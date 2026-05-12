@@ -46,13 +46,16 @@ export const POST = apiHandler(async (request) => {
   }
 
   const validatedData = PortfolioSchema.parse(body);
-  
+
   // Encrypt SMTP Password if present
   if (validatedData.smtpConfig?.pass) {
     validatedData.smtpConfig.pass = encrypt(validatedData.smtpConfig.pass);
   }
 
-  const result = await DbUtils.createDoc(CollectionName.PORTFOLIOS, validatedData);
+  const result = await DbUtils.createDoc(
+    CollectionName.PORTFOLIOS,
+    validatedData
+  );
 
   return sendSuccess({ id: result.insertedId }, 201);
 });

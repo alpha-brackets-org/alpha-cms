@@ -17,9 +17,13 @@ export function useCaseStudies(filters: CaseStudyFilters = {}) {
 }
 
 export function useCaseStudy(id: string) {
-  return useCmsQuery<PopulatedCaseStudy>(['case-study', id], () => api.get(`/case-studies/${id}`), {
-    enabled: id !== 'new' && !!id,
-  });
+  return useCmsQuery<PopulatedCaseStudy>(
+    ['case-study', id],
+    () => api.get(`/case-studies/${id}`),
+    {
+      enabled: id !== 'new' && !!id,
+    }
+  );
 }
 
 export function useCreateCaseStudy() {

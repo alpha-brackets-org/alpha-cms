@@ -46,12 +46,12 @@ export function apiHandler(
       // Brutal Role Protection & Authentication
       if (req.method !== 'GET') {
         const user = await getCurrentUser();
-        
+
         // Enforce authentication for mutations
         if (!user) {
           return sendError('AUTHENTICATION REQUIRED', 401);
         }
-        
+
         // Viewers should never be able to perform mutations (POST, PUT, DELETE)
         if (user.role === 'viewer') {
           return sendError('VIEWER ROLE - ACCESS DENIED', 403);
@@ -61,9 +61,9 @@ export function apiHandler(
       return await handler(req, context);
     } catch (error) {
       console.error('API_HANDLER_ERROR:', error);
-      
+
       if (error instanceof z.ZodError) {
-        return sendError(error.issues.map(e => e.message).join(', '), 400);
+        return sendError(error.issues.map((e) => e.message).join(', '), 400);
       }
 
       return sendError(

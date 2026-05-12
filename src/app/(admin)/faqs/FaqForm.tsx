@@ -26,7 +26,12 @@ interface FaqFormProps {
   submitText: string;
 }
 
-export function FaqForm({ initialData, onSubmit, isLoading, submitText }: FaqFormProps) {
+export function FaqForm({
+  initialData,
+  onSubmit,
+  isLoading,
+  submitText,
+}: FaqFormProps) {
   const { activePortfolio } = usePortfolio();
   const { data: portfolios = [] } = usePortfolios();
 
@@ -56,7 +61,9 @@ export function FaqForm({ initialData, onSubmit, isLoading, submitText }: FaqFor
   }, [initialData, activePortfolio]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -71,7 +78,10 @@ export function FaqForm({ initialData, onSubmit, isLoading, submitText }: FaqFor
   };
 
   return (
-    <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+    <form
+      onSubmit={handleSubmit}
+      className="grid grid-cols-1 gap-8 lg:grid-cols-3"
+    >
       {/* Main Content */}
       <div className="space-y-6 lg:col-span-2">
         <div className="border-2 border-border bg-card p-6">

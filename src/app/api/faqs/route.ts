@@ -10,7 +10,12 @@ import {
   sendForbidden,
   sendError,
 } from '@/lib/api-utils';
-import { CollectionName, MongoQuery, MongoPipeline, UserRole } from '@/types/cms';
+import {
+  CollectionName,
+  MongoQuery,
+  MongoPipeline,
+  UserRole,
+} from '@/types/cms';
 import { FaqSchema } from '@/schemas/cms';
 
 // GET ALL FAQS

@@ -16,9 +16,13 @@ export function useBlogs(filters: BlogFilters = {}) {
 }
 
 export function useBlog(id: string) {
-  return useCmsQuery<PopulatedBlog>(['blog', id], () => api.get(`/blogs/${id}`), {
-    enabled: id !== 'new' && !!id,
-  });
+  return useCmsQuery<PopulatedBlog>(
+    ['blog', id],
+    () => api.get(`/blogs/${id}`),
+    {
+      enabled: id !== 'new' && !!id,
+    }
+  );
 }
 
 export function useCreateBlog() {

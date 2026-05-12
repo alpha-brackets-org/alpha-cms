@@ -11,9 +11,13 @@ export function useProjects(filters: ProjectFilters = {}) {
 }
 
 export function useProject(id: string) {
-  return useCmsQuery<Project>(['projects', id], () => api.get(`/projects/${id}`), {
-    enabled: id !== 'new' && !!id,
-  });
+  return useCmsQuery<Project>(
+    ['projects', id],
+    () => api.get(`/projects/${id}`),
+    {
+      enabled: id !== 'new' && !!id,
+    }
+  );
 }
 
 export function useCreateProject() {

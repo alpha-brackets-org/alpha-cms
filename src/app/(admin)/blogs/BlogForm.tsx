@@ -43,7 +43,13 @@ interface BlogFormProps {
   isNew?: boolean;
 }
 
-export function BlogForm({ initialData, onSubmit, isLoading, submitText, isNew = false }: BlogFormProps) {
+export function BlogForm({
+  initialData,
+  onSubmit,
+  isLoading,
+  submitText,
+  isNew = false,
+}: BlogFormProps) {
   const [tagInput, setTagInput] = useState('');
   const [isMounted, setIsMounted] = useState(false);
 
@@ -197,7 +203,12 @@ export function BlogForm({ initialData, onSubmit, isLoading, submitText, isNew =
           >
             <Eye className="h-4 w-4" /> PREVIEW
           </Button>
-          <Button type="submit" disabled={isLoading} size="sm" className="gap-2">
+          <Button
+            type="submit"
+            disabled={isLoading}
+            size="sm"
+            className="gap-2"
+          >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (

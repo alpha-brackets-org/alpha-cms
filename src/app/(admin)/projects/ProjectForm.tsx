@@ -48,7 +48,13 @@ interface ProjectFormProps {
   isNew?: boolean;
 }
 
-export function ProjectForm({ initialData, onSubmit, isLoading, submitText, isNew = false }: ProjectFormProps) {
+export function ProjectForm({
+  initialData,
+  onSubmit,
+  isLoading,
+  submitText,
+  isNew = false,
+}: ProjectFormProps) {
   const [techInput, setTechInput] = useState('');
   const [isMounted, setIsMounted] = useState(false);
   const { error, warning } = useToast();
@@ -99,7 +105,7 @@ export function ProjectForm({ initialData, onSubmit, isLoading, submitText, isNe
   useEffect(() => {
     if (initialData) {
       const { portfolio, category, ...rest } = initialData;
- 
+
       reset({
         ...rest,
         portfolio: portfolio ? portfolio._id : '',
@@ -202,7 +208,12 @@ export function ProjectForm({ initialData, onSubmit, isLoading, submitText, isNe
               <Eye className="h-4 w-4" /> PREVIEW
             </Button>
           )}
-          <Button type="submit" disabled={isLoading} size="sm" className="gap-2">
+          <Button
+            type="submit"
+            disabled={isLoading}
+            size="sm"
+            className="gap-2"
+          >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (

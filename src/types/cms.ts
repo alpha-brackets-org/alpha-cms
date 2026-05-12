@@ -113,8 +113,6 @@ export type PopulatedCategory = Omit<Category, 'portfolio'> & {
   portfolio: Portfolio;
 };
 
-
-
 export type PopulatedFaq = Omit<Faq, 'portfolio'> & {
   portfolio: Portfolio;
 };

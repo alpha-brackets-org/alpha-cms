@@ -20,7 +20,11 @@ const imagekit = new ImageKit({
   publicKey: IMAGEKIT_PUBLIC_KEY,
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
   urlEndpoint: IMAGEKIT_URL_ENDPOINT,
-} as unknown as { publicKey: string; privateKey: string; urlEndpoint: string }) as unknown as CustomImageKit;
+} as unknown as {
+  publicKey: string;
+  privateKey: string;
+  urlEndpoint: string;
+}) as unknown as CustomImageKit;
 
 export function getSignedUrl(src: string, expireSeconds: number = 900) {
   return imagekit.url({

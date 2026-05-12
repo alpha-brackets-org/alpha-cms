@@ -80,7 +80,11 @@ export default function CategoriesPage() {
     if (category) {
       reset(category);
     } else {
-      reset({ name: '', slug: '', portfolio: activePortfolio === 'all' ? '' : activePortfolio } as Category);
+      reset({
+        name: '',
+        slug: '',
+        portfolio: activePortfolio === 'all' ? '' : activePortfolio,
+      } as Category);
     }
     setIsModalOpen(true);
   };
