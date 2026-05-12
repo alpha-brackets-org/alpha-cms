@@ -1,0 +1,32 @@
+{
+  "apps": [
+    {
+      "name": "alpha-cms-web",
+      "script": "npm",
+      "args": "start",
+      "env": {
+        "NODE_ENV": "production",
+        "PORT": 3001
+      }
+    },
+    {
+      "name": "alpha-cms-worker",
+      "script": "npx",
+      "args": "tsx src/workers/newsletter-worker.ts",
+      "env": {
+        "NODE_ENV": "production"
+      },
+      "autorestart": true,
+      "watch": false,
+      "max_memory_restart": "1G"
+    },
+    {
+      "name": "alpha-cms-monitor",
+      "script": "node scripts/monitor-queues.js",
+      "env": {
+        "NODE_ENV": "production",
+        "MONITOR_PORT": 3002
+      }
+    }
+  ]
+}
