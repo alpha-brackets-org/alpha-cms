@@ -27,6 +27,12 @@ export async function getCurrentUser(): Promise<User | null> {
     const user = await mongoose.connection.db
       .collection('users')
       .findOne({ _id: new mongoose.Types.ObjectId(payload.userId) });
+
+    if (!user) {
+      const cookieStore = await cookies();
+      cookieStore.delete('alpha_auth_token');
+      return null;
+    }
     return user as unknown as User;
   } catch (_) {
     return null;
