@@ -12,7 +12,6 @@ import {
   parseSearchParams,
   getCurrentUser,
   sendForbidden,
-  sendError,
 } from '@/lib/api-utils';
 import {
   CollectionName,
@@ -81,35 +80,35 @@ export const GET = apiHandler(async (request) => {
 });
 
 // CREATE CASE STUDY
-export const POST = apiHandler(async (request) => {
-  const user = await getCurrentUser();
-  const body = await request.json();
+export const POST = apiHandler(
+  async (_request, { validatedData }) => {
+    const user = await getCurrentUser();
 
-  const validatedData = CaseStudySchema.parse(body);
+    // Access Control
+    if (
+      user?.role !== UserRole.ADMIN &&
+      !user?.portfolios?.includes(validatedData.portfolio)
+    ) {
+      return sendForbidden('You do not have access to this portfolio');
+    }
 
-  // Access Control
-  if (
-    user?.role !== UserRole.ADMIN &&
-    !user?.portfolios?.includes(validatedData.portfolio)
-  ) {
-    return sendForbidden('You do not have access to this portfolio');
-  }
+    // Ensure portfolio is stored as ObjectId
+    const processedBody = {
+      ...validatedData,
+      portfolio: new mongoose.Types.ObjectId(validatedData.portfolio),
+      category:
+        validatedData.category &&
+        mongoose.Types.ObjectId.isValid(validatedData.category)
+          ? new mongoose.Types.ObjectId(validatedData.category)
+          : validatedData.category,
+    };
 
-  // Ensure portfolio is stored as ObjectId
-  const processedBody = {
-    ...validatedData,
-    portfolio: new mongoose.Types.ObjectId(validatedData.portfolio),
-    category:
-      validatedData.category &&
-      mongoose.Types.ObjectId.isValid(validatedData.category)
-        ? new mongoose.Types.ObjectId(validatedData.category)
-        : validatedData.category,
-  };
+    const result = await DbUtils.createDoc(
+      CollectionName.CASE_STUDIES,
+      processedBody
+    );
 
-  const result = await DbUtils.createDoc(
-    CollectionName.CASE_STUDIES,
-    processedBody
-  );
-
-  return sendSuccess({ id: result.insertedId }, 201);
-});
+    return sendSuccess({ id: result.insertedId }, 201);
+  },
+  { schema: CaseStudySchema }
+);

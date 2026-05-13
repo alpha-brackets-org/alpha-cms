@@ -80,26 +80,27 @@ export const GET = apiHandler(async (request) => {
 });
 
 // CREATE NEW BLOG
-export const POST = apiHandler(async (request) => {
-  const user = await getCurrentUser();
-  const body = await request.json();
-  const validatedData = BlogSchema.parse(body);
+export const POST = apiHandler(
+  async (_request, { validatedData }) => {
+    const user = await getCurrentUser();
 
-  // Access Control
-  if (
-    user?.role !== UserRole.ADMIN &&
-    !user?.portfolios?.includes(validatedData.portfolio)
-  ) {
-    return sendForbidden('You do not have access to this portfolio');
-  }
+    // Access Control
+    if (
+      user?.role !== UserRole.ADMIN &&
+      !user?.portfolios?.includes(validatedData.portfolio)
+    ) {
+      return sendForbidden('You do not have access to this portfolio');
+    }
 
-  // Ensure portfolio is stored as ObjectId
-  const processedBody = {
-    ...validatedData,
-    portfolio: new mongoose.Types.ObjectId(validatedData.portfolio),
-  };
+    // Ensure portfolio is stored as ObjectId
+    const processedBody = {
+      ...validatedData,
+      portfolio: new mongoose.Types.ObjectId(validatedData.portfolio),
+    };
 
-  const result = await DbUtils.createDoc(CollectionName.BLOGS, processedBody);
+    const result = await DbUtils.createDoc(CollectionName.BLOGS, processedBody);
 
-  return sendSuccess({ id: result.insertedId }, 201);
-});
+    return sendSuccess({ id: result.insertedId }, 201);
+  },
+  { schema: BlogSchema }
+);

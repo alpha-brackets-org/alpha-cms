@@ -7,6 +7,7 @@ import {
 } from '@/lib/api-utils';
 import { scopeQuery } from '@/lib/db/portfolio-utils';
 import { CollectionName } from '@/types/cms';
+import { MediaSchema } from '@/schemas/cms';
 import imagekit from '@/lib/imagekit';
 
 interface RouteContext {
@@ -14,19 +15,26 @@ interface RouteContext {
 }
 
 // UPDATE MEDIA
-export const PATCH = apiHandler(async (request, context: RouteContext) => {
-  const { id } = await context.params;
-  const body = await request.json();
-  const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
+export const PATCH = apiHandler(
+  async (_request, { params, validatedData }) => {
+    const { id } = await params;
+    const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
 
-  const result = await DbUtils.updateDoc(CollectionName.MEDIA, id, body, query);
+    const result = await DbUtils.updateDoc(
+      CollectionName.MEDIA,
+      id,
+      validatedData,
+      query
+    );
 
-  if (result.matchedCount === 0) {
-    return sendNotFound('Media Asset');
-  }
+    if (result.matchedCount === 0) {
+      return sendNotFound('Media Asset');
+    }
 
-  return sendSuccess({ success: true });
-});
+    return sendSuccess({ success: true });
+  },
+  { schema: MediaSchema.partial() }
+);
 
 // DELETE MEDIA
 export const DELETE = apiHandler(async (_request, context: RouteContext) => {

@@ -6,11 +6,9 @@ import {
   sendSuccess,
   getCurrentUser,
   sendForbidden,
-  sendBadRequest,
 } from '@/lib/api-utils';
 import { encrypt } from '@/lib/encryption';
 import { CollectionName, UserRole, PortfolioSchema } from '@/schemas/cms';
-import { z } from 'zod';
 import { MongoQuery } from '@/types/cms';
 
 export const GET = apiHandler(async () => {
@@ -36,26 +34,26 @@ export const GET = apiHandler(async () => {
   return NextResponse.json(portfolios);
 });
 
-export const POST = apiHandler(async (request) => {
-  const user = await getCurrentUser();
-  const body = await request.json();
+export const POST = apiHandler(
+  async (_request, { validatedData }) => {
+    const user = await getCurrentUser();
 
-  // Access Control: ONLY ADMINS can create portfolios
-  if (user?.role !== UserRole.ADMIN) {
-    return sendForbidden('Only system administrators can create portfolios');
-  }
+    // Access Control: ONLY ADMINS can create portfolios
+    if (user?.role !== UserRole.ADMIN) {
+      return sendForbidden('Only system administrators can create portfolios');
+    }
 
-  const validatedData = PortfolioSchema.parse(body);
+    // Encrypt SMTP Password if present
+    if (validatedData?.smtpConfig?.pass) {
+      validatedData.smtpConfig.pass = encrypt(validatedData.smtpConfig.pass);
+    }
 
-  // Encrypt SMTP Password if present
-  if (validatedData.smtpConfig?.pass) {
-    validatedData.smtpConfig.pass = encrypt(validatedData.smtpConfig.pass);
-  }
+    const result = await DbUtils.createDoc(
+      CollectionName.PORTFOLIOS,
+      validatedData
+    );
 
-  const result = await DbUtils.createDoc(
-    CollectionName.PORTFOLIOS,
-    validatedData
-  );
-
-  return sendSuccess({ id: result.insertedId }, 201);
-});
+    return sendSuccess({ id: result.insertedId }, 201);
+  },
+  { schema: PortfolioSchema }
+);

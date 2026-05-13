@@ -7,44 +7,48 @@ import {
   sendError,
 } from '@/lib/api-utils';
 import { scopeQuery } from '@/lib/db/portfolio-utils';
-import { CollectionName } from '@/schemas/cms';
+import { CollectionName, CategorySchema } from '@/schemas/cms';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
 // UPDATE CATEGORY
-export const PATCH = apiHandler(async (request, context: RouteContext) => {
-  const { id } = await context.params;
-  const body = await request.json();
+export const PATCH = apiHandler(
+  async (_request, { params, validatedData }) => {
+    const { id } = await params;
 
-  if (id === 'default-uncategorized') {
-    return sendError('System categories cannot be modified.', 403);
-  }
+    if (id === 'default-uncategorized') {
+      return sendError('System categories cannot be modified.', 403);
+    }
 
-  const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
+    const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
 
-  // Access Control: Only Admins can modify categories unless we want to allow Editors?
-  // Usually categories are managed by Admins or senior Editors.
-  // scopeQuery already ensures portfolio isolation.
+    // Access Control: Only Admins can modify categories unless we want to allow Editors?
+    // Usually categories are managed by Admins or senior Editors.
+    // scopeQuery already ensures portfolio isolation.
 
-  if (body.portfolio) {
-    body.portfolio = new mongoose.Types.ObjectId(String(body.portfolio));
-  }
+    if (validatedData?.portfolio) {
+      validatedData.portfolio = new mongoose.Types.ObjectId(
+        String(validatedData.portfolio)
+      ) as unknown as string;
+    }
 
-  const result = await DbUtils.updateDoc(
-    CollectionName.CATEGORIES,
-    id,
-    body,
-    query
-  );
+    const result = await DbUtils.updateDoc(
+      CollectionName.CATEGORIES,
+      id,
+      validatedData,
+      query
+    );
 
-  if (result.matchedCount === 0) {
-    return sendNotFound('Category');
-  }
+    if (result.matchedCount === 0) {
+      return sendNotFound('Category');
+    }
 
-  return sendSuccess({ success: true });
-});
+    return sendSuccess({ success: true });
+  },
+  { schema: CategorySchema.partial() }
+);
 
 // DELETE CATEGORY
 export const DELETE = apiHandler(async (_request, context: RouteContext) => {

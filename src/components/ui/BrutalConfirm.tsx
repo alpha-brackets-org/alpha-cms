@@ -83,8 +83,10 @@ export function BrutalConfirm({
             <div className="w-full space-y-2 text-left">
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                 Type{' '}
-                <span className="text-foreground">&quot;{requireTextMatch}&quot;</span> to
-                confirm
+                <span className="text-foreground">
+                  &quot;{requireTextMatch}&quot;
+                </span>{' '}
+                to confirm
               </label>
               <input
                 type="text"

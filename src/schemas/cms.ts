@@ -73,6 +73,10 @@ export const SEOMetadataSchema = z.object({
   ogImage: z.string().nullish(),
 });
 
+export const PortfolioIdSchema = z
+  .string()
+  .regex(/^[0-9a-fA-F]{24}$/, 'Please select a portfolio');
+
 export const TagSchema = z.object({
   tag: z.string(),
   id: z.string().nullish(),
@@ -106,7 +110,7 @@ export const BlogSchema = z
     featured: z.boolean().default(false),
     readTime: z.string().nullish(),
     seo: SEOMetadataSchema.nullish(),
-    portfolio: z.string(),
+    portfolio: PortfolioIdSchema,
   })
   .extend(BaseSchema.shape);
 
@@ -128,7 +132,7 @@ export const CaseStudySchema = z
     featured: z.boolean().default(false),
     pdfUrl: z.string().nullish(), // The gated content PDF to email
     seo: SEOMetadataSchema.nullish(),
-    portfolio: z.string(),
+    portfolio: PortfolioIdSchema,
   })
   .extend(BaseSchema.shape);
 
@@ -148,7 +152,7 @@ export const ProjectSchema = z
     description: z.string().nullish(),
     category: z.string().nullish(),
     seo: SEOMetadataSchema.nullish(),
-    portfolio: z.string(),
+    portfolio: PortfolioIdSchema,
   })
   .extend(BaseSchema.shape);
 
@@ -173,7 +177,7 @@ export const MediaSchema = z
     altText: z.string().optional(),
     folder: z.enum(MediaFolder).default(MediaFolder.UNORGANIZED),
     tags: z.array(z.string()).default([]),
-    portfolio: z.string(),
+    portfolio: PortfolioIdSchema,
   })
   .extend(BaseSchema.shape);
 
@@ -225,7 +229,7 @@ export const PortfolioSchema = z
 export const SubscriberSchema = z
   .object({
     email: z.email(),
-    portfolio: z.string(),
+    portfolio: PortfolioIdSchema,
     status: z.enum(SubscriberStatus).default(SubscriberStatus.ACTIVE),
     source: z.enum(SubscriberSource).default(SubscriberSource.NEWSLETTER),
     subscribedAt: z.string().optional(),
@@ -255,7 +259,7 @@ export const LeadSchema = z
         })
       )
       .default([]),
-    portfolio: z.string(),
+    portfolio: PortfolioIdSchema,
   })
   .extend(BaseSchema.shape);
 
@@ -274,9 +278,7 @@ export const CategorySchema = z
   .object({
     name: z.string().min(1, 'Name is required'),
     slug: z.string().min(1, 'Slug is required'),
-    portfolio: z.string({
-      message: 'Portfolio assignment is mandatory',
-    }),
+    portfolio: PortfolioIdSchema,
     isDefault: z.boolean().optional(),
   })
   .extend(BaseSchema.shape);
@@ -286,7 +288,7 @@ export const CampaignSchema = z
     title: z.string().min(1, 'Title is required'),
     subject: z.string().min(1, 'Subject is required'),
     content: z.string().min(1, 'Content is required'),
-    portfolio: z.string(),
+    portfolio: PortfolioIdSchema,
     status: z.enum(PublishStatus).default(PublishStatus.DRAFT),
     recipientCount: z.number().default(0),
     sentAt: z.string().nullish(),
@@ -301,7 +303,7 @@ export const CampaignSchema = z
 
 export const AnalyticsSchema = z
   .object({
-    portfolio: z.string(),
+    portfolio: PortfolioIdSchema,
     event: z.enum(AnalyticsEvent),
     path: z.string(),
     visitorId: z.string(),
@@ -365,9 +367,7 @@ export const FaqSchema = z
   .object({
     question: z.string().min(1, 'Question is required'),
     answer: z.string().min(1, 'Answer is required'),
-    portfolio: z.string({
-      message: 'Portfolio assignment is mandatory',
-    }),
+    portfolio: PortfolioIdSchema,
     status: z.enum(PublishStatus).default(PublishStatus.PUBLISHED),
     order: z.number().default(0),
     group: z.string().nullish(),

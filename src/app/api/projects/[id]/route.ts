@@ -6,7 +6,7 @@ import {
   portfolioPopulate,
   categoryPopulate,
 } from '@/lib/db/portfolio-utils';
-import { CollectionName } from '@/schemas/cms';
+import { CollectionName, ProjectSchema } from '@/schemas/cms';
 
 export const GET = apiHandler(async (_request, { params }) => {
   const { id } = await params;
@@ -29,24 +29,23 @@ export const GET = apiHandler(async (_request, { params }) => {
   return NextResponse.json(item);
 });
 
-export const PATCH = apiHandler(async (request, { params }) => {
-  const { id } = await params;
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return sendNotFound('Project');
-  }
-  const body = await request.json();
-  const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
+export const PATCH = apiHandler(
+  async (_request, { params, validatedData }) => {
+    const { id } = await params;
+    const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
 
-  const result = await DbUtils.updateDoc(
-    CollectionName.PROJECTS,
-    id,
-    body,
-    query
-  );
-  if (result.matchedCount === 0) return sendNotFound('Project');
+    const result = await DbUtils.updateDoc(
+      CollectionName.PROJECTS,
+      id,
+      validatedData,
+      query
+    );
+    if (result.matchedCount === 0) return sendNotFound('Project');
 
-  return NextResponse.json({ success: true });
-});
+    return NextResponse.json({ success: true });
+  },
+  { schema: ProjectSchema.partial() }
+);
 
 export const DELETE = apiHandler(async (_request, { params }) => {
   const { id } = await params;

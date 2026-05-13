@@ -8,7 +8,6 @@ import {
   parseSearchParams,
   getCurrentUser,
   sendForbidden,
-  sendError,
 } from '@/lib/api-utils';
 import { Category, MongoQuery, CollectionName, UserRole } from '@/types/cms';
 import { CategorySchema } from '@/schemas/cms';
@@ -53,23 +52,24 @@ export const GET = apiHandler(async (request) => {
   return sendPaginatedResponse(categories, { total, page, limit });
 });
 
-export const POST = apiHandler(async (request) => {
-  const user = await getCurrentUser();
-  const body = await request.json();
-  const validatedData = CategorySchema.parse(body);
+export const POST = apiHandler(
+  async (_request, { validatedData }) => {
+    const user = await getCurrentUser();
 
-  // Access Control
-  if (
-    user?.role !== UserRole.ADMIN &&
-    !user?.portfolios?.includes(validatedData.portfolio)
-  ) {
-    return sendForbidden('You do not have access to this portfolio');
-  }
+    // Access Control
+    if (
+      user?.role !== UserRole.ADMIN &&
+      !user?.portfolios?.includes(validatedData.portfolio)
+    ) {
+      return sendForbidden('You do not have access to this portfolio');
+    }
 
-  const result = await DbUtils.createDoc(CollectionName.CATEGORIES, {
-    ...validatedData,
-    portfolio: new mongoose.Types.ObjectId(validatedData.portfolio),
-  });
+    const result = await DbUtils.createDoc(CollectionName.CATEGORIES, {
+      ...validatedData,
+      portfolio: new mongoose.Types.ObjectId(validatedData.portfolio),
+    });
 
-  return sendSuccess({ id: result.insertedId }, 201);
-});
+    return sendSuccess({ id: result.insertedId }, 201);
+  },
+  { schema: CategorySchema }
+);

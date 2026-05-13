@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { NextResponse } from 'next/server';
 import { apiHandler, sendNotFound, DbUtils } from '@/lib/api-utils';
 import { scopeQuery, portfolioPopulate } from '@/lib/db/portfolio-utils';
-import { CollectionName } from '@/schemas/cms';
+import { CollectionName, LeadSchema } from '@/schemas/cms';
 
 export const GET = apiHandler(async (_request, { params }) => {
   const { id } = await params;
@@ -18,16 +18,23 @@ export const GET = apiHandler(async (_request, { params }) => {
   return NextResponse.json(item);
 });
 
-export const PATCH = apiHandler(async (request, { params }) => {
-  const { id } = await params;
-  const body = await request.json();
-  const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
+export const PATCH = apiHandler(
+  async (_request, { params, validatedData }) => {
+    const { id } = await params;
+    const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
 
-  const result = await DbUtils.updateDoc(CollectionName.LEADS, id, body, query);
-  if (result.matchedCount === 0) return sendNotFound('Lead');
+    const result = await DbUtils.updateDoc(
+      CollectionName.LEADS,
+      id,
+      validatedData,
+      query
+    );
+    if (result.matchedCount === 0) return sendNotFound('Lead');
 
-  return NextResponse.json({ success: true });
-});
+    return NextResponse.json({ success: true });
+  },
+  { schema: LeadSchema.partial() }
+);
 
 export const DELETE = apiHandler(async (_request, { params }) => {
   const { id } = await params;

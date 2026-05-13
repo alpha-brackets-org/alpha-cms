@@ -6,8 +6,7 @@ import {
   portfolioPopulate,
   categoryPopulate,
 } from '@/lib/db/portfolio-utils';
-import { CollectionName, PublishStatus } from '@/schemas/cms';
-import { queueNewsletterSend } from '@/lib/queues/newsletter-queue';
+import { CollectionName, CaseStudySchema } from '@/schemas/cms';
 
 // GET SINGLE CASE STUDY
 export const GET = apiHandler(async (_request, { params }) => {
@@ -33,36 +32,33 @@ export const GET = apiHandler(async (_request, { params }) => {
 });
 
 // UPDATE CASE STUDY
-export const PATCH = apiHandler(async (request, { params }) => {
-  const { id } = await params;
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return sendNotFound('Case Study');
-  }
-  const body = await request.json();
-  const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
+export const PATCH = apiHandler(
+  async (_request, { params, validatedData }) => {
+    const { id } = await params;
+    const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
 
-  // 1. Fetch current status to detect change
-  const currentDoc = await mongoose.connection.db
-    .collection(CollectionName.CASE_STUDIES)
-    .findOne(query);
+    // 1. Fetch current status to detect change
+    const currentDoc = await mongoose.connection.db
+      .collection(CollectionName.CASE_STUDIES)
+      .findOne(query);
 
-  if (!currentDoc) return sendNotFound('Case Study');
+    if (!currentDoc) return sendNotFound('Case Study');
 
-  // 2. Perform the update
-  const result = await DbUtils.updateDoc(
-    CollectionName.CASE_STUDIES,
-    id,
-    body,
-    query
-  );
-  if (result.matchedCount === 0) return sendNotFound('Case Study');
+    // 2. Perform the update
+    const result = await DbUtils.updateDoc(
+      CollectionName.CASE_STUDIES,
+      id,
+      validatedData,
+      query
+    );
+    if (result.matchedCount === 0) return sendNotFound('Case Study');
 
-  // 3. Trigger Newsletter if status changed to PUBLISHED
-  const wasPublished = currentDoc.status === PublishStatus.PUBLISHED;
-  const isPublished = body.status === PublishStatus.PUBLISHED;
+    // 3. Trigger Newsletter if status changed to PUBLISHED
+    // const wasPublished = currentDoc.status === PublishStatus.PUBLISHED;
+    // const isPublished = validatedData?.status === PublishStatus.PUBLISHED;
 
-  // Trigger Newsletter disabled for now since we are deploying on Vercel Free Tier without workers
-  /*
+    // Trigger Newsletter disabled for now since we are deploying on Vercel Free Tier without workers
+    /*
   if (!wasPublished && isPublished) {
     try {
       await queueNewsletterSend({
@@ -77,8 +73,10 @@ export const PATCH = apiHandler(async (request, { params }) => {
   }
   */
 
-  return NextResponse.json({ success: true });
-});
+    return NextResponse.json({ success: true });
+  },
+  { schema: CaseStudySchema.partial() }
+);
 
 // DELETE CASE STUDY
 export const DELETE = apiHandler(async (_request, { params }) => {

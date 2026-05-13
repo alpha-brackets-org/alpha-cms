@@ -43,13 +43,17 @@ export async function getCurrentUser(): Promise<User | null> {
  * Higher-Order Function to wrap API handlers.
  * Handles database connection and global error catching.
  */
-export interface ApiHandlerOptions {
+export interface ApiHandlerOptions<T extends z.ZodSchema = z.ZodSchema> {
   isPublic?: boolean;
+  schema?: T;
 }
 
-export function apiHandler(
-  handler: (req: Request, context: RouteContext) => Promise<NextResponse>,
-  options: ApiHandlerOptions = {}
+export function apiHandler<T extends z.ZodSchema = z.ZodSchema>(
+  handler: (
+    req: Request,
+    context: RouteContext & { validatedData?: z.infer<T> }
+  ) => Promise<NextResponse>,
+  options: ApiHandlerOptions<T> = {}
 ) {
   return async (req: Request, context: RouteContext) => {
     try {
@@ -61,6 +65,17 @@ export function apiHandler(
         if (params.id && !mongoose.Types.ObjectId.isValid(params.id)) {
           return sendNotFound('Resource');
         }
+      }
+
+      let validatedData: z.infer<T> | null = null;
+      if (
+        options.schema &&
+        (req.method === 'POST' ||
+          req.method === 'PATCH' ||
+          req.method === 'PUT')
+      ) {
+        const body = await req.json();
+        validatedData = options.schema.parse(body);
       }
 
       // Brutal Role Protection & Authentication
@@ -78,7 +93,7 @@ export function apiHandler(
         }
       }
 
-      return await handler(req, context);
+      return await handler(req, { ...context, validatedData });
     } catch (error) {
       console.error('API_HANDLER_ERROR:', error);
 

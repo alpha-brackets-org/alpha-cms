@@ -8,7 +8,6 @@ import {
   parseSearchParams,
   getCurrentUser,
   sendForbidden,
-  sendError,
 } from '@/lib/api-utils';
 import {
   CollectionName,
@@ -62,27 +61,27 @@ export const GET = apiHandler(async (request) => {
 });
 
 // CREATE NEW FAQ
-export const POST = apiHandler(async (request) => {
-  const user = await getCurrentUser();
-  const body = await request.json();
+export const POST = apiHandler(
+  async (_request, { validatedData }) => {
+    const user = await getCurrentUser();
 
-  const validatedData = FaqSchema.parse(body);
+    // Access Control
+    if (
+      user?.role !== UserRole.ADMIN &&
+      !user?.portfolios?.includes(validatedData.portfolio)
+    ) {
+      return sendForbidden('You do not have access to this portfolio');
+    }
 
-  // Access Control
-  if (
-    user?.role !== UserRole.ADMIN &&
-    !user?.portfolios?.includes(validatedData.portfolio)
-  ) {
-    return sendForbidden('You do not have access to this portfolio');
-  }
+    // Ensure portfolio is stored as ObjectId
+    const processedBody = {
+      ...validatedData,
+      portfolio: new mongoose.Types.ObjectId(validatedData.portfolio),
+    };
 
-  // Ensure portfolio is stored as ObjectId
-  const processedBody = {
-    ...validatedData,
-    portfolio: new mongoose.Types.ObjectId(validatedData.portfolio),
-  };
+    const result = await DbUtils.createDoc(CollectionName.FAQS, processedBody);
 
-  const result = await DbUtils.createDoc(CollectionName.FAQS, processedBody);
-
-  return sendSuccess({ id: result.insertedId }, 201);
-});
+    return sendSuccess({ id: result.insertedId }, 201);
+  },
+  { schema: FaqSchema }
+);
