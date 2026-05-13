@@ -55,6 +55,14 @@ export function apiHandler(
     try {
       await dbConnect();
 
+      // Validate ID in params if present
+      if (context.params) {
+        const params = await context.params;
+        if (params.id && !mongoose.Types.ObjectId.isValid(params.id)) {
+          return sendNotFound('Resource');
+        }
+      }
+
       // Brutal Role Protection & Authentication
       if (!options.isPublic && req.method !== 'GET') {
         const user = await getCurrentUser();
@@ -76,6 +84,14 @@ export function apiHandler(
 
       if (error instanceof z.ZodError) {
         return sendError(error.issues.map((e) => e.message).join(', '), 400);
+      }
+
+      // Catch BSON error for invalid ObjectIds
+      if (
+        error instanceof Error &&
+        error.message.includes('input must be a 24 character hex string')
+      ) {
+        return sendBadRequest('Invalid ID format');
       }
 
       return sendError(
