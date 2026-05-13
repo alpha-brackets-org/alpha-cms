@@ -16,6 +16,7 @@ import {
   LeadSchema,
   PortfolioSchema,
   CampaignSchema,
+  FaqSchema,
 } from '@/schemas/cms';
 import {
   PublishStatus,
@@ -39,6 +40,7 @@ registry.register('Category', CategorySchema);
 registry.register('Subscriber', SubscriberSchema);
 registry.register('Lead', LeadSchema);
 registry.register('Campaign', CampaignSchema);
+registry.register('Faq', FaqSchema);
 registry.register('SystemStats', StatsSchema);
 registry.register('SEOMetadata', SEOMetadataSchema);
 
@@ -168,6 +170,47 @@ registry.registerPath({
   responses: { 200: { description: 'Deleted' } },
 });
 
+registry.registerPath({
+  method: 'get',
+  path: '/portfolios/config',
+  tags: ['Public Endpoints'],
+  description:
+    'Public endpoint to fetch portfolio configuration for external sites',
+  summary: 'Get Public Portfolio Config',
+  request: {
+    query: z.object({
+      id: z.string().optional(),
+      domain: z.string().optional(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Public configuration data',
+      content: {
+        'application/json': {
+          schema: z.object({
+            _id: z.string(),
+            name: z.string(),
+            domain: z.string(),
+            active: z.boolean(),
+            maintenanceMode: z.boolean(),
+            newsletterConfig: z.object({
+              accentColor: z.string(),
+              logoUrl: z.string().nullable(),
+              senderName: z.string(),
+              footerText: z.string(),
+            }),
+            customScripts: z.object({ head: z.string(), footer: z.string() }),
+            socialLinks: z.array(
+              z.object({ platform: z.string(), url: z.string() })
+            ),
+          }),
+        },
+      },
+    },
+  },
+});
+
 // Users
 registry.registerPath({
   method: 'get',
@@ -215,6 +258,173 @@ registry.registerPath({
     params: z.object({ id: z.string() }),
   },
   responses: { 200: { description: 'Deleted' } },
+});
+
+// Authentication
+registry.registerPath({
+  method: 'post',
+  path: '/auth/login',
+  tags: ['Authentication'],
+  description: 'Authenticate user and set secure cookie',
+  summary: 'User Login',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            email: z.string().email(),
+            password: z.string(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Successfully authenticated',
+      content: {
+        'application/json': {
+          schema: z.object({
+            success: z.boolean(),
+            user: z.object({
+              _id: z.string(),
+              email: z.string(),
+              role: z.string(),
+            }),
+          }),
+        },
+      },
+    },
+    401: { description: 'Invalid credentials' },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/auth/forgot-password',
+  tags: ['Authentication'],
+  description: 'Request password reset link',
+  summary: 'Forgot Password',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            email: z.string().email(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Reset link sent if email exists',
+      content: {
+        'application/json': {
+          schema: z.object({
+            success: z.boolean(),
+            message: z.string(),
+          }),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/auth/reset-password',
+  tags: ['Authentication'],
+  description: 'Reset password using token',
+  summary: 'Reset Password',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            token: z.string(),
+            password: z.string(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Password restored successfully',
+      content: {
+        'application/json': {
+          schema: z.object({
+            success: z.boolean(),
+            message: z.string(),
+          }),
+        },
+      },
+    },
+    400: { description: 'Invalid token or missing fields' },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/auth/me',
+  tags: ['Authentication'],
+  description: 'Get current logged in user session',
+  summary: 'Current User Session',
+  responses: {
+    200: {
+      description: 'Current user data or null',
+      content: {
+        'application/json': {
+          schema: z.object({
+            user: z
+              .object({
+                _id: z.string(),
+                email: z.string(),
+                role: z.string(),
+                portfolios: z.array(z.string()),
+              })
+              .nullable(),
+          }),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/auth/change-password',
+  tags: ['Authentication'],
+  description: 'Change password for logged in user',
+  summary: 'Change Password',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            currentPassword: z.string(),
+            newPassword: z.string(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Password updated successfully',
+      content: {
+        'application/json': {
+          schema: z.object({
+            success: z.boolean(),
+            message: z.string(),
+          }),
+        },
+      },
+    },
+    400: { description: 'Incorrect current password or missing fields' },
+    401: { description: 'Unauthorized' },
+  },
 });
 
 /**
@@ -285,6 +495,37 @@ registry.registerPath({
         'application/json': { schema: z.object({ success: z.boolean() }) },
       },
     },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/subscribers/unsubscribe',
+  tags: ['Public Endpoints'],
+  description: 'Public endpoint to unsubscribe from a portfolio newsletter',
+  summary: 'Newsletter Unsubscribe',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            email: z.string().email(),
+            portfolioId: z.string(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Successfully unsubscribed',
+      content: {
+        'application/json': {
+          schema: z.object({ success: z.boolean(), message: z.string() }),
+        },
+      },
+    },
+    404: { description: 'Subscriber not found' },
   },
 });
 
@@ -363,6 +604,30 @@ registry.registerPath({
 
 registry.registerPath({
   method: 'get',
+  path: '/leads/export',
+  tags: ['Leads & Newsletter'],
+  description: 'Export leads as CSV file',
+  summary: 'Export Leads',
+  request: {
+    query: z.object({
+      ...PortfolioQueryParam,
+    }),
+  },
+  responses: {
+    200: {
+      description: 'CSV file download',
+      content: {
+        'text/csv': {
+          schema: z.string(),
+        },
+      },
+    },
+    404: { description: 'No leads found' },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
   path: '/leads/{id}',
   tags: ['Leads & Newsletter'],
   summary: 'Get Single Lead',
@@ -428,6 +693,34 @@ registry.registerPath({
     body: { content: { 'application/json': { schema: CampaignSchema } } },
   },
   responses: { 201: { description: 'Created' } },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/campaigns/{id}',
+  tags: ['Leads & Newsletter'],
+  summary: 'Get Single Campaign',
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: {
+    200: {
+      description: 'The campaign document',
+      content: { 'application/json': { schema: CampaignSchema } },
+    },
+    404: { description: 'Campaign not found' },
+  },
+});
+
+registry.registerPath({
+  method: 'delete',
+  path: '/campaigns/{id}',
+  tags: ['Leads & Newsletter'],
+  summary: 'Delete Campaign',
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: { 200: { description: 'Deleted' } },
 });
 
 /**
@@ -663,6 +956,107 @@ registry.registerPath({
   },
   responses: { 200: { description: 'Deleted' } },
 });
+
+// FAQs
+registry.registerPath({
+  method: 'get',
+  path: '/faqs',
+  tags: ['Core Content'],
+  description: 'Retrieve FAQs with multi-portfolio filtering',
+  summary: 'List FAQs',
+  request: {
+    query: z.object({
+      ...PaginationQueryParams,
+      ...PortfolioQueryParam,
+      ...SearchQueryParam,
+      status: z
+        .enum(PublishStatus)
+        .optional()
+        .openapi({ param: { name: 'status', in: 'query' } }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Paginated FAQs',
+      content: { 'application/json': { schema: z.array(FaqSchema) } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/faqs',
+  tags: ['Core Content'],
+  summary: 'Create FAQ',
+  request: {
+    body: { content: { 'application/json': { schema: FaqSchema } } },
+  },
+  responses: { 201: { description: 'Created' } },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/faqs/{id}',
+  tags: ['Core Content'],
+  summary: 'Get Single FAQ',
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: {
+    200: {
+      description: 'The FAQ document',
+      content: { 'application/json': { schema: FaqSchema } },
+    },
+    404: { description: 'FAQ not found' },
+  },
+});
+
+registry.registerPath({
+  method: 'patch',
+  path: '/faqs/{id}',
+  tags: ['Core Content'],
+  summary: 'Update FAQ',
+  request: {
+    params: z.object({ id: z.string() }),
+    body: { content: { 'application/json': { schema: FaqSchema } } },
+  },
+  responses: { 200: { description: 'Updated' } },
+});
+
+registry.registerPath({
+  method: 'delete',
+  path: '/faqs/{id}',
+  tags: ['Core Content'],
+  summary: 'Delete FAQ',
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: { 200: { description: 'Deleted' } },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/media/auth',
+  tags: ['Media & Assets'],
+  description:
+    'Generate authentication parameters for client-side ImageKit uploads',
+  summary: 'ImageKit Auth Params',
+  responses: {
+    200: {
+      description: 'Authentication parameters',
+      content: {
+        'application/json': {
+          schema: z.object({
+            token: z.string(),
+            expire: z.number(),
+            signature: z.string(),
+          }),
+        },
+      },
+    },
+  },
+});
+
 registry.registerPath({
   method: 'post',
   path: '/media/upload',

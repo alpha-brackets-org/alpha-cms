@@ -25,8 +25,8 @@ function getTransporter(portfolio: Portfolio) {
 
   // Fallback to system environment variables
   return nodemailer.createTransport({
-    host: process.env.MAIL_HOST || 'sandbox.smtp.mailtrap.io',
-    port: parseInt(process.env.MAIL_PORT || '2525'),
+    host: process.env.MAIL_HOST!,
+    port: parseInt(process.env.MAIL_PORT!),
     auth: {
       user: process.env.MAIL_USER,
       pass: process.env.MAIL_PASS,

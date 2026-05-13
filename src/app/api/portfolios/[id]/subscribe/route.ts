@@ -73,4 +73,4 @@ export const POST = apiHandler(async (request, context: RouteContext) => {
     { message: 'Successfully subscribed to the newsletter.' },
     201
   );
-});
+}, { isPublic: true });

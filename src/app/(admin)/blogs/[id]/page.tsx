@@ -56,7 +56,7 @@ export default function EditBlogPage() {
 
   return (
     <BlogForm
-      initialData={blog as unknown as Blog}
+      initialData={blog}
       onSubmit={handleSubmit}
       isLoading={updateMutation.isPending}
       submitText="SAVE CHANGES"

@@ -1,24 +1,14 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import { apiHandler } from '@/lib/api-utils';
+import { apiHandler, getCurrentUser } from '@/lib/api-utils';
 import { hashPassword, comparePassword } from '@/lib/auth-utils';
-import { cookies } from 'next/headers';
 
 export const POST = apiHandler(async (req) => {
   const { currentPassword, newPassword } = await req.json();
-  const cookieStore = await cookies();
-  const token = cookieStore.get('alpha_auth_token')?.value;
-
-  if (!token) {
-    return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
-  }
-
-  const user = await mongoose.connection.db.collection('users').findOne({
-    _id: new mongoose.Types.ObjectId(token),
-  });
+  const user = await getCurrentUser();
 
   if (!user) {
-    return NextResponse.json({ error: 'USER NOT FOUND' }, { status: 404 });
+    return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
   }
 
   const isValid = await comparePassword(currentPassword, user.password);
@@ -34,7 +24,7 @@ export const POST = apiHandler(async (req) => {
   await mongoose.connection.db
     .collection('users')
     .updateOne(
-      { _id: user._id },
+      { _id: new mongoose.Types.ObjectId(user._id as string) },
       { $set: { password: hashedPassword, updatedAt: new Date() } }
     );
 

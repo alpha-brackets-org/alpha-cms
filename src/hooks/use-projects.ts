@@ -1,5 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PaginatedResponse, Project, ProjectFilters } from '@/types/cms';
+import {
+  PaginatedResponse,
+  Project,
+  PopulatedProject,
+  ProjectFilters,
+} from '@/types/cms';
 import { api } from '@/lib/api-client';
 import { buildQueryString } from '@/lib/utils';
 import { useCmsQuery } from './use-cms-query';
@@ -11,7 +16,7 @@ export function useProjects(filters: ProjectFilters = {}) {
 }
 
 export function useProject(id: string) {
-  return useCmsQuery<Project>(
+  return useCmsQuery<PopulatedProject>(
     ['projects', id],
     () => api.get(`/projects/${id}`),
     {

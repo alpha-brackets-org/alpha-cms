@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI =
-  process.env.DATABASE_URL || 'mongodb://localhost:27017/alpha-cms';
+const MONGODB_URI = process.env.DATABASE_URL!;
 
 /**
  * Global interface for Mongoose caching in Next.js development

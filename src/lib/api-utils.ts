@@ -5,6 +5,7 @@ import dbConnect from '@/lib/db/dbConnect';
 import mongoose from 'mongoose';
 import { verifyToken } from './auth-utils';
 import { z } from 'zod';
+import { User, UserRole } from '@/schemas/cms';
 
 /**
  * Type for Next.js Route Handler Context
@@ -13,7 +14,7 @@ interface RouteContext {
   params: Promise<Record<string, string>>;
 }
 
-export async function getCurrentUser() {
+export async function getCurrentUser(): Promise<User | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get('alpha_auth_token')?.value;
 
@@ -26,7 +27,7 @@ export async function getCurrentUser() {
     const user = await mongoose.connection.db
       .collection('users')
       .findOne({ _id: new mongoose.Types.ObjectId(payload.userId) });
-    return user;
+    return user as unknown as User;
   } catch (_) {
     return null;
   }
@@ -36,15 +37,20 @@ export async function getCurrentUser() {
  * Higher-Order Function to wrap API handlers.
  * Handles database connection and global error catching.
  */
+export interface ApiHandlerOptions {
+  isPublic?: boolean;
+}
+
 export function apiHandler(
-  handler: (req: Request, context: RouteContext) => Promise<NextResponse>
+  handler: (req: Request, context: RouteContext) => Promise<NextResponse>,
+  options: ApiHandlerOptions = {}
 ) {
   return async (req: Request, context: RouteContext) => {
     try {
       await dbConnect();
 
       // Brutal Role Protection & Authentication
-      if (req.method !== 'GET') {
+      if (!options.isPublic && req.method !== 'GET') {
         const user = await getCurrentUser();
 
         // Enforce authentication for mutations
@@ -53,7 +59,7 @@ export function apiHandler(
         }
 
         // Viewers should never be able to perform mutations (POST, PUT, DELETE)
-        if (user.role === 'viewer') {
+        if (user.role === UserRole.VIEWER) {
           return sendError('VIEWER ROLE - ACCESS DENIED', 403);
         }
       }

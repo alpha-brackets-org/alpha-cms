@@ -1,6 +1,6 @@
 import Redis from 'ioredis';
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+const REDIS_URL = process.env.REDIS_URL!;
 
 // Create a singleton Redis instance
 let redis: Redis | undefined;
@@ -15,7 +15,7 @@ export function getRedisInstance(): Redis {
 }
 
 export const redisConnection = {
-  host: process.env.REDIS_HOST || '127.0.0.1',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
+  host: process.env.REDIS_HOST!,
+  port: parseInt(process.env.REDIS_PORT!),
   maxRetriesPerRequest: null, // Required for BullMQ
 };

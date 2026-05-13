@@ -56,7 +56,7 @@ export default function EditCaseStudyPage() {
 
   return (
     <CaseStudyForm
-      initialData={study as unknown as CaseStudy}
+      initialData={study}
       onSubmit={handleSubmit}
       isLoading={updateMutation.isPending}
       submitText="SAVE CHANGES"

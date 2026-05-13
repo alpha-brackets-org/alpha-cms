@@ -37,4 +37,4 @@ export const POST = apiHandler(async (request) => {
   }
 
   return sendSuccess({ message: 'You have been successfully unsubscribed.' });
-});
+}, { isPublic: true });

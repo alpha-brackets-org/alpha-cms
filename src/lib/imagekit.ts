@@ -14,6 +14,8 @@ interface CustomImageKit {
     signed?: boolean;
     expireSeconds?: number;
   }): string;
+  files: any;
+  helper: any;
 }
 
 const imagekit = new ImageKit({

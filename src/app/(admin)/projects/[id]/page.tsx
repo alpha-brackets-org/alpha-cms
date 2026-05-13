@@ -56,7 +56,7 @@ export default function EditProjectPage() {
 
   return (
     <ProjectForm
-      initialData={project as unknown as Project}
+      initialData={project}
       onSubmit={handleSubmit}
       isLoading={updateMutation.isPending}
       submitText="SAVE CHANGES"

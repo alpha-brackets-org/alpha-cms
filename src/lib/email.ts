@@ -6,15 +6,15 @@ import nodemailer from 'nodemailer';
  */
 
 const transporter = nodemailer.createTransport({
-  host: process.env.MAIL_HOST || 'sandbox.smtp.mailtrap.io',
-  port: parseInt(process.env.MAIL_PORT || '2525'),
+  host: process.env.MAIL_HOST!,
+  port: parseInt(process.env.MAIL_PORT!),
   auth: {
     user: process.env.MAIL_USER,
     pass: process.env.MAIL_PASS,
   },
 });
 
-const FROM_EMAIL = '"Alpha CMS Infrastructure" <no-reply@alphabrackets.com>';
+const FROM_EMAIL = process.env.MAIL_FROM!;
 
 export async function sendOperatorInvite(
   email: string,
@@ -48,7 +48,7 @@ export async function sendOperatorInvite(
           <p><strong>IDENTITY:</strong> ${email}</p>
           <p><strong>ACCESS KEY:</strong> ${temporaryPassword}</p>
         </div>
-        <p>LINK: <a href="http://localhost:3001/login" style="color: #00ff00;">INITIATE SESSION</a></p>
+        <p>LINK: <a href="${process.env.NEXT_PUBLIC_HUB_URL}/login" style="color: #00ff00;">INITIATE SESSION</a></p>
         <hr style="border: 1px solid #333;" />
         <p style="font-size: 10px; color: #666;">UNAUTHORIZED ACCESS IS PROHIBITED. ENCRYPTION ACTIVE.</p>
       </div>
@@ -61,14 +61,14 @@ export async function sendOperatorInvite(
 
 export async function sendPasswordReset(email: string, resetToken: string) {
   // Fallback for development if credentials are not set
-  if (!process.env.MAIL_USER || process.env.MAIL_USER === 'your_user') {
+  if (!process.env.MAIL_USER) {
     console.warn(
       '⚠️ [EMAIL ENGINE] SMTP Credentials not configured. Reset link logged to console.'
     );
     console.log(`
       [DEV RESET LOG]
       To: ${email}
-      Link: http://localhost:3001/reset-password?token=${resetToken}
+      Link: ${process.env.NEXT_PUBLIC_HUB_URL}/reset-password?token=${resetToken}
     `);
     return { success: true, logged: true };
   }
@@ -83,7 +83,7 @@ export async function sendPasswordReset(email: string, resetToken: string) {
         <hr style="border: 2px solid #fff;" />
         <p>A PASSWORD RESET WAS REQUESTED FOR YOUR ALPHA CMS ACCOUNT.</p>
         <div style="margin: 20px 0;">
-          <a href="http://localhost:3001/reset-password?token=${resetToken}" 
+          <a href="${process.env.NEXT_PUBLIC_HUB_URL}/reset-password?token=${resetToken}" 
              style="display: inline-block; background: #fff; color: #000; padding: 15px 30px; text-decoration: none; font-weight: bold;">
             RESTORE ACCESS
           </a>
