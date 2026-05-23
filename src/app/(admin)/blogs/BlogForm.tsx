@@ -168,10 +168,10 @@ export function BlogForm({
   return (
     <form
       onSubmit={handleSubmit(onFormSubmit)}
-      className="flex min-h-full flex-col"
+      className="flex flex-1 flex-col overflow-hidden"
     >
       {/* Top Bar Actions */}
-      <div className="sticky top-0 z-50 flex items-center justify-between border-b-2 border-border bg-secondary/80 p-4 backdrop-blur-xl md:px-8">
+      <div className="sticky top-0 z-50 flex shrink-0 items-center justify-between border-b border-white/10 bg-background/80 p-4 backdrop-blur-xl md:px-8">
         <div className="flex items-center gap-4">
           <Link
             href="/blogs"
@@ -219,20 +219,21 @@ export function BlogForm({
         </div>
       </div>
 
-      {/* Content Area */}
-      <div className="flex-1 space-y-8 p-6 md:p-8">
+      {/* Content Area: fills remaining height with two independently scrollable panes */}
+      <div className="flex min-h-0 flex-1">
         {Object.keys(errors).length > 0 && (
-          <div className="mb-8 flex items-center gap-3 border-2 border-destructive bg-destructive/10 p-4 text-destructive">
-            <AlertCircle className="h-5 w-5" />
+          <div className="absolute left-4 right-4 top-20 z-40 flex items-center gap-3 rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-destructive">
+            <AlertCircle className="h-4 w-4 shrink-0" />
             <span className="text-xs font-bold uppercase tracking-widest">
               Validation Alert: Missing Required Protocol
             </span>
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-4">
-          {/* Main Content Area */}
-          <div className="space-y-12 lg:col-span-3">
+        {/* Main scrollable content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="space-y-8 p-6 md:p-8">
+            {/* Title & Slug */}
             <div className="space-y-4">
               <div className="space-y-1">
                 <input
@@ -245,8 +246,7 @@ export function BlogForm({
                   } pb-4`}
                 />
               </div>
-
-              <div className="flex items-center gap-2 border-2 border-border/30 bg-secondary/20 p-3 font-mono text-[10px] text-muted-foreground">
+              <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-secondary/20 p-3 font-mono text-[10px] text-muted-foreground">
                 <span className="font-bold text-primary">PERMALINK:</span>
                 <span>/blogs/</span>
                 <input
@@ -257,6 +257,7 @@ export function BlogForm({
               </div>
             </div>
 
+            {/* Rich Text Editor */}
             <div className="space-y-4">
               <Controller
                 name="content"
@@ -270,15 +271,14 @@ export function BlogForm({
               />
             </div>
 
-            {/* SEO ENGINE SECTION */}
-            <div className="space-y-8 border-2 border-l-8 border-border border-l-primary bg-card p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-              <div className="flex items-center gap-3 border-b-2 border-border pb-4">
+            {/* SEO SECTION */}
+            <div className="space-y-6 rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl">
+              <div className="flex items-center gap-3 border-b border-white/10 pb-4">
                 <Search className="h-5 w-5 text-primary" />
                 <h3 className="text-sm font-bold uppercase tracking-widest">
                   SEO Infrastructure
                 </h3>
               </div>
-
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                 <div className="space-y-6">
                   <div className="space-y-2">
@@ -315,9 +315,11 @@ export function BlogForm({
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Sidebar Settings Area */}
-          <div className="space-y-6">
+        {/* Right Sidebar - independently scrollable */}
+        <div className="hidden w-80 shrink-0 overflow-y-auto border-l border-white/10 xl:block">
+          <div className="space-y-4 p-4">
             <SeoAnalyzer
               title={watchedValues.seo?.metaTitle || watchedValues.title}
               description={
@@ -328,8 +330,8 @@ export function BlogForm({
               ogImage={watchedValues.seo?.ogImage}
             />
 
-            <div className="space-y-6 border-2 border-border bg-card p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <h3 className="flex items-center gap-2 border-b-2 border-border pb-3 text-xs font-bold uppercase tracking-ultrawide">
+            <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
+              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-widest">
                 <Settings className="h-4 w-4 text-primary" /> Parameters
               </h3>
 
@@ -414,7 +416,7 @@ export function BlogForm({
                 </div>
               </div>
 
-              <div className="flex items-center justify-between border-2 border-border bg-secondary/50 p-4">
+              <div className="flex items-center justify-between rounded-xl border border-white/10 bg-secondary/50 p-3">
                 <Label className="flex cursor-pointer items-center gap-2">
                   <Star className="h-3 w-3 text-primary" /> Featured Post
                 </Label>
@@ -436,8 +438,8 @@ export function BlogForm({
               </div>
             </div>
 
-            <div className="space-y-4 border-2 border-border bg-card p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <h3 className="flex items-center gap-2 border-b-2 border-border pb-3 text-xs font-bold uppercase tracking-ultrawide">
+            <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
+              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-widest">
                 <ImageIcon className="h-4 w-4 text-primary" /> Social Media
               </h3>
               <Controller
@@ -453,8 +455,8 @@ export function BlogForm({
               />
             </div>
 
-            <div className="space-y-4 border-2 border-border bg-card p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <h3 className="flex items-center gap-2 border-b-2 border-border pb-3 text-xs font-bold uppercase tracking-ultrawide">
+            <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
+              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-widest">
                 <TagIcon className="h-4 w-4 text-primary" /> Taxonomies
               </h3>
 

@@ -122,28 +122,28 @@ export default function SubscribersPage() {
 
       {/* Stats Quick View */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-        <div className="border-4 border-foreground bg-primary p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <p className="text-[10px] font-black uppercase tracking-widest text-primary-foreground/80">
+        <div className="rounded-2xl border border-white/10 bg-primary/20 p-6 shadow-sm backdrop-blur-xl">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-primary/80">
             Total Subscribers
           </p>
-          <p className="text-4xl font-black text-primary-foreground">
+          <p className="text-4xl font-bold text-primary">
             {data?.total || 0}
           </p>
         </div>
-        <div className="border-4 border-foreground bg-card p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+        <div className="rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             Active Nodes
           </p>
-          <p className="text-4xl font-black text-foreground">
+          <p className="text-4xl font-bold text-foreground">
             {data?.data.filter((s) => s.status === SubscriberStatus.ACTIVE)
               .length || 0}
           </p>
         </div>
-        <div className="border-4 border-foreground bg-secondary p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+        <div className="rounded-2xl border border-white/10 bg-secondary/50 p-6 shadow-sm backdrop-blur-xl">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             Portfolios Reached
           </p>
-          <p className="text-4xl font-black text-foreground">
+          <p className="text-4xl font-bold text-foreground">
             {new Set(data?.data.map((s) => s.portfolio._id)).size || 0}
           </p>
         </div>
@@ -198,7 +198,7 @@ export default function SubscribersPage() {
             <BrutalTableRow key={subscriber._id}>
               <BrutalTableCell>
                 <div className="flex items-center gap-3">
-                  <div className="border-2 border-foreground bg-background p-2">
+                  <div className="rounded-full border border-white/10 bg-secondary p-2 text-muted-foreground">
                     <Mail className="h-4 w-4" />
                   </div>
                   <span className="font-mono text-sm font-bold">

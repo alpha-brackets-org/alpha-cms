@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
-export type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement>;
+export type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
+  wrapperClassName?: string;
+};
 
 const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, children, ...props }, ref) => {
+  ({ className, wrapperClassName, children, ...props }, ref) => {
     const [hasValue, setHasValue] = React.useState(
       !!props.value || !!props.defaultValue
     );
@@ -14,10 +16,10 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     }, [props.value, props.defaultValue]);
 
     return (
-      <div className="group relative w-full">
+      <div className={cn('group relative w-full', wrapperClassName)}>
         <select
           className={cn(
-            'flex h-12 w-full cursor-pointer appearance-none border-2 border-border bg-background pl-4 pr-10 text-sm font-bold uppercase tracking-normal transition-all hover:border-primary/50 focus-visible:border-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+            'flex h-12 w-full cursor-pointer appearance-none rounded-md border border-border bg-background pl-4 pr-10 text-sm font-medium transition-all hover:border-primary/50 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50',
             hasValue ? 'text-foreground' : 'text-muted-foreground',
             className
           )}

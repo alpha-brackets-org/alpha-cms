@@ -17,7 +17,7 @@ export function BrutalTable({
   return (
     <div
       className={cn(
-        'overflow-x-auto border-4 border-border shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]',
+        'overflow-x-auto rounded-2xl border border-white/10 shadow-sm backdrop-blur-xl',
         className
       )}
     >
@@ -28,11 +28,11 @@ export function BrutalTable({
         )}
       >
         <thead>
-          <tr className="border-b-4 border-border bg-secondary/50">
+          <tr className="border-b border-white/10 bg-secondary/50">
             {headers.map((header, i) => (
               <th
                 key={i}
-                className="p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground"
+                className="p-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
               >
                 {header}
               </th>
@@ -58,7 +58,7 @@ export function BrutalTableRow({
     <tr
       onClick={onClick}
       className={cn(
-        'border-b-2 border-border transition-colors hover:bg-secondary/20',
+        'border-b border-white/10 transition-colors hover:bg-secondary/20',
         onClick && 'cursor-pointer',
         className
       )}

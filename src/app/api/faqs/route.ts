@@ -6,6 +6,7 @@ import {
   apiHandler,
   DbUtils,
   parseSearchParams,
+  parseEnumParam,
   getCurrentUser,
   sendForbidden,
 } from '@/lib/api-utils';
@@ -15,7 +16,7 @@ import {
   MongoPipeline,
   UserRole,
 } from '@/types/cms';
-import { FaqSchema } from '@/schemas/cms';
+import { FaqSchema, PublishStatus } from '@/schemas/cms';
 
 // GET ALL FAQS
 export const GET = apiHandler(async (request) => {
@@ -34,8 +35,9 @@ export const GET = apiHandler(async (request) => {
   }
 
   // Apply status filter
-  if (status && status !== 'all') {
-    query.status = status;
+  const validStatus = parseEnumParam(status, Object.values(PublishStatus));
+  if (validStatus) {
+    query.status = validStatus;
   }
 
   // Total count for pagination

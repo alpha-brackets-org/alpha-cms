@@ -89,7 +89,7 @@ export default function FaqsPage() {
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="flex flex-col items-end gap-4 border-2 border-border bg-secondary/30 p-4 md:flex-row">
+      <div className="flex flex-col items-end gap-4 rounded-xl border border-white/10 bg-secondary/30 p-4 md:flex-row">
         <div className="relative w-full flex-1">
           <Label className="mb-1 block opacity-60">Search</Label>
           <div className="relative">

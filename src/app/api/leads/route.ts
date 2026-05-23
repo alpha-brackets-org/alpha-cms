@@ -6,6 +6,7 @@ import {
   apiHandler,
   DbUtils,
   parseSearchParams,
+  parseEnumParam,
   getCurrentUser,
   sendForbidden,
   sendError,
@@ -16,7 +17,7 @@ import {
   MongoPipeline,
   UserRole,
 } from '@/types/cms';
-import { LeadSchema } from '@/schemas/cms';
+import { LeadSchema, LeadStatus } from '@/schemas/cms';
 
 export const GET = apiHandler(async (request) => {
   const user = await getCurrentUser();
@@ -39,8 +40,9 @@ export const GET = apiHandler(async (request) => {
     ];
   }
 
-  if (status && status !== 'all') {
-    query.status = status;
+  const validStatus = parseEnumParam(status, Object.values(LeadStatus));
+  if (validStatus) {
+    query.status = validStatus;
   }
 
   const total = await mongoose.connection.db

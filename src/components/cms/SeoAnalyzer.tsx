@@ -148,30 +148,58 @@ export const SeoAnalyzer = ({
   };
 
   return (
-    <div className="border-2 border-border bg-card p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-      <div className="mb-6 flex items-center justify-between border-b-2 border-border pb-4">
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="h-5 w-5 text-primary" />
-          <h3 className="text-xs font-black uppercase tracking-ultrawide">
+    <div className="rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
+      {/* Header */}
+      <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-4">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-4 w-4 text-primary" />
+          <h3 className="text-[10px] font-bold uppercase tracking-widest">
             SEO Live Audit
           </h3>
         </div>
         <div className="flex flex-col items-end">
-          <span className="text-2xl font-black">{audit.score}%</span>
+          <span
+            className={cn(
+              'text-xl font-black tabular-nums',
+              audit.score > 80
+                ? 'text-primary'
+                : audit.score > 50
+                  ? 'text-amber-400'
+                  : 'text-destructive'
+            )}
+          >
+            {audit.score}%
+          </span>
           <span className="text-[8px] font-bold uppercase tracking-widest text-muted-foreground">
             Trust Score
           </span>
         </div>
       </div>
 
-      <div className="space-y-4">
+      {/* Progress bar */}
+      <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-secondary/60">
+        <div
+          className={cn(
+            'h-full rounded-full transition-all duration-1000',
+            audit.score > 80
+              ? 'bg-primary'
+              : audit.score > 50
+                ? 'bg-amber-400'
+                : 'bg-destructive'
+          )}
+          style={{ width: `${audit.score}%` }}
+        />
+      </div>
+
+      {/* Factors */}
+      <div className="space-y-2">
         {audit.factors.map((factor, idx) => (
           <div
             key={idx}
-            className="group border-2 border-border/30 bg-secondary/10 p-3 transition-colors hover:border-border/60"
+            className="rounded-xl border border-white/5 bg-secondary/20 p-3 transition-all hover:border-white/15 hover:bg-secondary/30"
           >
             <div className="mb-1 flex items-center justify-between">
-              <span className="text-[9px] font-black uppercase tracking-widest">
+              <span className="text-[9px] font-bold uppercase tracking-widest">
                 {factor.label}
               </span>
               {getStatusIcon(factor.status)}
@@ -183,26 +211,10 @@ export const SeoAnalyzer = ({
         ))}
       </div>
 
-      <div className="mt-6 border-t-2 border-border pt-4">
-        <div className="flex items-center gap-2">
-          <div className="h-1.5 flex-1 bg-secondary">
-            <div
-              className={cn(
-                'h-full transition-all duration-1000',
-                audit.score > 80
-                  ? 'bg-primary'
-                  : audit.score > 50
-                    ? 'bg-amber-500'
-                    : 'bg-destructive'
-              )}
-              style={{ width: `${audit.score}%` }}
-            />
-          </div>
-        </div>
-        <p className="mt-3 text-center text-[8px] font-bold uppercase italic text-muted-foreground">
-          Search engine results may vary based on actual indexing latency.
-        </p>
-      </div>
+      {/* Footer disclaimer */}
+      <p className="mt-4 text-center text-[8px] italic text-muted-foreground/60">
+        Search engine results may vary based on actual indexing latency.
+      </p>
     </div>
   );
 };

@@ -97,11 +97,10 @@ export function apiHandler<T extends z.ZodSchema = z.ZodSchema>(
     } catch (error) {
       console.error('API_HANDLER_ERROR:', error);
 
-      if (error instanceof z.ZodError) {
-        return sendError(error.issues.map((e) => e.message).join(', '), 400);
+      if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
+        const issues = (error as z.ZodError).issues;
+        return sendError(issues.map((e) => e.message).join(', '), 400);
       }
-
-      // Catch BSON error for invalid ObjectIds
       if (
         error instanceof Error &&
         error.message.includes('input must be a 24 character hex string')
@@ -143,25 +142,65 @@ export function sendPaginatedResponse<T>(
   return NextResponse.json(response);
 }
 
+/**
+ * Validates a raw query-param string against a list of valid enum values.
+ * Returns the value if valid, undefined otherwise.
+ *
+ * Usage:
+ *   parseEnumParam(status, Object.values(PublishStatus))
+ *   parseEnumParam(source, Object.values(SubscriberSource))
+ */
+export function parseEnumParam<T extends string>(
+  value: string | null | undefined,
+  validValues: readonly T[]
+): T | undefined {
+  if (!value || value === 'all') return undefined;
+  return validValues.includes(value as T) ? (value as T) : undefined;
+}
+
+/**
+ * Parses and normalizes URL query params for CMS list endpoints.
+ *
+ * Design rules:
+ *  - Filter params (status, category, source) return null when absent or 'all'.
+ *    The 'all' sentinel is a frontend UI concept — it must not leak into API logic.
+ *    Routes simply do: `if (status) { query.status = status; }` — no 'all' check needed.
+ *  - Pagination params (page, limit) are clamped and NaN-safe.
+ */
 export function parseSearchParams(request: Request) {
   const { searchParams } = new URL(request.url);
-  const search = searchParams.get('search') || '';
-  const status = searchParams.get('status') || 'all';
-  const category = searchParams.get('category') || 'all';
+
+  // Text search
+  const search = searchParams.get('search')?.trim() || '';
+
+  // Filter params — normalize 'all' and empty to null
+  const rawStatus = searchParams.get('status');
+  const status = rawStatus && rawStatus !== 'all' ? rawStatus : null;
+
+  const rawCategory = searchParams.get('category');
+  const category = rawCategory && rawCategory !== 'all' ? rawCategory : null;
+
+  const rawSource = searchParams.get('source');
+  const source = rawSource && rawSource !== 'all' ? rawSource : null;
+
+  // Optional scoping params
   const portfolio = searchParams.get('portfolio') || null;
-  const source = searchParams.get('source') || 'all';
   const folder = searchParams.get('folder') || null;
   const tag = searchParams.get('tag') || null;
-  const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
-  const limit = Math.max(1, parseInt(searchParams.get('limit') || '10'));
+
+  // Pagination — parseInt is NaN-safe via fallback
+  const rawPage = parseInt(searchParams.get('page') ?? '');
+  const rawLimit = parseInt(searchParams.get('limit') ?? '');
+  const page = Math.max(1, isNaN(rawPage) ? 1 : rawPage);
+  const limit = Math.max(1, isNaN(rawLimit) ? 10 : rawLimit);
   const skip = (page - 1) * limit;
 
   return {
     search,
     status,
     category,
-    portfolio,
     source,
+    portfolio,
     folder,
     tag,
     page,
@@ -169,6 +208,7 @@ export function parseSearchParams(request: Request) {
     skip,
   };
 }
+
 
 export function sendError(message: string, status: number = 500) {
   return NextResponse.json({ error: message }, { status });

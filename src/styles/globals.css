@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    color-scheme: dark;
     --background: 0 0% 3%;
     --foreground: 0 0% 98%;
     --card: 0 0% 3%;
@@ -20,10 +21,10 @@
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
+    --border: 0 0% 25%;
+    --input: 0 0% 25%;
     --ring: 142 71% 45%;
-    --radius: 0px; /* Brutalist sharp corners */
+    --radius: 0.75rem; /* Smooth corners */
     --primary-rgb: 34, 197, 94; /* Corresponding to #22c55e */
   }
 }
@@ -38,29 +39,16 @@
       'rlig' 1,
       'calt' 1;
   }
-
-  select option {
-    @apply bg-secondary text-foreground;
-  }
 }
 
-/* Brutalist Utility Classes */
+/* Brutalist Utility Classes (Modernized) */
 .brutal-border {
-  @apply border-2 border-b-4 border-r-4 border-primary;
+  @apply rounded-2xl border border-white/10 shadow-sm;
 }
 
 .brutal-card {
-  @apply border-2 border-border bg-secondary p-6 transition-all duration-200 hover:border-primary;
+  @apply rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl transition-all duration-300 hover:shadow-md hover:border-white/20;
 }
-
-.shadow-brutal {
-  box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
-}
-
-.shadow-primary {
-  box-shadow: 4px 4px 0px 0px hsl(var(--primary));
-}
-
 /* Custom Themed Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
@@ -73,7 +61,7 @@
 
 ::-webkit-scrollbar-thumb {
   background: hsl(var(--border));
-  border-radius: 0px;
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {

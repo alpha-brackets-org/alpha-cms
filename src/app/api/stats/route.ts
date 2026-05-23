@@ -141,14 +141,18 @@ export const GET = apiHandler(async (request) => {
     ])
     .toArray();
 
-  // Lead Growth (Last 6 Months)
-  const sixMonthsAgo = new Date();
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+  // Lead Growth (Dynamic Timeframe)
+  const url = new URL(request.url);
+  const monthsParam = url.searchParams.get('months');
+  const monthsNum = parseInt(monthsParam, 10);
+
+  const timeLimit = new Date();
+  timeLimit.setMonth(timeLimit.getMonth() - monthsNum);
 
   const leadsMonthly = await db
     .collection(CollectionName.LEADS)
     .aggregate([
-      { $match: { ...query, createdAt: { $gte: sixMonthsAgo.toISOString() } } },
+      { $match: { ...query, createdAt: { $gte: timeLimit.toISOString() } } },
       {
         $group: {
           _id: { $substr: ['$createdAt', 0, 7] }, // YYYY-MM

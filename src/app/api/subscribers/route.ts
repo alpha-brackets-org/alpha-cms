@@ -4,10 +4,12 @@ import {
   sendPaginatedResponse,
   apiHandler,
   parseSearchParams,
+  parseEnumParam,
   getCurrentUser,
   sendError,
 } from '@/lib/api-utils';
 import { CollectionName, MongoQuery, MongoPipeline } from '@/types/cms';
+import { SubscriberStatus, SubscriberSource } from '@/schemas/cms';
 
 // GET ALL SUBSCRIBERS
 export const GET = apiHandler(async (request) => {
@@ -28,13 +30,14 @@ export const GET = apiHandler(async (request) => {
   }
 
   // Apply status filter
-  if (status && status !== 'all') {
-    query.status = status;
+  const validStatus = parseEnumParam(status, Object.values(SubscriberStatus));
+  if (validStatus) {
+    query.status = validStatus;
   }
 
-  // Apply source filter
-  if (source && source !== 'all') {
-    query.source = source;
+  const validSource = parseEnumParam(source, Object.values(SubscriberSource));
+  if (validSource) {
+    query.source = validSource;
   }
 
   // Total count for pagination

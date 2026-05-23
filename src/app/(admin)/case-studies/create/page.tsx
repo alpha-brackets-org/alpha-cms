@@ -19,11 +19,13 @@ export default function CreateCaseStudyPage() {
   };
 
   return (
-    <CaseStudyForm
-      onSubmit={handleSubmit}
-      isLoading={createMutation.isPending}
-      submitText="CREATE CASE STUDY"
-      isNew={true}
-    />
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <CaseStudyForm
+        onSubmit={handleSubmit}
+        isLoading={createMutation.isPending}
+        submitText="CREATE CASE STUDY"
+        isNew={true}
+      />
+    </div>
   );
 }

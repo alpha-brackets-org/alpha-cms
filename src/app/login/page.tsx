@@ -35,10 +35,10 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8">
         {/* Header */}
         <div className="space-y-4 text-center">
-          <div className="mb-4 inline-flex h-20 w-20 items-center justify-center border-2 border-primary bg-primary/10">
+          <div className="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10">
             <ShieldCheck className="h-10 w-10 text-primary" />
           </div>
-          <h1 className="text-5xl font-bold tracking-tighter text-white">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-white">
             HUB<span className="text-primary">ACCESS</span>
           </h1>
           <p className="text-[10px] font-bold uppercase tracking-ultrawide text-muted-foreground">
@@ -49,7 +49,7 @@ export default function LoginPage() {
         {/* Login Form */}
         <form
           onSubmit={handleLogin}
-          className="space-y-8 border-4 border-foreground bg-card p-10 shadow-[16px_16px_0px_0px_rgba(0,0,0,1)]"
+          className="space-y-8 rounded-2xl border border-white/10 bg-card/50 p-6 shadow-2xl backdrop-blur-xl md:p-10"
         >
           {error && (
             <div className="border-2 border-destructive bg-destructive/10 p-4 text-center text-[10px] font-bold uppercase tracking-brutal text-destructive">
@@ -88,10 +88,10 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={loginMutation.isPending}
-            variant="brutal"
-            className="w-full py-8 text-xs"
+            variant="default"
+            className="w-full py-6 text-sm"
           >
-            {loginMutation.isPending ? 'AUTHENTICATING...' : 'INITIATE SESSION'}
+            {loginMutation.isPending ? 'Authenticating...' : 'Initiate Session'}
           </Button>
 
           <div className="pt-4 text-center">

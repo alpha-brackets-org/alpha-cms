@@ -20,6 +20,7 @@ import {
   Target,
   X,
   HelpCircle,
+  MessageSquareQuote,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePortfolios } from '@/hooks/use-portfolios';
@@ -51,6 +52,7 @@ export const Sidebar = ({ onClose }: { onClose?: () => void }) => {
     { name: 'Categories', icon: Layers, href: '/categories', adminOnly: false },
     { name: 'Blogs', icon: FileText, href: '/blogs', adminOnly: false },
     { name: 'FAQs', icon: HelpCircle, href: '/faqs', adminOnly: false },
+    { name: 'Testimonials', icon: MessageSquareQuote, href: '/testimonials', adminOnly: false },
     {
       name: 'Case Studies',
       icon: Briefcase,
@@ -76,9 +78,9 @@ export const Sidebar = ({ onClose }: { onClose?: () => void }) => {
   });
 
   return (
-    <aside className="grain flex h-screen w-64 flex-col overflow-hidden border-r-2 border-border bg-card">
+    <aside className="grain flex h-screen w-64 flex-col overflow-hidden border-r border-border bg-card">
       {/* Brand Header */}
-      <div className="flex items-center justify-between border-b-2 border-border p-6">
+      <div className="flex items-center justify-between border-b border-border p-6">
         <div>
           <h1 className="text-xl font-bold tracking-ultrawide text-primary">
             ALPHA CMS
@@ -98,7 +100,7 @@ export const Sidebar = ({ onClose }: { onClose?: () => void }) => {
       </div>
 
       {/* Portfolio Selector */}
-      <div className="mb-2 border-b-2 border-border bg-secondary/50 px-6 py-4">
+      <div className="mb-2 border-b border-border bg-secondary/50 px-6 py-4">
         <div className="mb-2 flex items-center justify-between">
           <Label>Active Portfolio</Label>
           {isLoading && (
@@ -130,9 +132,9 @@ export const Sidebar = ({ onClose }: { onClose?: () => void }) => {
             target={item.newTab ? '_blank' : undefined}
             rel={item.newTab ? 'noopener noreferrer' : undefined}
             className={cn(
-              'group flex items-center gap-3 border-2 border-transparent px-4 py-3 text-sm font-medium transition-all',
+              'group flex items-center gap-3 rounded-lg border border-transparent px-4 py-3 text-sm font-medium transition-all',
               pathname === item.href
-                ? 'border-primary bg-primary/10 text-primary'
+                ? 'bg-primary/10 text-primary'
                 : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
             )}
           >
@@ -150,11 +152,11 @@ export const Sidebar = ({ onClose }: { onClose?: () => void }) => {
       </nav>
 
       {/* Footer */}
-      <div className="space-y-4 border-t-2 border-border bg-secondary/10 p-4">
+      <div className="space-y-4 border-t border-border bg-secondary/10 p-4">
         {/* User Profile */}
-        <div className="border-2 border-border bg-card p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:translate-x-1 hover:translate-y-1 hover:shadow-none">
+        <div className="rounded-xl border border-white/10 bg-card p-3 shadow-sm transition-all hover:shadow-md">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center border-2 border-border bg-primary/10 text-xs font-black text-primary">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-primary/10 text-xs font-bold text-primary">
               {user?.email?.[0].toUpperCase() || '?'}
             </div>
             <div className="min-w-0 flex-1">
@@ -179,7 +181,7 @@ export const Sidebar = ({ onClose }: { onClose?: () => void }) => {
         <Button
           variant="ghost"
           onClick={handleLogout}
-          className="flex w-full items-center justify-start gap-3 border-2 border-transparent px-4 py-3 text-xs font-bold uppercase tracking-widest text-destructive transition-colors hover:border-destructive/20 hover:bg-destructive/10"
+          className="flex w-full items-center justify-start gap-3 rounded-lg border border-transparent px-4 py-3 text-xs font-bold uppercase tracking-widest text-destructive transition-colors hover:border-destructive/20 hover:bg-destructive/10"
         >
           <LogOut className="h-4 w-4" />
           Log Out

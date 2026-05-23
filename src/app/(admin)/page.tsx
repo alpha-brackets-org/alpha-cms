@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   FileText,
   Briefcase,
@@ -19,11 +19,13 @@ import { Badge } from '@/components/ui/badge';
 import { LeadGrowthChart } from '@/components/dashboard/LeadGrowthChart';
 import { useAuth } from '@/providers/AuthProvider';
 import { usePortfolio } from '@/providers/PortfolioProvider';
+import { Select } from '@/components/ui/select';
 
 export default function DashboardPage() {
   const { user: currentUser } = useAuth();
   const { activePortfolio } = usePortfolio();
-  const { data: liveStats, isLoading } = useStats();
+  const [leadMonths, setLeadMonths] = useState(6);
+  const { data: liveStats, isLoading } = useStats(leadMonths);
 
   const stats = [
     {
@@ -55,9 +57,9 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 p-6 md:p-8">
       {/* Welcome Section */}
-      <div className="flex items-start justify-between border-b-4 border-foreground pb-8">
+      <div className="flex items-start justify-between border-b border-white/10 pb-8">
         <div>
-          <h2 className="mb-2 text-4xl font-black uppercase tracking-tighter">
+          <h2 className="mb-2 text-4xl font-bold uppercase tracking-tighter">
             WELCOME BACK,{' '}
             <span className="text-primary">{currentUser?.role}</span>
           </h2>
@@ -74,7 +76,7 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
-        <Badge className="border-2 border-foreground bg-secondary px-4 py-1 font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+        <Badge className="rounded-full border border-white/10 bg-secondary px-4 py-1 font-medium text-primary shadow-sm">
           v1.4.2-STABLE
         </Badge>
       </div>
@@ -84,7 +86,7 @@ export default function DashboardPage() {
         {stats.map((stat) => (
           <div
             key={stat.name}
-            className="group border-2 border-border bg-card p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none"
+            className="group rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl transition-all hover:shadow-md"
           >
             <div className="mb-4 flex items-start justify-between">
               <stat.icon className="h-6 w-6 text-muted-foreground transition-colors group-hover:text-primary" />
@@ -108,8 +110,8 @@ export default function DashboardPage() {
         {/* Left/Main Column (8 Units) */}
         <div className="space-y-8 lg:col-span-8">
           {/* Portfolio Distribution */}
-          <div className="border-4 border-foreground bg-card p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-            <div className="mb-8 flex items-center justify-between border-b-2 border-border pb-4">
+          <div className="rounded-2xl border border-white/10 bg-card/50 p-8 shadow-sm backdrop-blur-xl">
+            <div className="mb-8 flex items-center justify-between border-b border-white/10 pb-4">
               <div className="flex items-center gap-3">
                 <Users className="h-5 w-5 text-primary" />
                 <h3 className="text-xs font-black uppercase tracking-ultrawide">
@@ -136,9 +138,9 @@ export default function DashboardPage() {
                 liveStats?.breakdown?.map((item) => (
                   <div
                     key={item._id}
-                    className="flex items-center justify-between border-2 border-border bg-secondary/10 p-4 transition-all hover:border-primary hover:bg-secondary/20"
+                    className="flex items-center justify-between rounded-xl border border-white/10 bg-secondary/10 p-4 transition-all hover:border-primary/50 hover:bg-secondary/20"
                   >
-                    <span className="text-xs font-black uppercase tracking-tight">
+                    <span className="text-xs font-bold uppercase tracking-tight">
                       {item.name}
                     </span>
                     <div className="flex gap-6">
@@ -174,20 +176,24 @@ export default function DashboardPage() {
           </div>
 
           {/* Large Lead Velocity Chart */}
-          <div className="border-4 border-foreground bg-card p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-            <div className="mb-8 flex items-center justify-between border-b-2 border-border pb-4">
+          <div className="rounded-2xl border border-white/10 bg-card/50 p-8 shadow-sm backdrop-blur-xl">
+            <div className="mb-8 flex items-center justify-between border-b border-white/10 pb-4">
               <div className="flex items-center gap-3">
                 <TrendingUp className="h-5 w-5 text-primary" />
                 <h3 className="text-xs font-black uppercase tracking-ultrawide">
                   Lead Generation Velocity
                 </h3>
               </div>
-              <Badge
-                variant="outline"
-                className="text-[9px] font-bold uppercase opacity-60"
+              <Select
+                value={leadMonths.toString()}
+                onChange={(e) => setLeadMonths(Number(e.target.value))}
+                wrapperClassName="w-40 shrink-0"
+                className="h-9 border-white/10 bg-secondary/50 text-[11px] font-bold uppercase tracking-wide"
               >
-                LAST 6 MONTHS
-              </Badge>
+                <option value="3">Last 3 Months</option>
+                <option value="6">Last 6 Months</option>
+                <option value="12">Last 12 Months</option>
+              </Select>
             </div>
             <div className="min-h-[300px]">
               {isLoading ? (
@@ -195,7 +201,7 @@ export default function DashboardPage() {
               ) : liveStats?.leadsMonthly?.length > 0 ? (
                 <LeadGrowthChart data={liveStats.leadsMonthly} />
               ) : (
-                <div className="flex h-[300px] items-center justify-center border-2 border-dashed border-border text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                <div className="flex h-[300px] items-center justify-center rounded-xl border border-dashed border-white/10 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                   No movement detected in funnel
                 </div>
               )}
@@ -206,8 +212,8 @@ export default function DashboardPage() {
         {/* Right/Sidebar Column (4 Units) */}
         <div className="space-y-8 lg:col-span-4">
           {/* Conversion Funnel */}
-          <div className="border-2 border-border bg-card p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <h3 className="mb-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+          <div className="rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl">
+            <h3 className="mb-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest">
               <Target className="h-4 w-4 text-primary" />
               Conversion Funnel
             </h3>
@@ -245,8 +251,8 @@ export default function DashboardPage() {
           </div>
 
           {/* Traffic Engine */}
-          <div className="border-2 border-border bg-card p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <h3 className="mb-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+          <div className="rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl">
+            <h3 className="mb-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest">
               <Zap className="h-4 w-4 text-primary" />
               Traffic Engine
             </h3>
@@ -283,8 +289,8 @@ export default function DashboardPage() {
           </div>
 
           {/* Newsletter Engine */}
-          <div className="border-2 border-border bg-card p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <h3 className="mb-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+          <div className="rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl">
+            <h3 className="mb-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest">
               <Mail className="h-4 w-4 text-primary" />
               Newsletter Hub
             </h3>
@@ -311,8 +317,8 @@ export default function DashboardPage() {
           </div>
 
           {/* System Infrastructure */}
-          <div className="border-2 border-border bg-card p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <h3 className="mb-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+          <div className="rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl">
+            <h3 className="mb-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest">
               <Server className="h-4 w-4 text-muted-foreground" />
               Infrastructure
             </h3>
@@ -337,8 +343,8 @@ export default function DashboardPage() {
                 <span className="text-[9px] font-bold uppercase tracking-tight text-muted-foreground">
                   Node Env
                 </span>
-                <Badge variant="brutal" className="h-4 px-2 py-0 text-[8px]">
-                  PRODUCTION
+                <Badge variant="default" className="h-4 px-2 py-0 text-[8px]">
+                  {process.env.NODE_ENV === 'development' ? 'DEVELOPMENT' : 'PRODUCTION'}
                 </Badge>
               </div>
             </div>

@@ -157,7 +157,7 @@ export default function PortfoliosPage() {
         </div>
         <Button
           onClick={() => openModal()}
-          className="h-12 gap-2 border-2 border-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+          className="h-12 gap-2 rounded-xl border border-white/10 shadow-sm"
         >
           <Plus className="h-5 w-5" />
           PROVISION PORTFOLIO
@@ -169,7 +169,7 @@ export default function PortfoliosPage() {
           [...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="space-y-4 border-2 border-border bg-card p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+              className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl"
             >
               <Skeleton className="h-6 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
@@ -192,11 +192,11 @@ export default function PortfoliosPage() {
           portfolios.map((portfolio) => (
             <div
               key={portfolio._id}
-              className="group border-2 border-border bg-card p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:border-primary"
+              className="group rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl transition-all hover:border-primary/50"
             >
               <div className="mb-6 flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="border-2 border-border bg-secondary p-2 text-primary transition-colors group-hover:border-primary">
+                  <div className="rounded-xl border border-white/10 bg-secondary/50 p-2 text-primary transition-colors group-hover:bg-primary/20">
                     <Shield className="h-5 w-5" />
                   </div>
                   <div>
@@ -319,7 +319,7 @@ export default function PortfoliosPage() {
       {/* Provisioning Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
-          <div className="relative max-h-[90vh] w-full max-w-md overflow-y-auto border-4 border-foreground bg-card p-8 shadow-[16px_16px_0px_0px_rgba(0,0,0,1)]">
+          <div className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-card/95 p-8 shadow-2xl backdrop-blur-xl">
             <button
               onClick={closeModal}
               className="absolute right-4 top-4 p-2 transition-colors hover:bg-secondary"
@@ -337,7 +337,7 @@ export default function PortfoliosPage() {
             </p>
 
             {/* Tabs Navigation */}
-            <div className="mb-8 flex border-2 border-foreground bg-secondary/10">
+            <div className="mb-8 flex overflow-hidden rounded-xl border border-white/10 bg-secondary/10">
               <button
                 type="button"
                 onClick={() => setActiveTab('general')}
@@ -354,7 +354,7 @@ export default function PortfoliosPage() {
                 type="button"
                 onClick={() => setActiveTab('branding')}
                 className={cn(
-                  'flex-1 border-x-2 border-foreground px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-colors',
+                  'flex-1 px-3 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors',
                   activeTab === 'branding'
                     ? 'bg-primary text-primary-foreground'
                     : 'hover:bg-secondary'
@@ -454,8 +454,8 @@ export default function PortfoliosPage() {
               )}
 
               {activeTab === 'branding' && (
-                <div className="animate-in fade-in slide-in-from-bottom-2 space-y-4 border-2 border-primary/20 bg-primary/5 p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] duration-300">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+                <div className="animate-in fade-in slide-in-from-bottom-2 space-y-4 rounded-xl border border-white/10 bg-primary/10 p-4 shadow-sm duration-300">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
                     Newsletter Branding
                   </p>
 
@@ -514,8 +514,8 @@ export default function PortfoliosPage() {
               )}
 
               {activeTab === 'infrastructure' && (
-                <div className="animate-in fade-in slide-in-from-bottom-2 space-y-4 border-2 border-amber-500/20 bg-amber-500/5 p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] duration-300">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">
+                <div className="animate-in fade-in slide-in-from-bottom-2 space-y-4 rounded-xl border border-white/10 bg-amber-500/10 p-4 shadow-sm duration-300">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-500">
                     SMTP Infrastructure (Private)
                   </p>
 
@@ -567,8 +567,8 @@ export default function PortfoliosPage() {
               )}
 
               {activeTab === 'scripts' && (
-                <div className="animate-in fade-in slide-in-from-bottom-2 space-y-4 border-2 border-blue-500/20 bg-blue-500/5 p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] duration-300">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">
+                <div className="animate-in fade-in slide-in-from-bottom-2 space-y-4 rounded-xl border border-white/10 bg-blue-500/10 p-4 shadow-sm duration-300">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">
                     Custom Script Injection
                   </p>
 
@@ -595,9 +595,9 @@ export default function PortfoliosPage() {
               )}
 
               {activeTab === 'social' && (
-                <div className="animate-in fade-in slide-in-from-bottom-2 space-y-4 border-2 border-pink-500/20 bg-pink-500/5 p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] duration-300">
+                <div className="animate-in fade-in slide-in-from-bottom-2 space-y-4 rounded-xl border border-white/10 bg-pink-500/10 p-4 shadow-sm duration-300">
                   <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-pink-600">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-pink-500">
                       Social Connectivity
                     </p>
                     <Button
@@ -616,7 +616,7 @@ export default function PortfoliosPage() {
                     {fields.map((field, index) => (
                       <div
                         key={field.id}
-                        className="group relative grid grid-cols-12 gap-2 border-2 border-border/30 bg-background p-2 transition-all hover:border-pink-500/50"
+                        className="group relative grid grid-cols-12 gap-2 rounded-xl border border-white/10 bg-background/50 p-2 transition-all hover:border-pink-500/50"
                       >
                         <div className="col-span-4">
                           <Label className="text-[8px] uppercase opacity-50">
@@ -706,7 +706,7 @@ export default function PortfoliosPage() {
       {/* Detail Modal */}
       {detailPortfolio && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
-          <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto border-4 border-foreground bg-card p-6 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] md:p-10">
+          <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-card/95 p-6 shadow-2xl backdrop-blur-xl md:p-10">
             <button
               onClick={() => setDetailPortfolio(null)}
               className="absolute right-4 top-4 p-2 transition-colors hover:bg-secondary"
@@ -715,8 +715,8 @@ export default function PortfoliosPage() {
             </button>
 
             <div className="mb-8 flex items-center gap-5">
-              <div className="border-4 border-foreground bg-primary p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <Shield className="h-8 w-8 text-primary-foreground" />
+              <div className="rounded-2xl border border-white/10 bg-primary/20 p-3 shadow-sm">
+                <Shield className="h-8 w-8 text-primary" />
               </div>
               <div className="flex-1">
                 <h3 className="mb-2 text-2xl font-black uppercase leading-none tracking-tighter">
@@ -738,15 +738,15 @@ export default function PortfoliosPage() {
 
             <div className="space-y-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="border-2 border-border bg-secondary/5 p-4">
-                  <p className="mb-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                <div className="rounded-xl border border-white/10 bg-secondary/50 p-4 shadow-sm">
+                  <p className="mb-2 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
                     Primary Domain
                   </p>
                   <p className="break-all font-mono text-xs leading-relaxed text-primary underline decoration-primary/30 underline-offset-4">
                     {detailPortfolio.domain || 'N/A'}
                   </p>
                 </div>
-                <div className="border-2 border-border bg-secondary/5 p-4">
+                <div className="rounded-xl border border-white/10 bg-secondary/50 p-4 shadow-sm">
                   <p className="mb-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground">
                     System Status
                   </p>
@@ -765,7 +765,7 @@ export default function PortfoliosPage() {
 
               {/* Advanced Configuration Status */}
               <div className="space-y-4">
-                <div className="border-2 border-primary/20 bg-primary/5 p-4">
+                <div className="rounded-xl border border-white/10 bg-primary/10 p-4 shadow-sm">
                   <div className="mb-3 flex items-center justify-between">
                     <p className="text-[10px] font-black uppercase tracking-widest text-primary">
                       Branding & Newsletter

@@ -30,8 +30,9 @@ export function useLogin() {
 export function useLogout() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => {
-      Cookies.remove('alpha_auth_token');
+    mutationFn: async () => {
+      Cookies.remove('alpha_auth_token'); // Fallback for any client state
+      await api.post('/auth/logout', {}).catch(() => {});
       return Promise.resolve();
     },
     onSuccess: () => {

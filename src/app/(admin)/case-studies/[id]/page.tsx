@@ -55,12 +55,14 @@ export default function EditCaseStudyPage() {
   }
 
   return (
-    <CaseStudyForm
-      initialData={study}
-      onSubmit={handleSubmit}
-      isLoading={updateMutation.isPending}
-      submitText="SAVE CHANGES"
-      isNew={false}
-    />
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <CaseStudyForm
+        initialData={study}
+        onSubmit={handleSubmit}
+        isLoading={updateMutation.isPending}
+        submitText="SAVE CHANGES"
+        isNew={false}
+      />
+    </div>
   );
 }

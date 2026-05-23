@@ -1,105 +1,66 @@
 /**
- * CMS Type Definitions
+ * CMS Type Definitions — Single barrel for all CMS types.
  *
- * NOTE: These types are now inferred from Zod schemas in src/schemas/cms.ts
+ * Rules:
+ *  - Schemas (Zod) live in: src/schemas/cms.ts
+ *  - Types (TypeScript) are defined/inferred there and re-exported here.
+ *  - All application code imports from THIS file, not from @/schemas/cms directly.
  */
+
+// =============================================================================
+// ENUMS — re-exported so consumers never import from @/schemas/cms directly
+// =============================================================================
 
 export {
   CollectionName,
   PublishStatus,
+  TestimonialStatus,
+  MediaFolder,
   SubscriberStatus,
   SubscriberSource,
+  LeadStatus,
+  LeadSource,
   UserRole,
+  AnalyticsEvent,
+  ContentType,
 } from '@/schemas/cms';
-import {
-  Blog as BlogType,
-  CaseStudy as CaseStudyType,
-  Media as MediaType,
-  Portfolio as PortfolioType,
-  User as UserType,
-  Category as CategoryType,
-  Stats as StatsType,
-  SEOMetadata as SEOMetadataType,
-  PopulatedBlog as PopulatedBlogType,
-  PopulatedCaseStudy as PopulatedCaseStudyType,
-  PopulatedProject as PopulatedProjectType,
-  AnalyticsSchema,
-  SubscriberSchema,
-  ProjectSchema,
-  LeadSchema,
-  CampaignSchema,
-  FaqSchema,
-  Tag as TagType,
+
+// =============================================================================
+// DOMAIN TYPES — direct re-exports from @/schemas/cms inferred types
+// =============================================================================
+
+// Shared primitives
+export type { SEOMetadata, Tag } from '@/schemas/cms';
+
+// Content
+export type {
+  Blog,
+  PopulatedBlog,
+  CaseStudy,
+  PopulatedCaseStudy,
+  Project,
+  PopulatedProject,
+  Faq,
+  Testimonial,
+  PopulatedTestimonial,
 } from '@/schemas/cms';
-import z from 'zod';
 
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  limit: number;
-  totalPages: number;
-  page: number;
-  pagingCounter: number;
-  hasPrevPage: boolean;
-  hasNextPage: boolean;
-}
+// Infrastructure
+export type { Portfolio, Media, User, Category, Stats } from '@/schemas/cms';
 
-export interface BaseFilters {
-  search?: string;
-  status?: string;
-  category?: string;
-  page?: number;
-  limit?: number;
-  [key: string]: string | number | boolean | undefined | null;
-}
+// CRM / Marketing
+export type {
+  Lead,
+  Subscriber,
+  Campaign,
+  Analytics,
+} from '@/schemas/cms';
 
-export type BlogFilters = BaseFilters;
-export type CaseStudyFilters = BaseFilters;
-export type CategoryFilters = BaseFilters;
-export type SubscriberFilters = BaseFilters;
-export type ProjectFilters = BaseFilters;
-export type LeadFilters = BaseFilters;
+// =============================================================================
+// POPULATED VARIANTS — resolved portfolio/category references
+// =============================================================================
 
-/**
- * TanStack Query Metadata Types
- */
-declare module '@tanstack/react-query' {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  interface Register {
-    mutationMeta: {
-      successMessage?: string;
-    };
-  }
-}
-
-/**
- * MongoDB Utility Types
- */
-export type MongoQuery = {
-  [key: string]: unknown;
-  $or?: Record<string, unknown>[];
-  $and?: Record<string, unknown>[];
-};
-export type MongoPipeline = Record<string, unknown>[];
-
-export type SEOMetadata = SEOMetadataType;
-export type Blog = BlogType;
-export type PopulatedBlog = PopulatedBlogType;
-export type CaseStudy = CaseStudyType;
-export type PopulatedCaseStudy = PopulatedCaseStudyType;
-export type PopulatedProject = PopulatedProjectType;
-export type Media = MediaType;
-export type Portfolio = PortfolioType;
-export type User = UserType;
-export type Tag = TagType;
-export type Category = CategoryType;
-export type Stats = StatsType;
-export type Subscriber = z.infer<typeof SubscriberSchema>;
-export type Analytics = z.infer<typeof AnalyticsSchema>;
-export type Project = z.infer<typeof ProjectSchema>;
-export type Lead = z.infer<typeof LeadSchema>;
-export type Campaign = z.infer<typeof CampaignSchema>;
-export type Faq = z.infer<typeof FaqSchema>;
+import type { Lead, Subscriber, Category, Faq, Portfolio } from '@/schemas/cms';
 
 export type PopulatedLead = Omit<Lead, 'portfolio'> & {
   portfolio: Portfolio;
@@ -116,3 +77,65 @@ export type PopulatedCategory = Omit<Category, 'portfolio'> & {
 export type PopulatedFaq = Omit<Faq, 'portfolio'> & {
   portfolio: Portfolio;
 };
+
+// =============================================================================
+// PAGINATION
+// =============================================================================
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  limit: number;
+  totalPages: number;
+  page: number;
+  pagingCounter: number;
+  hasPrevPage: boolean;
+  hasNextPage: boolean;
+}
+
+// =============================================================================
+// FILTERS — used by hooks and API query builders
+// =============================================================================
+
+export interface BaseFilters {
+  search?: string;
+  status?: string;
+  category?: string;
+  page?: number;
+  limit?: number;
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+export type BlogFilters = BaseFilters;
+export type CaseStudyFilters = BaseFilters;
+export type ProjectFilters = BaseFilters;
+export type CategoryFilters = BaseFilters;
+export type LeadFilters = BaseFilters;
+export type SubscriberFilters = BaseFilters;
+export type FaqFilters = BaseFilters;
+export type TestimonialFilters = BaseFilters;
+
+// =============================================================================
+// MONGODB UTILITY TYPES — used in API routes for raw query building
+// =============================================================================
+
+export type MongoQuery = {
+  [key: string]: unknown;
+  $or?: Record<string, unknown>[];
+  $and?: Record<string, unknown>[];
+};
+
+export type MongoPipeline = Record<string, unknown>[];
+
+// =============================================================================
+// TANSTACK QUERY — global mutation metadata augmentation
+// =============================================================================
+
+declare module '@tanstack/react-query' {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface Register {
+    mutationMeta: {
+      successMessage?: string;
+    };
+  }
+}

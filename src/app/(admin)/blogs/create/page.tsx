@@ -19,11 +19,13 @@ export default function CreateBlogPage() {
   };
 
   return (
-    <BlogForm
-      onSubmit={handleSubmit}
-      isLoading={createMutation.isPending}
-      submitText="CREATE ARTICLE"
-      isNew={true}
-    />
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <BlogForm
+        onSubmit={handleSubmit}
+        isLoading={createMutation.isPending}
+        submitText="CREATE ARTICLE"
+        isNew={true}
+      />
+    </div>
   );
 }

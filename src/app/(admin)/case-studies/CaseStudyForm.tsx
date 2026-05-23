@@ -201,14 +201,14 @@ export function CaseStudyForm({
   return (
     <form
       onSubmit={handleSubmit(onFormSubmit)}
-      className="flex min-h-full flex-col"
+      className="flex flex-1 flex-col overflow-hidden"
     >
-      {/* Top Bar Actions */}
-      <div className="sticky top-0 z-50 flex items-center justify-between border-b-2 border-border bg-secondary/80 p-4 backdrop-blur-xl md:px-8">
+      {/* Top Bar */}
+      <div className="sticky top-0 z-50 flex shrink-0 items-center justify-between border-b border-white/10 bg-background/80 p-4 backdrop-blur-xl md:px-8">
         <div className="flex items-center gap-4">
           <Link
             href="/case-studies"
-            className="border-2 border-transparent p-2 transition-all hover:border-border hover:bg-background"
+            className="rounded-lg p-2 transition-all hover:bg-secondary"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
@@ -255,25 +255,24 @@ export function CaseStudyForm({
         </div>
       </div>
 
-      <div className="flex-1 space-y-8 p-6 md:p-8">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-4">
-          {/* Main Area */}
-          <div className="space-y-12 lg:col-span-3">
+      {/* Two-pane body */}
+      <div className="flex min-h-0 flex-1">
+        {/* Main scrollable content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="space-y-8 p-6 md:p-8">
+            {/* Title & Slug */}
             <div className="space-y-4">
               <input
                 {...register('projectTitle')}
                 placeholder="Case Study Title"
-                className={`w-full border-b-2 bg-transparent text-3xl font-bold transition-colors placeholder:text-muted-foreground/30 focus:outline-none md:text-4xl ${
-                  errors.projectTitle
+                className={`w-full border-b-2 bg-transparent text-3xl font-bold transition-colors placeholder:text-muted-foreground/30 focus:outline-none md:text-4xl ${errors.projectTitle
                     ? 'border-destructive'
                     : 'border-transparent focus:border-border/50'
-                } pb-4`}
+                  } pb-4`}
               />
-              <div className="flex flex-wrap items-center gap-4 border-2 border-border/30 bg-secondary/20 p-3 font-mono text-[10px] text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-4 rounded-xl border border-white/10 bg-secondary/20 p-3 font-mono text-[10px] text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold uppercase text-primary">
-                    Slug:
-                  </span>
+                  <span className="font-bold uppercase text-primary">Slug:</span>
                   <input
                     {...register('slug')}
                     placeholder="project-slug"
@@ -283,8 +282,9 @@ export function CaseStudyForm({
               </div>
             </div>
 
-            <div className="space-y-4">
-              <Label className="text-xl font-bold tracking-widest text-primary">
+            {/* Rich Text Editor */}
+            <div className="space-y-3">
+              <Label className="text-sm font-bold tracking-widest text-primary">
                 Overview (Minimalistic Teaser)
               </Label>
               <Controller
@@ -299,9 +299,9 @@ export function CaseStudyForm({
               />
             </div>
 
-            {/* SEO ENGINE SECTION */}
-            <div className="space-y-8 border-2 border-l-8 border-border border-l-primary bg-card p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-              <div className="flex items-center gap-3 border-b-2 border-border pb-4">
+            {/* SEO Section */}
+            <div className="space-y-6 rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl">
+              <div className="flex items-center gap-3 border-b border-white/10 pb-4">
                 <Search className="h-5 w-5 text-primary" />
                 <h3 className="text-sm font-bold uppercase tracking-widest">
                   SEO Infrastructure
@@ -341,7 +341,7 @@ export function CaseStudyForm({
                   />
                 </div>
               </div>
-              <div className="border-t border-border pt-6">
+              <div className="border-t border-white/10 pt-6">
                 <Label className="mb-4 block">
                   OpenGraph Image (Social Sharing)
                 </Label>
@@ -359,9 +359,11 @@ export function CaseStudyForm({
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
+        {/* Right Sidebar - independently scrollable */}
+        <div className="hidden w-80 shrink-0 overflow-y-auto border-l border-white/10 xl:block">
+          <div className="space-y-4 p-4">
             <SeoAnalyzer
               title={watchedValues.seo?.metaTitle || watchedValues.projectTitle}
               description={
@@ -372,8 +374,9 @@ export function CaseStudyForm({
               ogImage={watchedValues.seo?.ogImage}
             />
 
-            <div className="space-y-6 border-2 border-border bg-card p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <h3 className="flex items-center gap-2 border-b-2 border-border pb-3 text-xs font-bold uppercase tracking-ultrawide">
+            {/* Case Study Details */}
+            <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
+              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-widest">
                 <Settings className="h-4 w-4 text-primary" /> Case Study Details
               </h3>
 
@@ -478,7 +481,7 @@ export function CaseStudyForm({
                 </div>
               </div>
 
-              <div className="flex items-center justify-between border-2 border-border bg-secondary/50 p-4">
+              <div className="flex items-center justify-between rounded-xl border border-white/10 bg-secondary/50 p-3">
                 <Label className="flex cursor-pointer items-center gap-2">
                   <Star className="h-3 w-3 text-primary" /> Feature Case Study
                 </Label>
@@ -500,9 +503,9 @@ export function CaseStudyForm({
               </div>
             </div>
 
-            {/* Tags Section */}
-            <div className="space-y-4 border-2 border-border bg-card p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <h3 className="flex items-center gap-2 border-b-2 border-border pb-3 text-xs font-bold uppercase tracking-ultrawide">
+            {/* Taxonomies */}
+            <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
+              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-widest">
                 <TagIcon className="h-4 w-4 text-primary" /> Taxonomies
               </h3>
 
@@ -535,7 +538,7 @@ export function CaseStudyForm({
                 </div>
               </div>
 
-              <div className="space-y-3 border-t border-border pt-4">
+              <div className="space-y-3 border-t border-white/10 pt-4">
                 <Label>Keywords / Tags</Label>
                 <Input
                   value={tagInput}
@@ -565,9 +568,9 @@ export function CaseStudyForm({
               </div>
             </div>
 
-            {/* Media & PDF Section */}
-            <div className="space-y-6 border-2 border-border bg-card p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <h3 className="flex items-center gap-2 border-b-2 border-border pb-3 text-xs font-bold uppercase tracking-ultrawide">
+            {/* Media & PDF */}
+            <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
+              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-widest">
                 <ImageIcon className="h-4 w-4 text-primary" /> Media & Content
               </h3>
 
@@ -583,7 +586,7 @@ export function CaseStudyForm({
                 )}
               />
 
-              <div className="space-y-2 border-t border-border pt-4">
+              <div className="space-y-2 border-t border-white/10 pt-4">
                 <Label>Gated Content PDF (Lead Magnet)</Label>
                 <Input
                   {...register('pdfUrl')}

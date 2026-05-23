@@ -1,26 +1,50 @@
 import { z } from '@/lib/zod-setup';
 
+// =============================================================================
+// SECTION 1 — COLLECTION NAMES (MongoDB registry)
+// =============================================================================
+
 export enum CollectionName {
+  ANALYTICS = 'analytics',
   BLOGS = 'blogs',
+  CAMPAIGNS = 'campaigns',
   CASE_STUDIES = 'case-studies',
-  PROJECTS = 'projects',
+  CATEGORIES = 'categories',
+  FAQS = 'faqs',
+  LEADS = 'leads',
   MEDIA = 'media',
   PORTFOLIOS = 'portfolios',
-  USERS = 'users',
-  CATEGORIES = 'categories',
-  ANALYTICS = 'analytics',
+  PROJECTS = 'projects',
   SUBSCRIBERS = 'subscribers',
-  LEADS = 'leads',
-  CAMPAIGNS = 'campaigns',
-  FAQS = 'faqs',
+  TESTIMONIALS = 'testimonials',
+  USERS = 'users',
 }
+
+// =============================================================================
+// SECTION 2 — ENUMS
+// =============================================================================
 
 export enum PublishStatus {
   DRAFT = 'draft',
-  SENT = 'sent',
-  FAILED = 'failed',
   PUBLISHED = 'published',
   ARCHIVED = 'archived',
+  SENT = 'sent',
+  FAILED = 'failed',
+}
+
+export enum TestimonialStatus {
+  PUBLISHED = 'published',
+  DRAFT = 'draft',
+  ARCHIVED = 'archived',
+}
+
+export enum MediaFolder {
+  UNORGANIZED = 'unorganized',
+  BRANDING = 'branding',
+  CONTENT = 'content',
+  PORTFOLIOS = 'portfolios',
+  VIDEOS = 'videos',
+  DOCUMENTS = 'documents',
 }
 
 export enum SubscriberStatus {
@@ -66,6 +90,36 @@ export enum ContentType {
   PROJECT = 'project',
 }
 
+// =============================================================================
+// SECTION 3 — SHARED / PRIMITIVE SCHEMAS
+// =============================================================================
+
+/** Reusable MongoDB _id validator */
+export const PortfolioIdSchema = z
+  .string()
+  .regex(/^[0-9a-fA-F]{24}$/, 'Please select a portfolio');
+
+/** Common MongoDB document timestamps + _id */
+export const BaseSchema = z.object({
+  _id: z.string().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+/** Shared portfolio reference shape used in all Populated* schemas */
+const PopulatedPortfolioRef = z
+  .object({
+    _id: z.string(),
+    name: z.string(),
+    domain: z.string().optional(),
+  })
+  .nullish();
+
+/** Shared category reference shape */
+const PopulatedCategoryRef = z
+  .object({ _id: z.string(), name: z.string(), slug: z.string() })
+  .nullish();
+
 export const SEOMetadataSchema = z.object({
   metaTitle: z.string().nullish(),
   metaDescription: z.string().nullish(),
@@ -73,27 +127,18 @@ export const SEOMetadataSchema = z.object({
   ogImage: z.string().nullish(),
 });
 
-export const PortfolioIdSchema = z
-  .string()
-  .regex(/^[0-9a-fA-F]{24}$/, 'Please select a portfolio');
-
 export const TagSchema = z.object({
   tag: z.string(),
   id: z.string().nullish(),
 });
 
-/**
- * Base Schema for common MongoDB fields
- */
-export const BaseSchema = z.object({
-  _id: z.string().optional(),
-  createdAt: z.string().optional(),
-  updatedAt: z.string().optional(),
-});
+// =============================================================================
+// SECTION 4 — CONTENT SCHEMAS (Blog, CaseStudy, Project, FAQ, Testimonial)
+// =============================================================================
 
 export const BlogSchema = z
   .object({
-    title: z.string().min(1),
+    title: z.string().min(1, 'Title is required'),
     slug: z.string(),
     content: z.string().nullish(),
     excerpt: z.string().nullish(),
@@ -123,14 +168,14 @@ export const CaseStudySchema = z
     services: z.array(z.string()).default([]),
     year: z.string().nullish(),
     category: z.string().nullish(),
-    content: z.string(), // This will now act as the minimalistic "Overview" text
+    content: z.string(), // Minimalistic "Overview" teaser shown on listing page
     excerpt: z.string().nullish(),
-    readTime: z.string().nullish(), // e.g., "5 min read"
-    coverImage: z.string().nullish(), // Hero image for the detail page
+    readTime: z.string().nullish(),
+    coverImage: z.string().nullish(),
     tags: z.array(TagSchema).nullish(),
     status: z.enum(PublishStatus).default(PublishStatus.DRAFT),
     featured: z.boolean().default(false),
-    pdfUrl: z.string().nullish(), // The gated content PDF to email
+    pdfUrl: z.string().nullish(), // Gated content PDF sent to lead on download
     seo: SEOMetadataSchema.nullish(),
     portfolio: PortfolioIdSchema,
   })
@@ -138,9 +183,10 @@ export const CaseStudySchema = z
 
 export const ProjectSchema = z
   .object({
-    title: z.string().min(1),
+    title: z.string().min(1, 'Title is required'),
     slug: z.string(),
     excerpt: z.string().nullish(),
+    description: z.string().nullish(),
     techStack: z.array(z.string()).default([]),
     projectType: z.string().nullish(),
     liveUrl: z.string().url().nullish(),
@@ -149,37 +195,49 @@ export const ProjectSchema = z
     gallery: z.array(z.string()).default([]),
     status: z.enum(PublishStatus).default(PublishStatus.DRAFT),
     featured: z.boolean().default(false),
-    description: z.string().nullish(),
     category: z.string().nullish(),
     seo: SEOMetadataSchema.nullish(),
     portfolio: PortfolioIdSchema,
   })
   .extend(BaseSchema.shape);
 
-export enum MediaFolder {
-  UNORGANIZED = 'unorganized',
-  BRANDING = 'branding',
-  CONTENT = 'content',
-  PORTFOLIOS = 'portfolios',
-  VIDEOS = 'videos',
-  DOCUMENTS = 'documents',
-}
-
-export const MediaSchema = z
+export const FaqSchema = z
   .object({
-    filename: z.string(),
-    imageKitUrl: z.string(),
-    imageKitFileId: z.string(),
-    mimeType: z.string(),
-    filesize: z.number(),
-    width: z.number().optional(),
-    height: z.number().optional(),
-    altText: z.string().optional(),
-    folder: z.enum(MediaFolder).default(MediaFolder.UNORGANIZED),
-    tags: z.array(z.string()).default([]),
+    question: z.string().min(1, 'Question is required'),
+    answer: z.string().min(1, 'Answer is required'),
+    portfolio: PortfolioIdSchema,
+    status: z.enum(PublishStatus).default(PublishStatus.PUBLISHED),
+    order: z.number().default(0),
+    group: z.string().nullish(),
+  })
+  .extend(BaseSchema.shape);
+
+export const TestimonialSchema = z
+  .object({
+    name: z.string().min(1, 'Client name is required'),
+    role: z.string().nullish(),
+    company: z.string().nullish(),
+    avatar: z.string().nullish(),
+    content: z.string().min(1, 'Testimonial content is required'),
+    rating: z.number().int().min(1).max(5).default(5),
+    status: z
+      .enum([
+        TestimonialStatus.PUBLISHED,
+        TestimonialStatus.DRAFT,
+        TestimonialStatus.ARCHIVED,
+      ])
+      .default(TestimonialStatus.PUBLISHED),
+    featured: z.boolean().default(false),
+    order: z.number().default(0),
+    sourceUrl: z.string().nullish(),
+    platform: z.string().nullish(),
     portfolio: PortfolioIdSchema,
   })
   .extend(BaseSchema.shape);
+
+// =============================================================================
+// SECTION 5 — INFRASTRUCTURE SCHEMAS (Portfolio, Media, User, Category)
+// =============================================================================
 
 export const PortfolioSchema = z
   .object({
@@ -215,29 +273,51 @@ export const PortfolioSchema = z
       })
       .nullish(),
     socialLinks: z
-      .array(
-        z.object({
-          platform: z.string(),
-          url: z.string(),
-        })
-      )
+      .array(z.object({ platform: z.string(), url: z.string() }))
       .default([]),
     maintenanceMode: z.boolean().default(false),
   })
   .extend(BaseSchema.shape);
 
-export const SubscriberSchema = z
+export const MediaSchema = z
   .object({
-    email: z.email(),
+    filename: z.string(),
+    imageKitUrl: z.string(),
+    imageKitFileId: z.string(),
+    mimeType: z.string(),
+    filesize: z.number(),
+    width: z.number().optional(),
+    height: z.number().optional(),
+    altText: z.string().optional(),
+    folder: z.enum(MediaFolder).default(MediaFolder.UNORGANIZED),
+    tags: z.array(z.string()).default([]),
     portfolio: PortfolioIdSchema,
-    status: z.enum(SubscriberStatus).default(SubscriberStatus.ACTIVE),
-    source: z.enum(SubscriberSource).default(SubscriberSource.NEWSLETTER),
-    subscribedAt: z.string().optional(),
-    downloadHistory: z.array(z.string()).default([]),
-    intent: z.string().nullish(),
-    metadata: z.record(z.string(), z.unknown()).nullish(),
   })
   .extend(BaseSchema.shape);
+
+export const UserSchema = z
+  .object({
+    email: z.email(),
+    role: z.enum(UserRole).default(UserRole.VIEWER),
+    portfolios: z.array(z.string()).optional().default([]),
+    password: z.string().optional(),
+    resetToken: z.string().optional(),
+    resetTokenExpiry: z.date().optional(),
+  })
+  .extend(BaseSchema.shape);
+
+export const CategorySchema = z
+  .object({
+    name: z.string().min(1, 'Name is required'),
+    slug: z.string().min(1, 'Slug is required'),
+    portfolio: PortfolioIdSchema,
+    isDefault: z.boolean().optional(),
+  })
+  .extend(BaseSchema.shape);
+
+// =============================================================================
+// SECTION 6 — CRM / MARKETING SCHEMAS (Lead, Subscriber, Campaign, Analytics)
+// =============================================================================
 
 export const LeadSchema = z
   .object({
@@ -263,23 +343,16 @@ export const LeadSchema = z
   })
   .extend(BaseSchema.shape);
 
-export const UserSchema = z
+export const SubscriberSchema = z
   .object({
     email: z.email(),
-    role: z.enum(UserRole).default(UserRole.VIEWER),
-    portfolios: z.array(z.string()).optional().default([]),
-    password: z.string().optional(),
-    resetToken: z.string().optional(),
-    resetTokenExpiry: z.date().optional(),
-  })
-  .extend(BaseSchema.shape);
-
-export const CategorySchema = z
-  .object({
-    name: z.string().min(1, 'Name is required'),
-    slug: z.string().min(1, 'Slug is required'),
     portfolio: PortfolioIdSchema,
-    isDefault: z.boolean().optional(),
+    status: z.enum(SubscriberStatus).default(SubscriberStatus.ACTIVE),
+    source: z.enum(SubscriberSource).default(SubscriberSource.NEWSLETTER),
+    subscribedAt: z.string().optional(),
+    downloadHistory: z.array(z.string()).default([]),
+    intent: z.string().nullish(),
+    metadata: z.record(z.string(), z.unknown()).nullish(),
   })
   .extend(BaseSchema.shape);
 
@@ -351,84 +424,63 @@ export const StatsSchema = z.object({
     })
     .optional(),
   leadsMonthly: z
-    .array(
-      z.object({
-        month: z.string(),
-        count: z.number(),
-      })
-    )
+    .array(z.object({ month: z.string(), count: z.number() }))
     .optional(),
   totalVisitors: z.number().optional(),
   totalLeads: z.number().optional(),
   conversionRate: z.number().optional(),
 });
 
-export const FaqSchema = z
-  .object({
-    question: z.string().min(1, 'Question is required'),
-    answer: z.string().min(1, 'Answer is required'),
-    portfolio: PortfolioIdSchema,
-    status: z.enum(PublishStatus).default(PublishStatus.PUBLISHED),
-    order: z.number().default(0),
-    group: z.string().nullish(),
-  })
-  .extend(BaseSchema.shape);
+// =============================================================================
+// SECTION 7 — INFERRED TYPESCRIPT TYPES
+// =============================================================================
 
-// Helper types for TypeScript
+export type SEOMetadata = z.infer<typeof SEOMetadataSchema>;
+export type Tag = z.infer<typeof TagSchema>;
+
+// Content
 export type Blog = z.infer<typeof BlogSchema>;
 export type CaseStudy = z.infer<typeof CaseStudySchema>;
 export type Project = z.infer<typeof ProjectSchema>;
-export type Media = z.infer<typeof MediaSchema>;
-export type SEOMetadata = z.infer<typeof SEOMetadataSchema>;
+export type Faq = z.infer<typeof FaqSchema>;
+export type Testimonial = z.infer<typeof TestimonialSchema>;
+
+// Infrastructure
 export type Portfolio = z.infer<typeof PortfolioSchema>;
+export type Media = z.infer<typeof MediaSchema>;
 export type User = z.infer<typeof UserSchema>;
 export type Category = z.infer<typeof CategorySchema>;
-export type Stats = z.infer<typeof StatsSchema>;
-export type Subscriber = z.infer<typeof SubscriberSchema>;
-export type Lead = z.infer<typeof LeadSchema>;
-export type Campaign = z.infer<typeof CampaignSchema>;
-export type Faq = z.infer<typeof FaqSchema>;
-export type Tag = z.infer<typeof TagSchema>;
 
-// Populated Schemas for Listing Views and Responses
+// CRM / Marketing
+export type Lead = z.infer<typeof LeadSchema>;
+export type Subscriber = z.infer<typeof SubscriberSchema>;
+export type Campaign = z.infer<typeof CampaignSchema>;
+export type Analytics = z.infer<typeof AnalyticsSchema>;
+export type Stats = z.infer<typeof StatsSchema>;
+
+// =============================================================================
+// SECTION 8 — POPULATED SCHEMAS (with resolved references for list views)
+// =============================================================================
+
 export const PopulatedBlogSchema = BlogSchema.extend({
-  category: z
-    .object({ _id: z.string(), name: z.string(), slug: z.string() })
-    .nullish(),
-  portfolio: z
-    .object({
-      _id: z.string(),
-      name: z.string(),
-      domain: z.string().optional(),
-    })
-    .nullish(),
+  category: PopulatedCategoryRef,
+  portfolio: PopulatedPortfolioRef,
 });
 export type PopulatedBlog = z.infer<typeof PopulatedBlogSchema>;
 
 export const PopulatedCaseStudySchema = CaseStudySchema.extend({
-  category: z
-    .object({ _id: z.string(), name: z.string(), slug: z.string() })
-    .nullish(),
-  portfolio: z
-    .object({
-      _id: z.string(),
-      name: z.string(),
-      domain: z.string().optional(),
-    })
-    .nullish(),
+  category: PopulatedCategoryRef,
+  portfolio: PopulatedPortfolioRef,
 });
 export type PopulatedCaseStudy = z.infer<typeof PopulatedCaseStudySchema>;
 
 export const PopulatedProjectSchema = ProjectSchema.extend({
-  category: z
-    .object({ _id: z.string(), name: z.string(), slug: z.string() })
-    .nullish(),
-  portfolio: z
-    .object({
-      _id: z.string(),
-      name: z.string(),
-      domain: z.string().optional(),
-    })
-    .nullish(),
+  category: PopulatedCategoryRef,
+  portfolio: PopulatedPortfolioRef,
 });
 export type PopulatedProject = z.infer<typeof PopulatedProjectSchema>;
+
+export const PopulatedTestimonialSchema = TestimonialSchema.extend({
+  portfolio: PopulatedPortfolioRef,
+});
+export type PopulatedTestimonial = z.infer<typeof PopulatedTestimonialSchema>;

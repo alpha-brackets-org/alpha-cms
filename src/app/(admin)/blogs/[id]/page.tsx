@@ -55,12 +55,14 @@ export default function EditBlogPage() {
   }
 
   return (
-    <BlogForm
-      initialData={blog}
-      onSubmit={handleSubmit}
-      isLoading={updateMutation.isPending}
-      submitText="SAVE CHANGES"
-      isNew={false}
-    />
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <BlogForm
+        initialData={blog}
+        onSubmit={handleSubmit}
+        isLoading={updateMutation.isPending}
+        submitText="SAVE CHANGES"
+        isNew={false}
+      />
+    </div>
   );
 }
