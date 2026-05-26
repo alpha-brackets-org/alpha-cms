@@ -17,11 +17,18 @@ import {
   PortfolioSchema,
   CampaignSchema,
   FaqSchema,
+  TestimonialSchema,
+  AnalyticsSchema,
+  PopulatedBlogSchema,
+  PopulatedCaseStudySchema,
+  PopulatedProjectSchema,
+  PopulatedTestimonialSchema,
 } from '@/schemas/cms';
 import {
   PublishStatus,
   SubscriberSource,
   SubscriberStatus,
+  TestimonialStatus,
 } from '@/schemas/cms';
 
 const registry = new OpenAPIRegistry();
@@ -31,8 +38,11 @@ const registry = new OpenAPIRegistry();
  * Standardized data structures for the ecosystem
  */
 registry.register('Blog', BlogSchema);
+registry.register('PopulatedBlog', PopulatedBlogSchema);
 registry.register('CaseStudy', CaseStudySchema);
+registry.register('PopulatedCaseStudy', PopulatedCaseStudySchema);
 registry.register('Project', ProjectSchema);
+registry.register('PopulatedProject', PopulatedProjectSchema);
 registry.register('Media', MediaSchema);
 registry.register('Portfolio', PortfolioSchema);
 registry.register('User', UserSchema);
@@ -41,8 +51,32 @@ registry.register('Subscriber', SubscriberSchema);
 registry.register('Lead', LeadSchema);
 registry.register('Campaign', CampaignSchema);
 registry.register('Faq', FaqSchema);
+registry.register('Testimonial', TestimonialSchema);
+registry.register('PopulatedTestimonial', PopulatedTestimonialSchema);
+registry.register('Analytics', AnalyticsSchema);
 registry.register('SystemStats', StatsSchema);
 registry.register('SEOMetadata', SEOMetadataSchema);
+
+/**
+ * Public-safe portfolio config — returned by /portfolios/config.
+ * Does NOT expose smtpConfig, credentials, or internal fields.
+ */
+const PortfolioConfigSchema = z.object({
+  _id: z.string(),
+  name: z.string(),
+  domain: z.string(),
+  active: z.boolean(),
+  maintenanceMode: z.boolean(),
+  newsletterConfig: z.object({
+    accentColor: z.string(),
+    logoUrl: z.string().nullable(),
+    senderName: z.string(),
+    footerText: z.string(),
+  }),
+  customScripts: z.object({ head: z.string(), footer: z.string() }),
+  socialLinks: z.array(z.object({ platform: z.string(), url: z.string() })),
+});
+registry.register('PortfolioConfig', PortfolioConfigSchema);
 
 registry.registerComponent('securitySchemes', 'AuthCookie', {
   type: 'apiKey',
@@ -188,23 +222,7 @@ registry.registerPath({
       description: 'Public configuration data',
       content: {
         'application/json': {
-          schema: z.object({
-            _id: z.string(),
-            name: z.string(),
-            domain: z.string(),
-            active: z.boolean(),
-            maintenanceMode: z.boolean(),
-            newsletterConfig: z.object({
-              accentColor: z.string(),
-              logoUrl: z.string().nullable(),
-              senderName: z.string(),
-              footerText: z.string(),
-            }),
-            customScripts: z.object({ head: z.string(), footer: z.string() }),
-            socialLinks: z.array(
-              z.object({ platform: z.string(), url: z.string() })
-            ),
-          }),
+          schema: PortfolioConfigSchema,
         },
       },
     },
@@ -427,6 +445,26 @@ registry.registerPath({
   },
 });
 
+registry.registerPath({
+  method: 'post',
+  path: '/auth/logout',
+  tags: ['Authentication'],
+  description: 'Clear authentication cookie and terminate session',
+  summary: 'User Logout',
+  responses: {
+    200: {
+      description: 'Successfully logged out',
+      content: {
+        'application/json': {
+          schema: z.object({
+            success: z.boolean(),
+          }),
+        },
+      },
+    },
+  },
+});
+
 /**
  * --- PRIORITY 2: LEADS & NEWSLETTER ---
  */
@@ -526,6 +564,35 @@ registry.registerPath({
       },
     },
     404: { description: 'Subscriber not found' },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/analytics/collect',
+  tags: ['Public Endpoints'],
+  description: 'Submit an analytics event from a portfolio site',
+  summary: 'Collect Analytics Event',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: AnalyticsSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: 'Event tracked successfully',
+      content: {
+        'application/json': {
+          schema: z.object({
+            tracked: z.boolean(),
+          }),
+        },
+      },
+    },
   },
 });
 
@@ -749,7 +816,7 @@ registry.registerPath({
   responses: {
     200: {
       description: 'Paginated blog posts',
-      content: { 'application/json': { schema: z.array(BlogSchema) } },
+      content: { 'application/json': { schema: z.array(PopulatedBlogSchema) } },
     },
   },
 });
@@ -788,7 +855,7 @@ registry.registerPath({
   responses: {
     200: {
       description: 'The blog post document',
-      content: { 'application/json': { schema: BlogSchema } },
+      content: { 'application/json': { schema: PopulatedBlogSchema } },
     },
   },
 });
@@ -826,7 +893,7 @@ registry.registerPath({
   responses: {
     200: {
       description: 'List of case studies',
-      content: { 'application/json': { schema: z.array(CaseStudySchema) } },
+      content: { 'application/json': { schema: z.array(PopulatedCaseStudySchema) } },
     },
   },
 });
@@ -865,7 +932,7 @@ registry.registerPath({
   responses: {
     200: {
       description: 'The case study document',
-      content: { 'application/json': { schema: CaseStudySchema } },
+      content: { 'application/json': { schema: PopulatedCaseStudySchema } },
     },
   },
 });
@@ -902,7 +969,7 @@ registry.registerPath({
   responses: {
     200: {
       description: 'List of projects',
-      content: { 'application/json': { schema: z.array(ProjectSchema) } },
+      content: { 'application/json': { schema: z.array(PopulatedProjectSchema) } },
     },
   },
 });
@@ -941,7 +1008,7 @@ registry.registerPath({
   responses: {
     200: {
       description: 'The project document',
-      content: { 'application/json': { schema: ProjectSchema } },
+      content: { 'application/json': { schema: PopulatedProjectSchema } },
     },
   },
 });
@@ -1032,6 +1099,144 @@ registry.registerPath({
     params: z.object({ id: z.string() }),
   },
   responses: { 200: { description: 'Deleted' } },
+});
+
+// Testimonials
+registry.registerPath({
+  method: 'get',
+  path: '/testimonials',
+  tags: ['Core Content'],
+  description: 'Retrieve testimonials with multi-portfolio filtering',
+  summary: 'List Testimonials',
+  request: {
+    query: z.object({
+      ...PaginationQueryParams,
+      ...PortfolioQueryParam,
+      ...SearchQueryParam,
+      status: z
+        .nativeEnum(TestimonialStatus)
+        .optional()
+        .openapi({ param: { name: 'status', in: 'query' } }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Paginated testimonials',
+      content: {
+        'application/json': {
+          schema: z.array(PopulatedTestimonialSchema),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/testimonials',
+  tags: ['Core Content'],
+  summary: 'Create Testimonial',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: TestimonialSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: 'Created',
+      content: {
+        'application/json': {
+          schema: z.object({
+            id: z.string(),
+          }),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/testimonials/{id}',
+  tags: ['Core Content'],
+  summary: 'Get Single Testimonial',
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: {
+    200: {
+      description: 'The testimonial document',
+      content: {
+        'application/json': {
+          schema: PopulatedTestimonialSchema,
+        },
+      },
+    },
+    404: {
+      description: 'Testimonial not found',
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'patch',
+  path: '/testimonials/{id}',
+  tags: ['Core Content'],
+  summary: 'Update Testimonial',
+  request: {
+    params: z.object({ id: z.string() }),
+    body: {
+      content: {
+        'application/json': {
+          schema: TestimonialSchema.partial(),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Updated',
+      content: {
+        'application/json': {
+          schema: z.object({
+            success: z.boolean(),
+          }),
+        },
+      },
+    },
+    404: {
+      description: 'Testimonial not found',
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'delete',
+  path: '/testimonials/{id}',
+  tags: ['Core Content'],
+  summary: 'Delete Testimonial',
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: {
+    200: {
+      description: 'Deleted',
+      content: {
+        'application/json': {
+          schema: z.object({
+            success: z.boolean(),
+          }),
+        },
+      },
+    },
+    404: {
+      description: 'Testimonial not found',
+    },
+  },
 });
 
 registry.registerPath({
