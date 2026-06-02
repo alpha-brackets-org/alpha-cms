@@ -133,16 +133,16 @@ export const TagSchema = z.object({
 });
 
 // Zod schemas for enums to generate clean, referenced OpenAPI definitions
-export const PublishStatusSchema = z.enum(PublishStatus);
-export const TestimonialStatusSchema = z.enum(TestimonialStatus);
-export const MediaFolderSchema = z.enum(MediaFolder);
-export const SubscriberStatusSchema = z.enum(SubscriberStatus);
-export const SubscriberSourceSchema = z.enum(SubscriberSource);
-export const LeadStatusSchema = z.enum(LeadStatus);
-export const LeadSourceSchema = z.enum(LeadSource);
-export const UserRoleSchema = z.enum(UserRole);
-export const AnalyticsEventSchema = z.enum(AnalyticsEvent);
-export const ContentTypeSchema = z.enum(ContentType);
+export const PublishStatusSchema = z.enum(PublishStatus).openapi('PublishStatus');
+export const TestimonialStatusSchema = z.enum(TestimonialStatus).openapi('TestimonialStatus');
+export const MediaFolderSchema = z.enum(MediaFolder).openapi('MediaFolder');
+export const SubscriberStatusSchema = z.enum(SubscriberStatus).openapi('SubscriberStatus');
+export const SubscriberSourceSchema = z.enum(SubscriberSource).openapi('SubscriberSource');
+export const LeadStatusSchema = z.enum(LeadStatus).openapi('LeadStatus');
+export const LeadSourceSchema = z.enum(LeadSource).openapi('LeadSource');
+export const UserRoleSchema = z.enum(UserRole).openapi('UserRole');
+export const AnalyticsEventSchema = z.enum(AnalyticsEvent).openapi('AnalyticsEvent');
+export const ContentTypeSchema = z.enum(ContentType).openapi('ContentType');
 
 // =============================================================================
 // SECTION 4 — CONTENT SCHEMAS (Blog, CaseStudy, Project, FAQ, Testimonial)
@@ -169,7 +169,7 @@ export const BlogSchema = z
     seo: SEOMetadataSchema.nullish(),
     portfolio: PortfolioIdSchema,
   })
-  .extend(BaseSchema.shape);
+  .extend(BaseSchema.shape).openapi('Blog');
 
 export const CaseStudySchema = z
   .object({
@@ -191,7 +191,7 @@ export const CaseStudySchema = z
     seo: SEOMetadataSchema.nullish(),
     portfolio: PortfolioIdSchema,
   })
-  .extend(BaseSchema.shape);
+  .extend(BaseSchema.shape).openapi('CaseStudy');
 
 export const ProjectSchema = z
   .object({
@@ -211,7 +211,7 @@ export const ProjectSchema = z
     seo: SEOMetadataSchema.nullish(),
     portfolio: PortfolioIdSchema,
   })
-  .extend(BaseSchema.shape);
+  .extend(BaseSchema.shape).openapi('Project');
 
 export const FaqSchema = z
   .object({
@@ -222,7 +222,7 @@ export const FaqSchema = z
     order: z.number().default(0),
     group: z.string().nullish(),
   })
-  .extend(BaseSchema.shape);
+  .extend(BaseSchema.shape).openapi('Faq');
 
 export const TestimonialSchema = z
   .object({
@@ -239,7 +239,7 @@ export const TestimonialSchema = z
     platform: z.string().nullish(),
     portfolio: PortfolioIdSchema,
   })
-  .extend(BaseSchema.shape);
+  .extend(BaseSchema.shape).openapi('Testimonial');
 
 // =============================================================================
 // SECTION 5 — INFRASTRUCTURE SCHEMAS (Portfolio, Media, User, Category)
@@ -283,7 +283,7 @@ export const PortfolioSchema = z
       .default([]),
     maintenanceMode: z.boolean().default(false),
   })
-  .extend(BaseSchema.shape);
+  .extend(BaseSchema.shape).openapi('Portfolio');
 
 export const MediaSchema = z
   .object({
@@ -299,7 +299,7 @@ export const MediaSchema = z
     tags: z.array(z.string()).default([]),
     portfolio: PortfolioIdSchema,
   })
-  .extend(BaseSchema.shape);
+  .extend(BaseSchema.shape).openapi('Media');
 
 export const UserSchema = z
   .object({
@@ -310,7 +310,7 @@ export const UserSchema = z
     resetToken: z.string().optional(),
     resetTokenExpiry: z.date().optional(),
   })
-  .extend(BaseSchema.shape);
+  .extend(BaseSchema.shape).openapi('User');
 
 export const CategorySchema = z
   .object({
@@ -319,7 +319,7 @@ export const CategorySchema = z
     portfolio: PortfolioIdSchema,
     isDefault: z.boolean().optional(),
   })
-  .extend(BaseSchema.shape);
+  .extend(BaseSchema.shape).openapi('Category');
 
 // =============================================================================
 // SECTION 6 — CRM / MARKETING SCHEMAS (Lead, Subscriber, Campaign, Analytics)
@@ -347,7 +347,7 @@ export const LeadSchema = z
       .default([]),
     portfolio: PortfolioIdSchema,
   })
-  .extend(BaseSchema.shape);
+  .extend(BaseSchema.shape).openapi('Lead');
 
 export const SubscriberSchema = z
   .object({
@@ -360,7 +360,7 @@ export const SubscriberSchema = z
     intent: z.string().nullish(),
     metadata: z.record(z.string(), z.unknown()).nullish(),
   })
-  .extend(BaseSchema.shape);
+  .extend(BaseSchema.shape).openapi('Subscriber');
 
 export const CampaignSchema = z
   .object({
@@ -378,7 +378,7 @@ export const CampaignSchema = z
       })
       .nullish(),
   })
-  .extend(BaseSchema.shape);
+  .extend(BaseSchema.shape).openapi('Campaign');
 
 export const AnalyticsSchema = z
   .object({
@@ -396,7 +396,7 @@ export const AnalyticsSchema = z
       })
       .optional(),
   })
-  .extend(BaseSchema.shape);
+  .extend(BaseSchema.shape).openapi('Analytics');
 
 export const StatsSchema = z.object({
   blogs: z.number(),
@@ -435,7 +435,7 @@ export const StatsSchema = z.object({
   totalVisitors: z.number().optional(),
   totalLeads: z.number().optional(),
   conversionRate: z.number().optional(),
-});
+}).openapi('Stats');
 
 // =============================================================================
 // SECTION 7 — INFERRED TYPESCRIPT TYPES
@@ -471,22 +471,22 @@ export type Stats = z.infer<typeof StatsSchema>;
 export const PopulatedBlogSchema = BlogSchema.extend({
   category: PopulatedCategoryRef,
   portfolio: PopulatedPortfolioRef,
-});
+}).openapi('PopulatedBlog');
 export type PopulatedBlog = z.infer<typeof PopulatedBlogSchema>;
 
 export const PopulatedCaseStudySchema = CaseStudySchema.extend({
   category: PopulatedCategoryRef,
   portfolio: PopulatedPortfolioRef,
-});
+}).openapi('PopulatedCaseStudy');
 export type PopulatedCaseStudy = z.infer<typeof PopulatedCaseStudySchema>;
 
 export const PopulatedProjectSchema = ProjectSchema.extend({
   category: PopulatedCategoryRef,
   portfolio: PopulatedPortfolioRef,
-});
+}).openapi('PopulatedProject');
 export type PopulatedProject = z.infer<typeof PopulatedProjectSchema>;
 
 export const PopulatedTestimonialSchema = TestimonialSchema.extend({
   portfolio: PopulatedPortfolioRef,
-});
+}).openapi('PopulatedTestimonial');
 export type PopulatedTestimonial = z.infer<typeof PopulatedTestimonialSchema>;

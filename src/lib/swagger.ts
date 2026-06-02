@@ -85,7 +85,7 @@ const PortfolioConfigSchema = z.object({
     logoUrl: z.string().nullable(),
     senderName: z.string(),
     footerText: z.string(),
-  }),
+  }).openapi('PortfolioConfig'),
   customScripts: z.object({ head: z.string(), footer: z.string() }),
   socialLinks: z.array(z.object({ platform: z.string(), url: z.string() })),
 });
@@ -305,7 +305,7 @@ registry.registerPath({
           schema: z.object({
             email: z.string().email(),
             password: z.string(),
-          }),
+          }).openapi('LoginRequest'),
         },
       },
     },
@@ -321,7 +321,7 @@ registry.registerPath({
               _id: z.string(),
               email: z.string(),
               role: z.string(),
-            }),
+            }).openapi('LoginResponse'),
           }),
         },
       },
@@ -342,7 +342,7 @@ registry.registerPath({
         'application/json': {
           schema: z.object({
             email: z.string().email(),
-          }),
+          }).openapi('ForgotPasswordRequest'),
         },
       },
     },
@@ -355,7 +355,7 @@ registry.registerPath({
           schema: z.object({
             success: z.boolean(),
             message: z.string(),
-          }),
+          }).openapi('ForgotPasswordResponse'),
         },
       },
     },
@@ -375,7 +375,7 @@ registry.registerPath({
           schema: z.object({
             token: z.string(),
             password: z.string(),
-          }),
+          }).openapi('ResetPasswordRequest'),
         },
       },
     },
@@ -388,7 +388,7 @@ registry.registerPath({
           schema: z.object({
             success: z.boolean(),
             message: z.string(),
-          }),
+          }).openapi('ResetPasswordResponse'),
         },
       },
     },
@@ -414,7 +414,7 @@ registry.registerPath({
                 email: z.string(),
                 role: z.string(),
                 portfolios: z.array(z.string()),
-              })
+              }).openapi('AuthMeResponse')
               .nullable(),
           }),
         },
@@ -436,7 +436,7 @@ registry.registerPath({
           schema: z.object({
             currentPassword: z.string(),
             newPassword: z.string(),
-          }),
+          }).openapi('ChangePasswordRequest'),
         },
       },
     },
@@ -449,7 +449,7 @@ registry.registerPath({
           schema: z.object({
             success: z.boolean(),
             message: z.string(),
-          }),
+          }).openapi('ChangePasswordResponse'),
         },
       },
     },
@@ -471,7 +471,7 @@ registry.registerPath({
         'application/json': {
           schema: z.object({
             success: z.boolean(),
-          }),
+          }).openapi('LogoutResponse'),
         },
       },
     },
@@ -511,7 +511,7 @@ registry.registerPath({
             downloadUrl: z.string().openapi({
               description: 'Direct link to the requested case study',
               example: 'https://saadqadir.com/case-study/healthline-platform',
-            }),
+            }).openapi('SubmitLeadResponse'),
           }),
         },
       },
@@ -543,7 +543,7 @@ registry.registerPath({
     201: {
       description: 'Subscription confirmed',
       content: {
-        'application/json': { schema: z.object({ success: z.boolean() }) },
+        'application/json': { schema: z.object({ success: z.boolean() }).openapi('SubscribeResponse') },
       },
     },
   },
@@ -562,7 +562,7 @@ registry.registerPath({
           schema: z.object({
             email: z.string().email(),
             portfolioId: z.string(),
-          }),
+          }).openapi('UnsubscribeRequest').openapi('SubscribeRequest'),
         },
       },
     },
@@ -572,7 +572,7 @@ registry.registerPath({
       description: 'Successfully unsubscribed',
       content: {
         'application/json': {
-          schema: z.object({ success: z.boolean(), message: z.string() }),
+          schema: z.object({ success: z.boolean(), message: z.string() }).openapi('UnsubscribeResponse'),
         },
       },
     },
@@ -602,7 +602,7 @@ registry.registerPath({
         'application/json': {
           schema: z.object({
             tracked: z.boolean(),
-          }),
+          }).openapi('AnalyticsCollectResponse'),
         },
       },
     },
@@ -1261,7 +1261,7 @@ registry.registerPath({
             token: z.string(),
             expire: z.number(),
             signature: z.string(),
-          }),
+          }).openapi('MediaAuthResponse'),
         },
       },
     },
@@ -1280,7 +1280,7 @@ registry.registerPath({
       content: {
         'multipart/form-data': {
           schema: z.object({
-            file: z.unknown().openapi({ type: 'string', format: 'binary' }),
+            file: z.unknown().openapi({ type: 'string', format: 'binary' }).openapi('MediaUploadRequest'),
             portfolio: z.string(),
             virtualFolder: z.string().optional(),
           }),
