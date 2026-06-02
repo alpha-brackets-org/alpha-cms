@@ -170,8 +170,9 @@ export function parseEnumParam<T extends string>(
 export function parseSearchParams(request: Request) {
   const { searchParams } = new URL(request.url);
 
-  // Text search
-  const search = searchParams.get('search')?.trim() || '';
+  // Text search — escape regex special characters to prevent ReDoS
+  const rawSearch = searchParams.get('search')?.trim() || '';
+  const search = rawSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   // Filter params — normalize 'all' and empty to null
   const rawStatus = searchParams.get('status');
