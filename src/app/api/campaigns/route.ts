@@ -61,6 +61,7 @@ export const POST = apiHandler(async (request) => {
 
   const campaign = {
     ...campaignData,
+    portfolio: new mongoose.Types.ObjectId(campaignData.portfolio),
     status: PublishStatus.DRAFT,
     recipientCount: 0,
     createdAt: new Date(),

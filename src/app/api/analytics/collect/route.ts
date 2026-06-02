@@ -6,29 +6,32 @@ import { CollectionName } from '@/types/cms';
  * ANALYTICS INGESTION ENDPOINT
  * High-performance endpoint for collecting visitor events from portfolios.
  */
-export const POST = apiHandler(async (request) => {
-  const body = await request.json();
-  const db = mongoose.connection.db;
+export const POST = apiHandler(
+  async (request) => {
+    const body = await request.json();
+    const db = mongoose.connection.db;
 
-  const { portfolio, event, path, visitorId, metadata, duration } = body;
+    const { portfolio, event, path, visitorId, metadata, duration } = body;
 
-  if (!portfolio) {
-    throw new Error('Portfolio ID is required for data attribution');
-  }
+    if (!portfolio) {
+      throw new Error('Portfolio ID is required for data attribution');
+    }
 
-  // Insert the event record
-  await db.collection(CollectionName.ANALYTICS).insertOne({
-    portfolio: new mongoose.Types.ObjectId(portfolio as string),
-    event,
-    path,
-    visitorId,
-    duration: duration || 0,
-    metadata: metadata || {},
-    timestamp: new Date(),
-  });
+    // Insert the event record
+    await db.collection(CollectionName.ANALYTICS).insertOne({
+      portfolio: new mongoose.Types.ObjectId(portfolio as string),
+      event,
+      path,
+      visitorId,
+      duration: duration || 0,
+      metadata: metadata || {},
+      timestamp: new Date(),
+    });
 
-  return sendSuccess({ tracked: true }, 201);
-});
+    return sendSuccess({ tracked: true }, 201);
+  },
+  { isPublic: true }
+);
 
 // Handle Preflight for CORS
 export const OPTIONS = async () => {

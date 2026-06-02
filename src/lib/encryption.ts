@@ -37,7 +37,9 @@ export function decrypt(text: string): string {
 
     return decrypted.toString();
   } catch (err) {
-    console.error('DECRYPTION_FAILED:', err);
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('DECRYPTION_FAILED:', err);
+    }
     return ''; // Return empty string if decryption fails
   }
 }

@@ -24,7 +24,8 @@ interface RouteContext {
  * PUBLIC LEAD GENERATION ENDPOINT
  * Captures leads for specific case study downloads.
  */
-export const POST = apiHandler(async (request, context: RouteContext) => {
+export const POST = apiHandler(
+  async (request, context: RouteContext) => {
   const { id: portfolioId } = await context.params;
   const body = await request.json();
 
@@ -120,4 +121,4 @@ export const POST = apiHandler(async (request, context: RouteContext) => {
     },
     201
   );
-});
+}, { isPublic: true });
