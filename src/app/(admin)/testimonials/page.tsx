@@ -100,21 +100,19 @@ export default function TestimonialsPage() {
 
       {/* Filters */}
       <div className="flex flex-col items-end gap-4 rounded-2xl border border-white/10 bg-secondary/20 p-4 backdrop-blur-xl md:flex-row">
-        <div className="relative w-full flex-1">
+        <div className="w-full flex-1">
           <Label className="mb-1 block opacity-60">Search</Label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              id="testimonials-search"
-              placeholder="Search by name, company, content..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(1);
-              }}
-              className="h-[42px] pl-10"
-            />
-          </div>
+          <Input
+            id="testimonials-search"
+            placeholder="Search by name, company, content..."
+            className="h-10 text-xs font-medium"
+            leftSection={<Search className="h-4 w-4" />}
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(1);
+            }}
+          />
         </div>
 
         <div className="flex w-full flex-wrap items-end gap-4 md:w-auto">
@@ -127,7 +125,8 @@ export default function TestimonialsPage() {
                 setStatus(e.target.value);
                 setPage(1);
               }}
-              className="h-[42px] min-w-[140px]"
+              wrapperClassName="min-w-[140px] shrink-0"
+              className="h-10 text-xs font-bold uppercase tracking-wide"
             >
               <option value="all">All Status</option>
               {Object.values(TestimonialStatus).map((s) => (
@@ -143,7 +142,7 @@ export default function TestimonialsPage() {
               variant="outline"
               onClick={handleClearFilters}
               disabled={!searchTerm && status === 'all'}
-              className="h-[42px] px-6"
+              className="h-10 px-6 text-xs font-bold uppercase tracking-wide"
             >
               Clear
             </Button>

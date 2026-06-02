@@ -166,13 +166,13 @@ export function MediaLibrary({
       {/* Library Toolbar */}
       <div className="flex items-center justify-between border-b-4 border-border bg-secondary/50 p-4">
         <div className="flex max-w-md flex-1 items-center gap-4">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="w-full">
             <Input
               placeholder="Search assets..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-10 rounded-none border-2 border-border pl-10 text-xs"
+              leftSection={<Search className="h-4 w-4" />}
+              className="h-10 rounded-none border-2 border-border text-xs"
             />
           </div>
           {selectedAssets.length > 0 && (

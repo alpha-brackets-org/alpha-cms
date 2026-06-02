@@ -97,20 +97,18 @@ export default function CaseStudiesPage() {
 
       {/* Filters */}
       <div className="flex flex-col items-end gap-4 rounded-xl border border-white/10 bg-secondary/30 p-4 md:flex-row">
-        <div className="relative w-full flex-1">
+        <div className="w-full flex-1">
           <Label className="mb-1 block opacity-60">Search Projects</Label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search by title, client, industry..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(1);
-              }}
-              className="h-[42px] pl-10"
-            />
-          </div>
+          <Input
+            placeholder="Search by title, client, industry..."
+            className="h-10 text-xs font-medium"
+            leftSection={<Search className="h-4 w-4" />}
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(1);
+            }}
+          />
         </div>
 
         <div className="flex w-full flex-wrap items-end gap-4 md:w-auto">
@@ -122,7 +120,8 @@ export default function CaseStudiesPage() {
                 setCategory(e.target.value);
                 setPage(1);
               }}
-              className="h-[42px]"
+              wrapperClassName="w-full md:w-40 shrink-0"
+              className="h-10 text-xs font-bold uppercase tracking-wide"
             >
               <option value="all">All Categories</option>
               {categories.map((cat) => (
@@ -141,7 +140,8 @@ export default function CaseStudiesPage() {
                 setStatus(e.target.value);
                 setPage(1);
               }}
-              className="h-[42px]"
+              wrapperClassName="w-full md:w-40 shrink-0"
+              className="h-10 text-xs font-bold uppercase tracking-wide"
             >
               <option value="all">All Status</option>
               {Object.values(PublishStatus).map((stat) => (
@@ -157,7 +157,7 @@ export default function CaseStudiesPage() {
               variant="outline"
               onClick={handleClearFilters}
               disabled={!searchTerm && status === 'all' && category === 'all'}
-              className="h-[42px] px-6"
+              className="h-10 px-6 text-xs font-bold uppercase tracking-wide"
             >
               Clear
             </Button>

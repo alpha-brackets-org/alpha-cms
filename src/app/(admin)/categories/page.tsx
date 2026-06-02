@@ -137,21 +137,19 @@ export default function CategoriesPage() {
 
       {/* Filters */}
       <div className="flex flex-col items-end gap-4 rounded-xl border border-white/10 bg-secondary/30 p-4 md:flex-row">
-        <div className="relative w-full flex-1">
+        <div className="w-full flex-1">
           <Label className="mb-1 block opacity-60">Search Categories</Label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search by name..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(1);
-              }}
-              className="h-[42px] pl-10"
-            />
-          </div>
+          <Input
+            type="text"
+            placeholder="Search by name..."
+            className="h-10 text-xs font-medium"
+            leftSection={<Search className="h-4 w-4" />}
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(1);
+            }}
+          />
         </div>
       </div>
 

@@ -76,12 +76,12 @@ export default function SubscribersPage() {
             Monitor and manage cross-portfolio subscribers
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 md:w-64">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex-1 md:w-64">
             <Input
               placeholder="SEARCH EMAIL..."
-              className="pl-10"
+              className="h-10 text-xs font-medium"
+              leftSection={<Search className="h-4 w-4" />}
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -94,7 +94,8 @@ export default function SubscribersPage() {
             onChange={(e) =>
               setFilters({ ...filters, status: e.target.value, page: 1 })
             }
-            className="h-10 w-40"
+            wrapperClassName="w-40 shrink-0"
+            className="h-10 text-[11px] font-bold uppercase tracking-wide"
           >
             <option value="all">ALL STATUS</option>
             {Object.values(SubscriberStatus).map((status) => (
@@ -108,7 +109,8 @@ export default function SubscribersPage() {
             onChange={(e) =>
               setFilters({ ...filters, source: e.target.value, page: 1 })
             }
-            className="h-10 w-40"
+            wrapperClassName="w-48 shrink-0"
+            className="h-10 text-[11px] font-bold uppercase tracking-wide"
           >
             <option value="all">ALL SOURCES</option>
             {Object.values(SubscriberSource).map((source) => (
