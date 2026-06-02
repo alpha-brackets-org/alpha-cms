@@ -23,14 +23,16 @@ import {
   PopulatedCaseStudySchema,
   PopulatedProjectSchema,
   PopulatedTestimonialSchema,
+  PublishStatusSchema,
+  TestimonialStatusSchema,
+  MediaFolderSchema,
+  SubscriberStatusSchema,
+  SubscriberSourceSchema,
+  LeadStatusSchema,
+  LeadSourceSchema,
+  UserRoleSchema,
+  AnalyticsEventSchema,
 } from '@/schemas/cms';
-import {
-  PublishStatus,
-  SubscriberSource,
-  SubscriberStatus,
-  TestimonialStatus,
-} from '@/schemas/cms';
-
 const registry = new OpenAPIRegistry();
 
 /**
@@ -56,6 +58,17 @@ registry.register('PopulatedTestimonial', PopulatedTestimonialSchema);
 registry.register('Analytics', AnalyticsSchema);
 registry.register('SystemStats', StatsSchema);
 registry.register('SEOMetadata', SEOMetadataSchema);
+
+// Register enums globally as shared components
+registry.register('PublishStatus', PublishStatusSchema);
+registry.register('TestimonialStatus', TestimonialStatusSchema);
+registry.register('MediaFolder', MediaFolderSchema);
+registry.register('SubscriberStatus', SubscriberStatusSchema);
+registry.register('SubscriberSource', SubscriberSourceSchema);
+registry.register('LeadStatus', LeadStatusSchema);
+registry.register('LeadSource', LeadSourceSchema);
+registry.register('UserRole', UserRoleSchema);
+registry.register('AnalyticsEvent', AnalyticsEventSchema);
 
 /**
  * Public-safe portfolio config — returned by /portfolios/config.
@@ -607,12 +620,10 @@ registry.registerPath({
       ...PaginationQueryParams,
       ...PortfolioQueryParam,
       ...SearchQueryParam,
-      source: z
-        .nativeEnum(SubscriberSource)
+      source: SubscriberSourceSchema
         .optional()
         .openapi({ param: { name: 'source', in: 'query' } }),
-      status: z
-        .nativeEnum(SubscriberStatus)
+      status: SubscriberStatusSchema
         .optional()
         .openapi({ param: { name: 'status', in: 'query' } }),
     }),
@@ -807,8 +818,7 @@ registry.registerPath({
       ...PortfolioQueryParam,
       ...SearchQueryParam,
       ...CategoryQueryParam,
-      status: z
-        .enum(PublishStatus)
+      status: PublishStatusSchema
         .optional()
         .openapi({ param: { name: 'status', in: 'query' } }),
     }),
@@ -884,8 +894,7 @@ registry.registerPath({
       ...PortfolioQueryParam,
       ...SearchQueryParam,
       ...CategoryQueryParam,
-      status: z
-        .enum(PublishStatus)
+      status: PublishStatusSchema
         .optional()
         .openapi({ param: { name: 'status', in: 'query' } }),
     }),
@@ -960,8 +969,7 @@ registry.registerPath({
       ...PaginationQueryParams,
       ...PortfolioQueryParam,
       ...SearchQueryParam,
-      status: z
-        .enum(PublishStatus)
+      status: PublishStatusSchema
         .optional()
         .openapi({ param: { name: 'status', in: 'query' } }),
     }),
@@ -1036,8 +1044,7 @@ registry.registerPath({
       ...PaginationQueryParams,
       ...PortfolioQueryParam,
       ...SearchQueryParam,
-      status: z
-        .enum(PublishStatus)
+      status: PublishStatusSchema
         .optional()
         .openapi({ param: { name: 'status', in: 'query' } }),
     }),
@@ -1113,8 +1120,7 @@ registry.registerPath({
       ...PaginationQueryParams,
       ...PortfolioQueryParam,
       ...SearchQueryParam,
-      status: z
-        .nativeEnum(TestimonialStatus)
+      status: TestimonialStatusSchema
         .optional()
         .openapi({ param: { name: 'status', in: 'query' } }),
     }),

@@ -132,6 +132,18 @@ export const TagSchema = z.object({
   id: z.string().nullish(),
 });
 
+// Zod schemas for enums to generate clean, referenced OpenAPI definitions
+export const PublishStatusSchema = z.enum(PublishStatus);
+export const TestimonialStatusSchema = z.enum(TestimonialStatus);
+export const MediaFolderSchema = z.enum(MediaFolder);
+export const SubscriberStatusSchema = z.enum(SubscriberStatus);
+export const SubscriberSourceSchema = z.enum(SubscriberSource);
+export const LeadStatusSchema = z.enum(LeadStatus);
+export const LeadSourceSchema = z.enum(LeadSource);
+export const UserRoleSchema = z.enum(UserRole);
+export const AnalyticsEventSchema = z.enum(AnalyticsEvent);
+export const ContentTypeSchema = z.enum(ContentType);
+
 // =============================================================================
 // SECTION 4 — CONTENT SCHEMAS (Blog, CaseStudy, Project, FAQ, Testimonial)
 // =============================================================================
@@ -150,7 +162,7 @@ export const BlogSchema = z
       .nullish(),
     category: z.string().nullish(),
     tags: z.array(TagSchema).nullish(),
-    status: z.enum(PublishStatus).default(PublishStatus.DRAFT),
+    status: PublishStatusSchema.default(PublishStatus.DRAFT),
     publishedAt: z.string().nullish(),
     featured: z.boolean().default(false),
     readTime: z.string().nullish(),
@@ -173,7 +185,7 @@ export const CaseStudySchema = z
     readTime: z.string().nullish(),
     coverImage: z.string().nullish(),
     tags: z.array(TagSchema).nullish(),
-    status: z.enum(PublishStatus).default(PublishStatus.DRAFT),
+    status: PublishStatusSchema.default(PublishStatus.DRAFT),
     featured: z.boolean().default(false),
     pdfUrl: z.string().nullish(), // Gated content PDF sent to lead on download
     seo: SEOMetadataSchema.nullish(),
@@ -193,7 +205,7 @@ export const ProjectSchema = z
     repoUrl: z.string().url().nullish(),
     thumbnail: z.string().nullish(),
     gallery: z.array(z.string()).default([]),
-    status: z.enum(PublishStatus).default(PublishStatus.DRAFT),
+    status: PublishStatusSchema.default(PublishStatus.DRAFT),
     featured: z.boolean().default(false),
     category: z.string().nullish(),
     seo: SEOMetadataSchema.nullish(),
@@ -206,7 +218,7 @@ export const FaqSchema = z
     question: z.string().min(1, 'Question is required'),
     answer: z.string().min(1, 'Answer is required'),
     portfolio: PortfolioIdSchema,
-    status: z.enum(PublishStatus).default(PublishStatus.PUBLISHED),
+    status: PublishStatusSchema.default(PublishStatus.PUBLISHED),
     order: z.number().default(0),
     group: z.string().nullish(),
   })
@@ -220,13 +232,7 @@ export const TestimonialSchema = z
     avatar: z.string().nullish(),
     content: z.string().min(1, 'Testimonial content is required'),
     rating: z.number().int().min(1).max(5).default(5),
-    status: z
-      .enum([
-        TestimonialStatus.PUBLISHED,
-        TestimonialStatus.DRAFT,
-        TestimonialStatus.ARCHIVED,
-      ])
-      .default(TestimonialStatus.PUBLISHED),
+    status: TestimonialStatusSchema.default(TestimonialStatus.PUBLISHED),
     featured: z.boolean().default(false),
     order: z.number().default(0),
     sourceUrl: z.string().nullish(),
@@ -289,7 +295,7 @@ export const MediaSchema = z
     width: z.number().optional(),
     height: z.number().optional(),
     altText: z.string().optional(),
-    folder: z.enum(MediaFolder).default(MediaFolder.UNORGANIZED),
+    folder: MediaFolderSchema.default(MediaFolder.UNORGANIZED),
     tags: z.array(z.string()).default([]),
     portfolio: PortfolioIdSchema,
   })
@@ -298,7 +304,7 @@ export const MediaSchema = z
 export const UserSchema = z
   .object({
     email: z.email(),
-    role: z.enum(UserRole).default(UserRole.VIEWER),
+    role: UserRoleSchema.default(UserRole.VIEWER),
     portfolios: z.array(z.string()).optional().default([]),
     password: z.string().optional(),
     resetToken: z.string().optional(),
@@ -327,9 +333,9 @@ export const LeadSchema = z
     company: z.string().nullish(),
     jobTitle: z.string().nullish(),
     phone: z.string().nullish(),
-    source: z.enum(LeadSource).default(LeadSource.CASE_STUDY),
+    source: LeadSourceSchema.default(LeadSource.CASE_STUDY),
     downloadedItems: z.array(z.string()).default([]),
-    status: z.enum(LeadStatus).default(LeadStatus.NEW),
+    status: LeadStatusSchema.default(LeadStatus.NEW),
     notes: z
       .array(
         z.object({
@@ -347,8 +353,8 @@ export const SubscriberSchema = z
   .object({
     email: z.email(),
     portfolio: PortfolioIdSchema,
-    status: z.enum(SubscriberStatus).default(SubscriberStatus.ACTIVE),
-    source: z.enum(SubscriberSource).default(SubscriberSource.NEWSLETTER),
+    status: SubscriberStatusSchema.default(SubscriberStatus.ACTIVE),
+    source: SubscriberSourceSchema.default(SubscriberSource.NEWSLETTER),
     subscribedAt: z.string().optional(),
     downloadHistory: z.array(z.string()).default([]),
     intent: z.string().nullish(),
@@ -362,7 +368,7 @@ export const CampaignSchema = z
     subject: z.string().min(1, 'Subject is required'),
     content: z.string().min(1, 'Content is required'),
     portfolio: PortfolioIdSchema,
-    status: z.enum(PublishStatus).default(PublishStatus.DRAFT),
+    status: PublishStatusSchema.default(PublishStatus.DRAFT),
     recipientCount: z.number().default(0),
     sentAt: z.string().nullish(),
     stats: z
@@ -377,7 +383,7 @@ export const CampaignSchema = z
 export const AnalyticsSchema = z
   .object({
     portfolio: PortfolioIdSchema,
-    event: z.enum(AnalyticsEvent),
+    event: AnalyticsEventSchema,
     path: z.string(),
     visitorId: z.string(),
     duration: z.number().default(0),
