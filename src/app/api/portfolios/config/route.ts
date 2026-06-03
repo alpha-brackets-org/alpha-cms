@@ -36,7 +36,10 @@ export const GET = apiHandler(async (request) => {
       return sendError('Invalid Portfolio ID', 400);
     }
   } else if (domain) {
-    query.domain = domain;
+    // Strip http(s):// and www. if present in the requested domain just to be safe
+    const cleanDomain = domain.replace(/^(https?:\/\/)?(www\.)?/, '');
+    // Match the domain in the DB even if the DB has http://, https://, or www.
+    query.domain = new RegExp(`^(https?:\\/\\/)?(www\\.)?${cleanDomain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\/?$`, 'i');
   }
 
   const portfolio = await db
