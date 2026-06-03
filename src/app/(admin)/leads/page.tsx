@@ -241,7 +241,7 @@ export default function LeadsPage() {
                 <Badge variant="outline" className="text-[9px]">
                   {item.source === LeadSource.CASE_STUDY
                     ? 'CASE STUDY DOWNLOAD'
-                    : item.source.toUpperCase()}
+                    : item.source.toUpperCase().replace(/_/g, ' ')}
                 </Badge>
                 {item.downloadedItems && item.downloadedItems.length > 0 && (
                   <div className="mt-1 flex items-center gap-1 text-[9px] text-muted-foreground">
@@ -256,8 +256,9 @@ export default function LeadsPage() {
                   onChange={(e) =>
                     handleStatusChange(item._id!, e.target.value as LeadStatus)
                   }
+                  wrapperClassName="w-32"
                   className={cn(
-                    'h-8 w-32 border-2 text-[10px] font-black uppercase tracking-tighter',
+                    'h-8 border-2 text-[10px] font-black uppercase tracking-tighter',
                     {
                       [LeadStatus.NEW]:
                         'border-blue-500 bg-blue-50 text-blue-700',
@@ -272,7 +273,7 @@ export default function LeadsPage() {
                 >
                   {Object.values(LeadStatus).map((status) => (
                     <option key={status} value={status}>
-                      {status}
+                      {status.toUpperCase()}
                     </option>
                   ))}
                 </Select>

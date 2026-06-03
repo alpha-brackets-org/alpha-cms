@@ -13,6 +13,7 @@ import {
   Portfolio,
   CaseStudy,
   LeadSource,
+  LeadStatus,
 } from '@/schemas/cms';
 import { sendLeadMagnetEmail } from '@/lib/newsletter-engine';
 import { getSignedUrl } from '@/lib/imagekit';
@@ -61,7 +62,7 @@ export const POST = apiHandler(
         company,
         jobTitle,
         source: LeadSource.CONTACT_FORM,
-        status: 'new',
+        status: LeadStatus.NEW,
         notes,
         portfolio: portfolioObjId,
         createdAt: new Date(),
