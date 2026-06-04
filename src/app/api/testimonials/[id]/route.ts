@@ -29,16 +29,28 @@ export const PATCH = apiHandler(
     const { id } = await params;
     const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
 
+    const processedData: Record<string, unknown> = { ...validatedData };
+    if (processedData.portfolio) {
+      processedData.portfolio = new mongoose.Types.ObjectId(processedData.portfolio as string);
+    }
+
     // DbUtils.updateDoc automatically sets updatedAt — no need to pass it manually
     const result = await DbUtils.updateDoc(
       CollectionName.TESTIMONIALS,
       id,
-      validatedData,
+      processedData,
       query
     );
     if (result.matchedCount === 0) return sendNotFound('Testimonial');
 
-    return NextResponse.json({ success: true });
+    // Fetch and return the updated document
+    const results = await mongoose.connection.db
+      .collection(CollectionName.TESTIMONIALS)
+      .aggregate([{ $match: query }, ...portfolioPopulate()])
+      .toArray();
+
+    const updatedTestimonial = results[0];
+    return NextResponse.json(updatedTestimonial || { success: true });
   },
   { schema: TestimonialSchema.partial() }
 );
