@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { apiHandler, sendSuccess } from '@/lib/api-utils';
+import { apiHandler, sendSuccess, sendCorsResponse } from '@/lib/api-utils';
 import { CollectionName } from '@/types/cms';
 
 /**
@@ -28,7 +28,7 @@ export const POST = apiHandler(
       timestamp: new Date(),
     });
 
-    return sendSuccess({ tracked: true }, 201);
+    return sendCorsResponse(sendSuccess({ tracked: true }, 201));
   },
   { isPublic: true }
 );

@@ -144,7 +144,8 @@ export const GET = apiHandler(async (request) => {
   // Lead Growth (Dynamic Timeframe)
   const url = new URL(request.url);
   const monthsParam = url.searchParams.get('months');
-  const monthsNum = parseInt(monthsParam, 10);
+  let monthsNum = parseInt(monthsParam || '6', 10);
+  if (isNaN(monthsNum)) monthsNum = 6;
 
   const timeLimit = new Date();
   timeLimit.setMonth(timeLimit.getMonth() - monthsNum);
