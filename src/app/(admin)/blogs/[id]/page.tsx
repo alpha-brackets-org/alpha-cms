@@ -14,7 +14,8 @@ export default function EditBlogPage() {
   const params = useParams();
   const id = params.id as string;
 
-  const { data: blog, isLoading } = useBlog(id);
+  const { data: response, isLoading } = useBlog(id);
+  const blog = response?.data;
   const updateMutation = useUpdateBlog(id);
 
   const handleSubmit = (formData: Blog) => {

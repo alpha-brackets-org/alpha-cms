@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
+import { getDb } from '@/lib/db/dbConnect';
 import {
   apiHandler,
   DbUtils,
   getCurrentUser,
   sendForbidden,
+  sendData,
+  sendNotFound,
 } from '@/lib/api-utils';
 import { UserRole, UserSchema } from '@/schemas/cms';
 
@@ -21,7 +24,7 @@ export const PATCH = apiHandler(
 
     // Security Protocol: Check for email collision if email is being updated
     if (validatedData?.email) {
-      const collision = await mongoose.connection.db
+      const collision = await getDb()
         .collection('users')
         .findOne({
           email: validatedData.email,
@@ -39,9 +42,19 @@ export const PATCH = apiHandler(
       }
     }
 
-    await DbUtils.updateDoc('users', id, validatedData);
+    await DbUtils.updateDoc('users', id, validatedData!);
 
-    return NextResponse.json({ success: true });
+    const updated = await DbUtils.findDoc('users', id);
+    const {
+      salt,
+      hash,
+      sessions,
+      loginAttempts,
+      password,
+      ...sanitizedUpdated
+    } = (updated as Record<string, unknown>) || {};
+
+    return sendData(sanitizedUpdated);
   },
   { schema: UserSchema.partial() }
 );
@@ -54,9 +67,11 @@ export const DELETE = apiHandler(async (req, { params }) => {
 
   const { id } = await params;
 
-  await mongoose.connection.db
-    .collection('users')
-    .deleteOne({ _id: new mongoose.Types.ObjectId(id as string) });
+  const result = await DbUtils.deleteDoc('users', id);
 
-  return NextResponse.json({ success: true });
+  if (result.deletedCount === 0) {
+    return sendNotFound('User');
+  }
+
+  return sendData({ id });
 });

@@ -1,12 +1,18 @@
 import mongoose from 'mongoose';
+import { getDb } from '@/lib/db/dbConnect';
 import {
   apiHandler,
-  sendSuccess,
+  sendData,
   sendError,
   corsOptions,
   sendCorsResponse,
 } from '@/lib/api-utils';
-import { CollectionName, LeadStatus, LeadSource } from '@/schemas/cms';
+import {
+  CollectionName,
+  LeadStatus,
+  LeadSource,
+  LeadCaptureSchema,
+} from '@/schemas/cms';
 import { Portfolio, CaseStudy } from '@/types/cms';
 import { sendLeadMagnetEmail } from '@/lib/newsletter-engine';
 
@@ -16,8 +22,7 @@ export async function OPTIONS() {
 }
 
 export const POST = apiHandler(
-  async (request) => {
-    const body = await request.json();
+  async (_request, { validatedData }) => {
     const {
       firstName,
       lastName,
@@ -28,15 +33,11 @@ export const POST = apiHandler(
       portfolio,
       caseStudyId,
       intent,
-    } = body;
-
-    if (!email || !firstName || !lastName || !portfolio || !caseStudyId) {
-      return sendError('Missing required fields', 400);
-    }
+    } = validatedData!;
 
     // 0. Simple Rate Limiting (Prevent abuse)
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-    const recentSubmissions = await mongoose.connection.db
+    const recentSubmissions = await getDb()
       .collection(CollectionName.LEADS)
       .countDocuments({
         email,
@@ -49,7 +50,7 @@ export const POST = apiHandler(
     }
 
     // 1. Fetch Portfolio
-    const portfolioDoc = await mongoose.connection.db
+    const portfolioDoc = await getDb()
       .collection(CollectionName.PORTFOLIOS)
       .findOne({ _id: new mongoose.Types.ObjectId(portfolio as string) });
 
@@ -58,7 +59,7 @@ export const POST = apiHandler(
     }
 
     // 2. Fetch Case Study
-    const caseStudyDoc = await mongoose.connection.db
+    const caseStudyDoc = await getDb()
       .collection(CollectionName.CASE_STUDIES)
       .findOne({ _id: new mongoose.Types.ObjectId(caseStudyId as string) });
 
@@ -67,7 +68,7 @@ export const POST = apiHandler(
     }
 
     // 3. Upsert Lead
-    const existingLead = await mongoose.connection.db
+    const existingLead = await getDb()
       .collection(CollectionName.LEADS)
       .findOne({
         email,
@@ -83,7 +84,7 @@ export const POST = apiHandler(
         items.push(downloadedItemName);
       }
 
-      await mongoose.connection.db.collection(CollectionName.LEADS).updateOne(
+      await getDb().collection(CollectionName.LEADS).updateOne(
         { _id: existingLead._id },
         {
           $set: {
@@ -99,7 +100,7 @@ export const POST = apiHandler(
       );
     } else {
       // Create new lead
-      await mongoose.connection.db.collection(CollectionName.LEADS).insertOne({
+      await getDb().collection(CollectionName.LEADS).insertOne({
         firstName,
         lastName,
         email,
@@ -121,7 +122,7 @@ export const POST = apiHandler(
         to: email,
         portfolio: portfolioDoc as unknown as Portfolio,
         content: caseStudyDoc as unknown as CaseStudy,
-        intent,
+        intent: intent ?? undefined,
       });
     } catch (error) {
       console.error('Failed to send lead magnet email:', error);
@@ -130,8 +131,8 @@ export const POST = apiHandler(
     }
 
     return sendCorsResponse(
-      sendSuccess({ message: 'Lead captured and email sent' }, 201)
+      sendData({ message: 'Lead captured and email sent' }, 201)
     );
   },
-  { isPublic: true }
+  { isPublic: true, schema: LeadCaptureSchema }
 );

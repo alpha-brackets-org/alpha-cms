@@ -77,10 +77,10 @@ export default function CampaignsPage() {
 
   const handleSend = (id: string) => {
     sendMutation.mutate(id, {
-      onSuccess: (data) => {
+      onSuccess: (res) => {
         success(
           'CAMPAIGN SENT',
-          `Successfully sent to ${data.sent} subscribers.`
+          `Successfully sent to ${res.data.sent} subscribers.`
         );
       },
     });
@@ -201,7 +201,7 @@ export default function CampaignsPage() {
                   {campaign.status === 'draft' && (
                     <Button
                       size="sm"
-                      onClick={() => handleSend(campaign._id)}
+                      onClick={() => handleSend(campaign._id!)}
                       disabled={sendMutation.isPending}
                       className="h-8 gap-2 bg-amber-500 text-amber-950 hover:bg-amber-600"
                     >

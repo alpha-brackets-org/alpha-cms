@@ -24,7 +24,7 @@ export default function LoginPage() {
       { email, password },
       {
         onSuccess: () => {
-          router.push('/');
+          router.push('/dashboard');
         },
       }
     );
@@ -38,7 +38,7 @@ export default function LoginPage() {
           <div className="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10">
             <ShieldCheck className="h-10 w-10 text-primary" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-white">
+          <h1 className="text-4xl font-bold tracking-tighter text-white md:text-5xl">
             HUB<span className="text-primary">ACCESS</span>
           </h1>
           <p className="text-[10px] font-bold uppercase tracking-ultrawide text-muted-foreground">

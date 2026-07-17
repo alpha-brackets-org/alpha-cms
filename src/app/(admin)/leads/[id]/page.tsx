@@ -217,7 +217,9 @@ export default function LeadDetailPage() {
                             {note.adminName || 'Admin'}
                           </span>
                           <span className="font-mono text-[9px] text-muted-foreground">
-                            {new Date(note.createdAt).toLocaleString()}
+                            {note.createdAt
+                              ? new Date(note.createdAt).toLocaleString()
+                              : ''}
                           </span>
                         </div>
                         <p className="mt-1 text-xs leading-relaxed text-foreground/80">

@@ -2,10 +2,7 @@
 
 import React from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import {
-  useTestimonial,
-  useUpdateTestimonial,
-} from '@/hooks/use-testimonials';
+import { useTestimonial, useUpdateTestimonial } from '@/hooks/use-testimonials';
 import { TestimonialForm } from '../TestimonialForm';
 import { Testimonial } from '@/types/cms';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,7 +10,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function EditTestimonialPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
-  const { data: testimonial, isLoading } = useTestimonial(id);
+  const { data: response, isLoading } = useTestimonial(id);
+  const testimonial = response?.data;
   const updateMutation = useUpdateTestimonial(id);
 
   const handleSubmit = (formData: Testimonial) => {
@@ -35,7 +33,11 @@ export default function EditTestimonialPage() {
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <TestimonialForm
-        initialData={testimonial as unknown as Parameters<typeof TestimonialForm>[0]['initialData']}
+        initialData={
+          testimonial as unknown as Parameters<
+            typeof TestimonialForm
+          >[0]['initialData']
+        }
         onSubmit={handleSubmit}
         isLoading={updateMutation.isPending}
         submitText="SAVE CHANGES"

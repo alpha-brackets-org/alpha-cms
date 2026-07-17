@@ -1,42 +1,28 @@
-import {
-  apiHandler,
-  sendSuccess,
-  sendError,
-  getCurrentUser,
-} from '@/lib/api-utils';
+import { apiHandler, sendData, sendError } from '@/lib/api-utils';
 import mongoose from 'mongoose';
 import { scopeQuery } from '@/lib/db/portfolio-utils';
+import { getDb } from '@/lib/db/dbConnect';
 
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
-
-export const GET = apiHandler(async (request, context: RouteContext) => {
-  const user = await getCurrentUser();
-  if (!user) return sendError('Unauthorized', 401);
-
-  const { id } = await context.params;
-  const db = mongoose.connection.db;
+export const GET = apiHandler(async (_request, { params }) => {
+  const { id } = await params;
+  const db = getDb();
 
   const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
   const campaign = await db.collection('campaigns').findOne(query);
 
   if (!campaign) return sendError('Campaign not found', 404);
 
-  return sendSuccess(campaign);
+  return sendData(campaign);
 });
 
-export const DELETE = apiHandler(async (_request, context: RouteContext) => {
-  const user = await getCurrentUser();
-  if (!user) return sendError('Unauthorized', 401);
-
-  const { id } = await context.params;
-  const db = mongoose.connection.db;
+export const DELETE = apiHandler(async (_request, { params }) => {
+  const { id } = await params;
+  const db = getDb();
 
   const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
   const result = await db.collection('campaigns').deleteOne(query);
 
   if (result.deletedCount === 0) return sendError('Campaign not found', 404);
 
-  return sendSuccess({ message: 'Campaign deleted' });
+  return sendData({ id });
 });

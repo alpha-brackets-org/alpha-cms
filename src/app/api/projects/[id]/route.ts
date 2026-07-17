@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { NextResponse } from 'next/server';
-import { apiHandler, sendNotFound, DbUtils } from '@/lib/api-utils';
+import { apiHandler, sendNotFound, sendData, DbUtils } from '@/lib/api-utils';
+import { getDb } from '@/lib/db/dbConnect';
 import {
   scopeQuery,
   portfolioPopulate,
@@ -15,7 +15,7 @@ export const GET = apiHandler(async (_request, { params }) => {
   }
   const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
 
-  const items = await mongoose.connection.db
+  const items = await getDb()
     .collection(CollectionName.PROJECTS)
     .aggregate([
       { $match: query },
@@ -26,7 +26,7 @@ export const GET = apiHandler(async (_request, { params }) => {
 
   const item = items[0];
   if (!item) return sendNotFound('Project');
-  return NextResponse.json(item);
+  return sendData(item);
 });
 
 export const PATCH = apiHandler(
@@ -37,12 +37,13 @@ export const PATCH = apiHandler(
     const result = await DbUtils.updateDoc(
       CollectionName.PROJECTS,
       id,
-      validatedData,
+      validatedData!,
       query
     );
     if (result.matchedCount === 0) return sendNotFound('Project');
 
-    return NextResponse.json({ success: true });
+    const updated = await DbUtils.findDoc(CollectionName.PROJECTS, id, query);
+    return sendData(updated);
   },
   { schema: ProjectSchema.partial() }
 );
@@ -56,5 +57,5 @@ export const DELETE = apiHandler(async (_request, { params }) => {
   const result = await DbUtils.deleteDoc(CollectionName.PROJECTS, id, query);
 
   if (result.deletedCount === 0) return sendNotFound('Project');
-  return NextResponse.json({ success: true });
+  return sendData({ id });
 });

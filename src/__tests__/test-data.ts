@@ -33,7 +33,10 @@ export interface LeadCapturePayload {
   phone?: string | null;
 }
 
-export const mockPortfolioData: Omit<Portfolio, '_id' | 'createdAt' | 'updatedAt'> = {
+export const mockPortfolioData: Omit<
+  Portfolio,
+  '_id' | 'createdAt' | 'updatedAt'
+> = {
   name: 'Test Portfolio',
   domain: 'test.com',
   active: true,
@@ -56,7 +59,9 @@ export const mockAdminUser = {
   password: 'admin123',
 };
 
-export const mockBlogData = (portfolioId: string): Omit<Blog, '_id' | 'createdAt' | 'updatedAt'> => ({
+export const mockBlogData = (
+  portfolioId: string
+): Omit<Blog, '_id' | 'createdAt' | 'updatedAt'> => ({
   title: 'Test Blog',
   slug: 'test-blog',
   portfolio: portfolioId,
@@ -72,7 +77,9 @@ export const mockBlogData = (portfolioId: string): Omit<Blog, '_id' | 'createdAt
   excerpt: null,
 });
 
-export const mockCaseStudyData = (portfolioId: string): Omit<CaseStudy, '_id' | 'createdAt' | 'updatedAt'> => ({
+export const mockCaseStudyData = (
+  portfolioId: string
+): Omit<CaseStudy, '_id' | 'createdAt' | 'updatedAt'> => ({
   projectTitle: 'Cool Case Study',
   slug: 'cool-case-study',
   content: 'Details content',
@@ -92,7 +99,9 @@ export const mockCaseStudyData = (portfolioId: string): Omit<CaseStudy, '_id' | 
   seo: null,
 });
 
-export const mockProjectData = (portfolioId: string): Omit<Project, '_id' | 'createdAt' | 'updatedAt'> => ({
+export const mockProjectData = (
+  portfolioId: string
+): Omit<Project, '_id' | 'createdAt' | 'updatedAt'> => ({
   title: 'Cool Project',
   slug: 'cool-project',
   portfolio: portfolioId,
@@ -110,7 +119,9 @@ export const mockProjectData = (portfolioId: string): Omit<Project, '_id' | 'cre
   seo: null,
 });
 
-export const mockFaqData = (portfolioId: string): Omit<Faq, '_id' | 'createdAt' | 'updatedAt'> => ({
+export const mockFaqData = (
+  portfolioId: string
+): Omit<Faq, '_id' | 'createdAt' | 'updatedAt'> => ({
   question: 'FAQ Question',
   answer: 'FAQ Answer',
   portfolio: portfolioId,
@@ -119,7 +130,9 @@ export const mockFaqData = (portfolioId: string): Omit<Faq, '_id' | 'createdAt' 
   group: null,
 });
 
-export const mockTestimonialData = (portfolioId: string): Omit<Testimonial, '_id' | 'createdAt' | 'updatedAt'> => ({
+export const mockTestimonialData = (
+  portfolioId: string
+): Omit<Testimonial, '_id' | 'createdAt' | 'updatedAt'> => ({
   name: 'John Doe',
   content: 'Great service.',
   portfolio: portfolioId,
@@ -134,14 +147,18 @@ export const mockTestimonialData = (portfolioId: string): Omit<Testimonial, '_id
   platform: null,
 });
 
-export const mockCategoryData = (portfolioId: string): Omit<Category, '_id' | 'createdAt' | 'updatedAt'> => ({
+export const mockCategoryData = (
+  portfolioId: string
+): Omit<Category, '_id' | 'createdAt' | 'updatedAt'> => ({
   name: 'Tech',
   slug: 'tech',
   portfolio: portfolioId,
   isDefault: false,
 });
 
-export const mockLeadData = (portfolioId: string): Omit<Lead, '_id' | 'createdAt' | 'updatedAt'> => ({
+export const mockLeadData = (
+  portfolioId: string
+): Omit<Lead, '_id' | 'createdAt' | 'updatedAt'> => ({
   firstName: 'Bob',
   lastName: 'Smith',
   email: 'bob@smith.com',
@@ -155,7 +172,10 @@ export const mockLeadData = (portfolioId: string): Omit<Lead, '_id' | 'createdAt
   notes: [],
 });
 
-export const mockLeadCaptureData = (portfolioId: string, caseStudyId: string): LeadCapturePayload => ({
+export const mockLeadCaptureData = (
+  portfolioId: string,
+  caseStudyId: string
+): LeadCapturePayload => ({
   firstName: 'Bob',
   lastName: 'Smith',
   email: 'bob@smith.com',
@@ -166,7 +186,9 @@ export const mockLeadCaptureData = (portfolioId: string, caseStudyId: string): L
   phone: null,
 });
 
-export const mockSubscriberData = (portfolioId: string): Omit<Subscriber, '_id' | 'createdAt' | 'updatedAt'> => ({
+export const mockSubscriberData = (
+  portfolioId: string
+): Omit<Subscriber, '_id' | 'createdAt' | 'updatedAt'> => ({
   email: 'subscriber@test.com',
   portfolio: portfolioId,
   status: SubscriberStatus.ACTIVE,
@@ -177,7 +199,9 @@ export const mockSubscriberData = (portfolioId: string): Omit<Subscriber, '_id' 
   metadata: null,
 });
 
-export const mockCampaignData = (portfolioId: string): Omit<Campaign, '_id' | 'createdAt' | 'updatedAt'> => ({
+export const mockCampaignData = (
+  portfolioId: string
+): Omit<Campaign, '_id' | 'createdAt' | 'updatedAt'> => ({
   title: 'Promo Campaign',
   subject: 'Special offer!',
   content: 'Details about special offer.',
@@ -188,7 +212,9 @@ export const mockCampaignData = (portfolioId: string): Omit<Campaign, '_id' | 'c
   stats: null,
 });
 
-export const mockMediaData = (portfolioId: string): Omit<Media, '_id' | 'createdAt' | 'updatedAt'> => ({
+export const mockMediaData = (
+  portfolioId: string
+): Omit<Media, '_id' | 'createdAt' | 'updatedAt'> => ({
   filename: 'test.png',
   imageKitUrl: 'https://ik.imagekit.io/test.png',
   imageKitFileId: 'file_123',
@@ -202,7 +228,9 @@ export const mockMediaData = (portfolioId: string): Omit<Media, '_id' | 'created
   altText: '',
 });
 
-export const mockAnalyticsData = (portfolioId: string): Omit<Analytics, '_id' | 'createdAt' | 'updatedAt'> => ({
+export const mockAnalyticsData = (
+  portfolioId: string
+): Omit<Analytics, '_id' | 'createdAt' | 'updatedAt'> => ({
   portfolio: portfolioId,
   event: AnalyticsEvent.PAGE_VIEW,
   path: '/home',

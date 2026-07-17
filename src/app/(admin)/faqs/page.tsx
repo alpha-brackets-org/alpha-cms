@@ -46,9 +46,9 @@ export default function FaqsPage() {
   const deleteMutation = useDeleteFaq();
 
   const faqs = response?.data || [];
-  const total = response?.total || 0;
-  const hasNextPage = response?.hasNextPage || false;
-  const hasPrevPage = response?.hasPrevPage || false;
+  const total = response?.pagination.total || 0;
+  const hasNextPage = response?.pagination.hasNextPage || false;
+  const hasPrevPage = response?.pagination.hasPrevPage || false;
 
   const handleClearFilters = () => {
     setSearchTerm('');
@@ -233,7 +233,7 @@ export default function FaqsPage() {
                     <Edit className="h-4 w-4 text-muted-foreground" />
                   </Link>
                   <button
-                    onClick={() => handleDeleteTrigger(faq._id, faq.question)}
+                    onClick={() => handleDeleteTrigger(faq._id!, faq.question)}
                     disabled={deleteMutation.isPending}
                     className="group/del border border-transparent p-2 transition-colors hover:border-destructive/20 hover:bg-destructive/10 disabled:opacity-30"
                   >
@@ -247,10 +247,10 @@ export default function FaqsPage() {
       </BrutalTable>
 
       {/* Pagination */}
-      {response && response.totalPages > 1 && (
+      {response && response.pagination.totalPages > 1 && (
         <BrutalPagination
           currentPage={page}
-          totalPages={response.totalPages}
+          totalPages={response.pagination.totalPages}
           hasPrevPage={hasPrevPage}
           hasNextPage={hasNextPage}
           onPageChange={setPage}

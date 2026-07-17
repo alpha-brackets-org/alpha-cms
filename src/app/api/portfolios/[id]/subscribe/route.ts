@@ -2,23 +2,21 @@ import mongoose from 'mongoose';
 import {
   apiHandler,
   DbUtils,
-  sendSuccess,
+  sendData,
   sendBadRequest,
+  sendError,
 } from '@/lib/api-utils';
 import { CollectionName, SubscriberStatus } from '@/types/cms';
 import { SubscriberSchema } from '@/schemas/cms';
-
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
+import { getDb } from '@/lib/db/dbConnect';
 
 /**
  * PUBLIC SUBSCRIBE ENDPOINT
  * Allows visitors to subscribe to a portfolio's newsletter.
  */
 export const POST = apiHandler(
-  async (request, context: RouteContext) => {
-    const { id } = await context.params;
+  async (request, { params }) => {
+    const { id } = await params;
     const body = await request.json();
 
     // Validate the request body
@@ -36,18 +34,19 @@ export const POST = apiHandler(
     const portfolioId = new mongoose.Types.ObjectId(id);
 
     // Check if already subscribed
-    const existing = await mongoose.connection.db
+    const existing = await getDb()
       .collection(CollectionName.SUBSCRIBERS)
       .findOne({ email: email.toLowerCase(), portfolio: portfolioId });
 
     if (existing) {
       if (existing.status === SubscriberStatus.ACTIVE) {
-        return sendBadRequest(
-          'This email is already subscribed to this portfolio.'
+        return sendError(
+          'This email is already subscribed to this portfolio.',
+          409
         );
       } else {
         // Re-activate if previously unsubscribed
-        await mongoose.connection.db
+        await getDb()
           .collection(CollectionName.SUBSCRIBERS)
           .updateOne(
             { _id: existing._id },
@@ -58,7 +57,7 @@ export const POST = apiHandler(
               },
             }
           );
-        return sendSuccess({ message: 'Subscription re-activated.' });
+        return sendData({ message: 'Subscription re-activated.' });
       }
     }
 
@@ -70,7 +69,7 @@ export const POST = apiHandler(
       subscribedAt: new Date(),
     });
 
-    return sendSuccess(
+    return sendData(
       { message: 'Successfully subscribed to the newsletter.' },
       201
     );

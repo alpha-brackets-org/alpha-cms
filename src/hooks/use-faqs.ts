@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PaginatedResponse, Faq, BaseFilters, PopulatedFaq } from '@/types/cms';
+import { Faq, BaseFilters, PopulatedFaq, PaginatedResponse } from '@/types/cms';
 import { api } from '@/lib/api-client';
 import { buildQueryString } from '@/lib/utils';
 import { useCmsQuery } from './use-cms-query';
@@ -11,15 +11,19 @@ export function useFaqs(filters: BaseFilters = {}) {
 }
 
 export function useFaq(id: string) {
-  return useCmsQuery<Faq>(['faq', id], () => api.get(`/faqs/${id}`), {
-    enabled: id !== 'new' && !!id,
-  });
+  return useCmsQuery<{ data: Faq }>(
+    ['faq', id],
+    () => api.get(`/faqs/${id}`),
+    {
+      enabled: id !== 'new' && !!id,
+    }
+  );
 }
 
 export function useCreateFaq() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Faq>) => api.post<{ id: string }>('/faqs', data),
+    mutationFn: (data: Partial<Faq>) => api.post<{ data: Faq }>('/faqs', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['faqs'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
@@ -31,7 +35,8 @@ export function useCreateFaq() {
 export function useUpdateFaq(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Faq>) => api.patch(`/faqs/${id}`, data),
+    mutationFn: (data: Partial<Faq>) =>
+      api.patch<{ data: Faq }>(`/faqs/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['faqs'] });
       queryClient.invalidateQueries({ queryKey: ['faq', id] });
@@ -44,7 +49,8 @@ export function useUpdateFaq(id: string) {
 export function useDeleteFaq() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/faqs/${id}`),
+    mutationFn: (id: string) =>
+      api.delete<{ data: { id: string } }>(`/faqs/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['faqs'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });

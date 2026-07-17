@@ -1,7 +1,7 @@
 import {
   apiHandler,
   sendError,
-  sendSuccess,
+  sendData,
   DbUtils,
   getCurrentUser,
   sendForbidden,
@@ -79,7 +79,7 @@ export const POST = apiHandler(async (request) => {
     // Atomic Database Registration
     const result = await DbUtils.createDoc('media', mediaData);
 
-    return sendSuccess(
+    return sendData(
       {
         ...mediaData,
         _id: result.insertedId,

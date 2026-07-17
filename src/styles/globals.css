@@ -47,7 +47,7 @@
 }
 
 .brutal-card {
-  @apply rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl transition-all duration-300 hover:shadow-md hover:border-white/20;
+  @apply rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl transition-all duration-300 hover:border-white/20 hover:shadow-md;
 }
 /* Custom Themed Scrollbars */
 ::-webkit-scrollbar {

@@ -62,10 +62,10 @@ export default function LeadsPage() {
   const updateMutation = useUpdateLead();
 
   const items = response?.data || [];
-  const total = response?.total || 0;
-  const totalPages = response?.totalPages || 1;
-  const hasNextPage = response?.hasNextPage || false;
-  const hasPrevPage = response?.hasPrevPage || false;
+  const total = response?.pagination.total || 0;
+  const totalPages = response?.pagination.totalPages || 1;
+  const hasNextPage = response?.pagination.hasNextPage || false;
+  const hasPrevPage = response?.pagination.hasPrevPage || false;
 
   const handleDeleteTrigger = (id: string, name: string) => {
     setTargetLead({ id, name });

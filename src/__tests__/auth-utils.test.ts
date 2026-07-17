@@ -29,7 +29,11 @@ describe('hashPassword / comparePassword', () => {
 });
 
 describe('signToken / verifyToken', () => {
-  const payload = { userId: '507f1f77bcf86cd799439011', email: 'admin@test.com', role: 'admin' };
+  const payload = {
+    userId: '507f1f77bcf86cd799439011',
+    email: 'admin@test.com',
+    role: 'admin',
+  };
 
   it('signs and verifies a token successfully', async () => {
     const token = await signToken(payload);

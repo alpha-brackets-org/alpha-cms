@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 import { scopeQuery, portfolioPopulate } from '@/lib/db/portfolio-utils';
 import {
-  sendPaginatedResponse,
-  sendSuccess,
+  sendList,
+  sendData,
   apiHandler,
   DbUtils,
   parseSearchParams,
@@ -10,11 +10,8 @@ import {
   getCurrentUser,
   sendForbidden,
 } from '@/lib/api-utils';
-import {
-  CollectionName,
-  MongoQuery,
-  MongoPipeline,
-} from '@/types/cms';
+import { getDb } from '@/lib/db/dbConnect';
+import { CollectionName, MongoQuery, MongoPipeline } from '@/types/cms';
 import { TestimonialSchema, TestimonialStatus, UserRole } from '@/schemas/cms';
 
 // ─── GET ALL TESTIMONIALS ─────────────────────────────────────────────────────
@@ -38,7 +35,7 @@ export const GET = apiHandler(async (request) => {
     query.status = validStatus;
   }
 
-  const total = await mongoose.connection.db
+  const total = await getDb()
     .collection(CollectionName.TESTIMONIALS)
     .countDocuments(query);
 
@@ -50,12 +47,12 @@ export const GET = apiHandler(async (request) => {
     ...portfolioPopulate(),
   ];
 
-  const testimonials = await mongoose.connection.db
+  const testimonials = await getDb()
     .collection(CollectionName.TESTIMONIALS)
     .aggregate(pipeline)
     .toArray();
 
-  return sendPaginatedResponse(testimonials, { page, limit, total });
+  return sendList(testimonials, { page, limit, total });
 });
 
 // ─── CREATE TESTIMONIAL ───────────────────────────────────────────────────────
@@ -66,7 +63,7 @@ export const POST = apiHandler(
     // Access Control
     if (
       user?.role !== UserRole.ADMIN &&
-      !user?.portfolios?.includes(validatedData.portfolio)
+      !user?.portfolios?.includes(validatedData!.portfolio)
     ) {
       return sendForbidden('You do not have access to this portfolio');
     }
@@ -74,15 +71,19 @@ export const POST = apiHandler(
     // Ensure portfolio is stored as ObjectId
     const processedBody = {
       ...validatedData,
-      portfolio: new mongoose.Types.ObjectId(validatedData.portfolio),
+      portfolio: new mongoose.Types.ObjectId(validatedData!.portfolio),
     };
 
     const result = await DbUtils.createDoc(
       CollectionName.TESTIMONIALS,
       processedBody
     );
+    const created = await DbUtils.findDoc(
+      CollectionName.TESTIMONIALS,
+      result.insertedId.toString()
+    );
 
-    return sendSuccess({ id: result.insertedId }, 201);
+    return sendData(created, 201);
   },
   { schema: TestimonialSchema }
 );

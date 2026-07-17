@@ -1,12 +1,24 @@
 import { cookies } from 'next/headers';
 import mongoose from 'mongoose';
-import { CollectionName, UserRole } from '@/schemas/cms';
+import { CollectionName, UserRole, User } from '@/schemas/cms';
 import { getCurrentUser } from '@/lib/api-utils';
 
 export async function getActivePortfolioId() {
   const cookieStore = await cookies();
   const portfolioCookie = cookieStore.get('alpha_active_portfolio');
   return portfolioCookie?.value || null;
+}
+
+/**
+ * Converts a user's `assignedPortfolios`/`portfolios` list into ObjectIds.
+ * Shared by scopeQuery (content collections, filtered on a `portfolio` field)
+ * and the Portfolios collection itself (filtered on `_id` — see portfolios/route.ts).
+ */
+export function getAssignedPortfolioObjectIds(user: User | null) {
+  const assignedPortfolios = user?.portfolios || [];
+  return assignedPortfolios.map(
+    (id) => new mongoose.Types.ObjectId(id as string)
+  );
 }
 
 export async function scopeQuery(
@@ -45,22 +57,14 @@ export async function scopeQuery(
     // Access Denied to this specific portfolio, fallback to any of their assigned ones
     return {
       ...baseQuery,
-      portfolio: {
-        $in: assignedPortfolios.map(
-          (id) => new mongoose.Types.ObjectId(id as string)
-        ),
-      },
+      portfolio: { $in: getAssignedPortfolioObjectIds(user) },
     };
   }
 
   // No specific portfolio chosen, show all assigned ones
   return {
     ...baseQuery,
-    portfolio: {
-      $in: assignedPortfolios.map(
-        (id) => new mongoose.Types.ObjectId(id as string)
-      ),
-    },
+    portfolio: { $in: getAssignedPortfolioObjectIds(user) },
   };
 }
 

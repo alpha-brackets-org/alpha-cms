@@ -14,7 +14,8 @@ export default function EditCaseStudyPage() {
   const params = useParams();
   const id = params.id as string;
 
-  const { data: study, isLoading } = useCaseStudy(id);
+  const { data: response, isLoading } = useCaseStudy(id);
+  const study = response?.data;
   const updateMutation = useUpdateCaseStudy(id);
 
   const handleSubmit = (formData: CaseStudy) => {

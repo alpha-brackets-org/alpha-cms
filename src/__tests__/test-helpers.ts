@@ -2,7 +2,12 @@ import mongoose from 'mongoose';
 import { hashPassword } from '@/lib/auth-utils';
 import { mockPortfolioData } from './test-data';
 
-export function makeReq(url: string, method = 'GET', body?: unknown, headers?: Record<string, string>) {
+export function makeReq(
+  url: string,
+  method = 'GET',
+  body?: unknown,
+  headers?: Record<string, string>
+) {
   return new Request(url, {
     method,
     headers: {
@@ -21,7 +26,9 @@ export async function clearCollections(db: mongoose.mongo.Db) {
   }
 }
 
-export async function seedDefaultPortfolio(db: mongoose.mongo.Db): Promise<string> {
+export async function seedDefaultPortfolio(
+  db: mongoose.mongo.Db
+): Promise<string> {
   const portfolioResult = await db.collection('portfolios').insertOne({
     ...mockPortfolioData,
     createdAt: new Date(),

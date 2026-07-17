@@ -129,7 +129,7 @@ export default function SubscribersPage() {
             Total Subscribers
           </p>
           <p className="text-4xl font-bold text-primary">
-            {data?.total || 0}
+            {data?.pagination.total || 0}
           </p>
         </div>
         <div className="rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl">
@@ -327,14 +327,14 @@ export default function SubscribersPage() {
       </BrutalTable>
 
       {/* Pagination */}
-      {data && data.totalPages > 1 && (
+      {data && data.pagination.totalPages > 1 && (
         <BrutalPagination
           currentPage={filters.page}
-          totalPages={data.totalPages}
-          hasPrevPage={data.hasPrevPage}
-          hasNextPage={data.hasNextPage}
+          totalPages={data.pagination.totalPages}
+          hasPrevPage={data.pagination.hasPrevPage}
+          hasNextPage={data.pagination.hasNextPage}
           onPageChange={(page) => setFilters({ ...filters, page })}
-          totalItems={data.total}
+          totalItems={data.pagination.total}
           itemsCount={data.data.length}
           label="IDENTITIES"
         />

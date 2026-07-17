@@ -59,9 +59,10 @@ export default function CategoriesPage() {
   });
 
   const categories = categoriesResponse?.data || [];
-  const totalPages = categoriesResponse?.totalPages || 1;
+  const totalPages = categoriesResponse?.pagination.totalPages || 1;
 
-  const { data: portfolios = [] } = usePortfolios();
+  const { data: portfoliosResponse } = usePortfolios();
+  const portfolios = portfoliosResponse?.data || [];
   const createMutation = useCreateCategory();
   const updateMutation = useUpdateCategory(editingCategory?._id || '');
   const deleteMutation = useDeleteCategory();
@@ -254,7 +255,7 @@ export default function CategoriesPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => openDeleteConfirm(cat._id, cat.name)}
+                        onClick={() => openDeleteConfirm(cat._id!, cat.name)}
                         className="h-9 w-9 border border-transparent hover:border-destructive/20 hover:bg-destructive/10"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />

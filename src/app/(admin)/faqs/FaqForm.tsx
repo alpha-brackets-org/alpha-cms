@@ -33,7 +33,8 @@ export function FaqForm({
   submitText,
 }: FaqFormProps) {
   const { activePortfolio } = usePortfolio();
-  const { data: portfolios = [] } = usePortfolios();
+  const { data: portfoliosResponse } = usePortfolios();
+  const portfolios = portfoliosResponse?.data || [];
 
   const [formData, setFormData] = useState({
     question: '',

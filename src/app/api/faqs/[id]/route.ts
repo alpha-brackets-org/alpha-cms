@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { NextResponse } from 'next/server';
-import { apiHandler, sendNotFound, DbUtils } from '@/lib/api-utils';
+import { apiHandler, sendNotFound, sendData, DbUtils } from '@/lib/api-utils';
+import { getDb } from '@/lib/db/dbConnect';
 import { scopeQuery, portfolioPopulate } from '@/lib/db/portfolio-utils';
 import { CollectionName } from '@/types/cms';
 import { FaqSchema } from '@/schemas/cms';
@@ -13,14 +13,14 @@ export const GET = apiHandler(async (_request, { params }) => {
   }
   const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
 
-  const faqs = await mongoose.connection.db
+  const faqs = await getDb()
     .collection(CollectionName.FAQS)
     .aggregate([{ $match: query }, ...portfolioPopulate()])
     .toArray();
 
   const faq = faqs[0];
   if (!faq) return sendNotFound('FAQ');
-  return NextResponse.json(faq);
+  return sendData(faq);
 });
 
 // UPDATE FAQ
@@ -32,12 +32,13 @@ export const PATCH = apiHandler(
     const result = await DbUtils.updateDoc(
       CollectionName.FAQS,
       id,
-      validatedData,
+      validatedData!,
       query
     );
     if (result.matchedCount === 0) return sendNotFound('FAQ');
 
-    return NextResponse.json({ success: true });
+    const updated = await DbUtils.findDoc(CollectionName.FAQS, id, query);
+    return sendData(updated);
   },
   { schema: FaqSchema.partial() }
 );
@@ -52,5 +53,5 @@ export const DELETE = apiHandler(async (_request, { params }) => {
   const result = await DbUtils.deleteDoc(CollectionName.FAQS, id, query);
 
   if (result.deletedCount === 0) return sendNotFound('FAQ');
-  return NextResponse.json({ success: true });
+  return sendData({ id });
 });

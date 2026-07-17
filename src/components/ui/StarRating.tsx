@@ -13,7 +13,11 @@ interface StarRatingProps {
  * StarRating — read-only star display component.
  * Use StarPicker (in StarPicker.tsx) when you need interactive input.
  */
-export function StarRating({ rating, size = 'sm', className }: StarRatingProps) {
+export function StarRating({
+  rating,
+  size = 'sm',
+  className,
+}: StarRatingProps) {
   const sizeClass = size === 'sm' ? 'h-3 w-3' : 'h-4 w-4';
 
   return (

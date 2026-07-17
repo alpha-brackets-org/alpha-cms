@@ -1,24 +1,13 @@
-import {
-  apiHandler,
-  sendSuccess,
-  sendError,
-  getCurrentUser,
-} from '@/lib/api-utils';
+import { apiHandler, sendData, sendError } from '@/lib/api-utils';
 import { CollectionName, Portfolio, PublishStatus } from '@/schemas/cms';
 import mongoose from 'mongoose';
 import { scopeQuery } from '@/lib/db/portfolio-utils';
 import { sendCampaignEmail } from '@/lib/newsletter-engine';
+import { getDb } from '@/lib/db/dbConnect';
 
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
-
-export const POST = apiHandler(async (_request, context: RouteContext) => {
-  const user = await getCurrentUser();
-  if (!user) return sendError('Unauthorized', 401);
-
-  const { id } = await context.params;
-  const db = mongoose.connection.db;
+export const POST = apiHandler(async (_request, { params }) => {
+  const { id } = await params;
+  const db = getDb();
 
   // 1. Fetch Campaign & Check Auth
   const campaignQuery = await scopeQuery({
@@ -78,7 +67,7 @@ export const POST = apiHandler(async (_request, context: RouteContext) => {
       }
     );
 
-    return sendSuccess({
+    return sendData({
       message: 'Campaign sent successfully',
       sent: result.sent,
       failed: result.failed,

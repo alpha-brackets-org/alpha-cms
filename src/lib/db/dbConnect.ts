@@ -29,12 +29,39 @@ async function dbConnect() {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
-      return mongoose;
-    });
+    cached.promise = mongoose
+      .connect(MONGODB_URI!, opts)
+      .then((mongoose) => {
+        return mongoose;
+      })
+      .catch((error) => {
+        // Reset so the next request can retry instead of replaying this failure forever
+        cached.promise = null;
+        throw error;
+      });
   }
-  cached.conn = await cached.promise;
+
+  try {
+    cached.conn = await cached.promise;
+  } catch (error) {
+    cached.promise = null;
+    throw error;
+  }
   return cached.conn;
 }
 
 export default dbConnect;
+
+/**
+ * Returns the active MongoDB `Db` handle, non-nullable.
+ * Safe to call anywhere `dbConnect()` has already run (i.e. inside any
+ * `apiHandler`-wrapped route) — throws instead of silently returning
+ * `undefined` if called before a connection exists.
+ */
+export function getDb() {
+  const db = mongoose.connection.db;
+  if (!db) {
+    throw new Error('Database not connected — dbConnect() must run first.');
+  }
+  return db;
+}

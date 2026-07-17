@@ -52,9 +52,9 @@ export default function CaseStudiesPage() {
 
   const categories = categoriesData?.data || [];
   const items = response?.data || [];
-  const total = response?.total || 0;
-  const hasNextPage = response?.hasNextPage || false;
-  const hasPrevPage = response?.hasPrevPage || false;
+  const total = response?.pagination.total || 0;
+  const hasNextPage = response?.pagination.hasNextPage || false;
+  const hasPrevPage = response?.pagination.hasPrevPage || false;
 
   const handleDeleteTrigger = (id: string, title: string) => {
     setTargetProject({ id, title });
@@ -278,7 +278,7 @@ export default function CaseStudiesPage() {
                   </Link>
                   <button
                     onClick={() =>
-                      handleDeleteTrigger(item._id, item.projectTitle)
+                      handleDeleteTrigger(item._id!, item.projectTitle)
                     }
                     className="group/del border border-transparent p-2 transition-colors hover:border-destructive/20 hover:bg-destructive/10"
                   >
@@ -292,10 +292,10 @@ export default function CaseStudiesPage() {
       </BrutalTable>
 
       {/* Pagination */}
-      {response && response.totalPages > 1 && (
+      {response && response.pagination.totalPages > 1 && (
         <BrutalPagination
           currentPage={page}
-          totalPages={response.totalPages}
+          totalPages={response.pagination.totalPages}
           hasPrevPage={hasPrevPage}
           hasNextPage={hasNextPage}
           onPageChange={setPage}

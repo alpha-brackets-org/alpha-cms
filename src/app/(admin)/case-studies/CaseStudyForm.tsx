@@ -68,7 +68,8 @@ export function CaseStudyForm({
   }, []);
 
   const { data: categoriesResponse } = useCategories();
-  const { data: portfolios } = usePortfolios();
+  const { data: portfoliosResponse } = usePortfolios();
+  const portfolios = portfoliosResponse?.data;
   const categories = categoriesResponse?.data || [];
 
   const {
@@ -265,14 +266,17 @@ export function CaseStudyForm({
               <input
                 {...register('projectTitle')}
                 placeholder="Case Study Title"
-                className={`w-full border-b-2 bg-transparent text-3xl font-bold transition-colors placeholder:text-muted-foreground/30 focus:outline-none md:text-4xl ${errors.projectTitle
+                className={`w-full border-b-2 bg-transparent text-3xl font-bold transition-colors placeholder:text-muted-foreground/30 focus:outline-none md:text-4xl ${
+                  errors.projectTitle
                     ? 'border-destructive'
                     : 'border-transparent focus:border-border/50'
-                  } pb-4`}
+                } pb-4`}
               />
               <div className="flex flex-wrap items-center gap-4 rounded-xl border border-white/10 bg-secondary/20 p-3 font-mono text-[10px] text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold uppercase text-primary">Slug:</span>
+                  <span className="font-bold uppercase text-primary">
+                    Slug:
+                  </span>
                   <input
                     {...register('slug')}
                     placeholder="project-slug"
@@ -350,7 +354,7 @@ export function CaseStudyForm({
                   control={control}
                   render={({ field }) => (
                     <MediaPicker
-                      value={field.value}
+                      value={field.value ?? undefined}
                       onChange={field.onChange}
                       label="Social Share Image"
                     />
@@ -367,11 +371,11 @@ export function CaseStudyForm({
             <SeoAnalyzer
               title={watchedValues.seo?.metaTitle || watchedValues.projectTitle}
               description={
-                watchedValues.seo?.metaDescription || watchedValues.excerpt
+                watchedValues.seo?.metaDescription || watchedValues.excerpt || ''
               }
               content={watchedValues.content}
-              keywords={watchedValues.seo?.keywords}
-              ogImage={watchedValues.seo?.ogImage}
+              keywords={watchedValues.seo?.keywords ?? ''}
+              ogImage={watchedValues.seo?.ogImage ?? ''}
             />
 
             {/* Case Study Details */}
@@ -579,7 +583,7 @@ export function CaseStudyForm({
                 control={control}
                 render={({ field }) => (
                   <MediaPicker
-                    value={field.value}
+                    value={field.value ?? undefined}
                     onChange={field.onChange}
                     label="Hero Cover Image"
                   />

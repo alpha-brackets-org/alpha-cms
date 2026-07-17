@@ -40,8 +40,10 @@ import { hasPermission, CmsPermission } from '@/lib/auth';
 
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
-  const { data: users = [], isLoading } = useUsers();
-  const { data: portfolios = [] } = usePortfolios();
+  const { data: usersResponse, isLoading } = useUsers();
+  const users = usersResponse?.data || [];
+  const { data: portfoliosResponse } = usePortfolios();
+  const portfolios = portfoliosResponse?.data || [];
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -189,7 +191,7 @@ export default function UsersPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleDeleteTrigger(user._id)}
+                      onClick={() => handleDeleteTrigger(user._id!)}
                       className="h-8 w-8 hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />

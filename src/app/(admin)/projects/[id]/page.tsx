@@ -14,7 +14,8 @@ export default function EditProjectPage() {
   const params = useParams();
   const id = params.id as string;
 
-  const { data: project, isLoading } = useProject(id);
+  const { data: response, isLoading } = useProject(id);
+  const project = response?.data;
   const updateMutation = useUpdateProject(id);
 
   const handleSubmit = (formData: Project) => {

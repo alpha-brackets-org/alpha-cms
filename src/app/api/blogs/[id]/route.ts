@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { NextResponse } from 'next/server';
-import { apiHandler, sendNotFound, DbUtils } from '@/lib/api-utils';
+import { apiHandler, sendNotFound, sendData, DbUtils } from '@/lib/api-utils';
+import { getDb } from '@/lib/db/dbConnect';
 import {
   scopeQuery,
   portfolioPopulate,
@@ -18,7 +18,7 @@ export const GET = apiHandler(async (_request, { params }) => {
   const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
 
   // Use aggregation with utilities to get populated details
-  const blogs = await mongoose.connection.db
+  const blogs = await getDb()
     .collection(CollectionName.BLOGS)
     .aggregate([
       { $match: query },
@@ -29,7 +29,7 @@ export const GET = apiHandler(async (_request, { params }) => {
 
   const blog = blogs[0];
   if (!blog) return sendNotFound('Blog');
-  return NextResponse.json(blog);
+  return sendData(blog);
 });
 
 // UPDATE BLOG
@@ -39,7 +39,7 @@ export const PATCH = apiHandler(
     const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
 
     // 1. Fetch current status to detect change
-    const currentDoc = await mongoose.connection.db
+    const currentDoc = await getDb()
       .collection(CollectionName.BLOGS)
       .findOne(query);
 
@@ -49,7 +49,7 @@ export const PATCH = apiHandler(
     const result = await DbUtils.updateDoc(
       CollectionName.BLOGS,
       id,
-      validatedData,
+      validatedData!,
       query
     );
     if (result.matchedCount === 0) return sendNotFound('Blog');
@@ -75,7 +75,8 @@ export const PATCH = apiHandler(
   }
   */
 
-    return NextResponse.json({ success: true });
+    const updated = await DbUtils.findDoc(CollectionName.BLOGS, id, query);
+    return sendData(updated);
   },
   { schema: BlogSchema.partial() }
 );
@@ -90,5 +91,5 @@ export const DELETE = apiHandler(async (_request, { params }) => {
   const result = await DbUtils.deleteDoc(CollectionName.BLOGS, id, query);
 
   if (result.deletedCount === 0) return sendNotFound('Blog');
-  return NextResponse.json({ success: true });
+  return sendData({ id });
 });

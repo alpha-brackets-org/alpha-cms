@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PaginatedResponse, Media } from '@/types/cms';
+import { Media, PaginatedResponse } from '@/types/cms';
 import { MediaFolder } from '@/schemas/cms';
 import { api } from '@/lib/api-client';
 import { buildQueryString } from '@/lib/utils';
@@ -23,7 +23,8 @@ export function useMedia(
 export function useDeleteMedia() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/media/${id}`),
+    mutationFn: (id: string) =>
+      api.delete<{ data: { id: string } }>(`/media/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['media'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
@@ -35,7 +36,13 @@ export function useDeleteMedia() {
 export function useBatchDeleteMedia() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (ids: string[]) => api.delete('/media', { ids }),
+    mutationFn: (ids: string[]) =>
+      api.delete<{ data: { ids: string[]; deletedCount: number } }>(
+        '/media',
+        {
+          ids,
+        }
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['media'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
@@ -69,7 +76,7 @@ export function useUploadMedia() {
       formData.append('folder', `/media/${portfolio}`); // ImageKit actual folder
 
       // 2. Execute Single Atomic Upload & Registration
-      return api.post('/media/upload', formData);
+      return api.post<{ data: Media }>('/media/upload', formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['media'] });
@@ -83,7 +90,7 @@ export function useUpdateMedia() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Media> }) =>
-      api.patch(`/media/${id}`, data),
+      api.patch<{ data: Media }>(`/media/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['media'] });
     },

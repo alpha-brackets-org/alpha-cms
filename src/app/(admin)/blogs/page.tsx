@@ -52,9 +52,9 @@ export default function BlogsPage() {
 
   const categories = categoriesData?.data || [];
   const blogs = response?.data || [];
-  const total = response?.total || 0;
-  const hasNextPage = response?.hasNextPage || false;
-  const hasPrevPage = response?.hasPrevPage || false;
+  const total = response?.pagination.total || 0;
+  const hasNextPage = response?.pagination.hasNextPage || false;
+  const hasPrevPage = response?.pagination.hasPrevPage || false;
 
   const handleClearFilters = () => {
     setSearchTerm('');
@@ -261,7 +261,7 @@ export default function BlogsPage() {
               <BrutalTableCell>
                 <div className="flex items-center gap-2 text-[10px] font-medium text-muted-foreground">
                   <Calendar className="h-3 w-3" />
-                  {formatDate(blog.createdAt)}
+                  {blog.createdAt ? formatDate(blog.createdAt) : '—'}
                 </div>
               </BrutalTableCell>
               <BrutalTableCell className="text-right">
@@ -273,7 +273,7 @@ export default function BlogsPage() {
                     <Edit className="h-4 w-4 text-muted-foreground" />
                   </Link>
                   <button
-                    onClick={() => handleDeleteTrigger(blog._id, blog.title)}
+                    onClick={() => handleDeleteTrigger(blog._id!, blog.title)}
                     disabled={deleteMutation.isPending}
                     className="group/del border border-transparent p-2 transition-colors hover:border-destructive/20 hover:bg-destructive/10 disabled:opacity-30"
                   >
@@ -287,10 +287,10 @@ export default function BlogsPage() {
       </BrutalTable>
 
       {/* Pagination */}
-      {response && response.totalPages > 1 && (
+      {response && response.pagination.totalPages > 1 && (
         <BrutalPagination
           currentPage={page}
-          totalPages={response.totalPages}
+          totalPages={response.pagination.totalPages}
           hasPrevPage={hasPrevPage}
           hasNextPage={hasNextPage}
           onPageChange={setPage}

@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  PaginatedResponse,
   Project,
   PopulatedProject,
   ProjectFilters,
+  PaginatedResponse,
 } from '@/types/cms';
 import { api } from '@/lib/api-client';
 import { buildQueryString } from '@/lib/utils';
@@ -16,7 +16,7 @@ export function useProjects(filters: ProjectFilters = {}) {
 }
 
 export function useProject(id: string) {
-  return useCmsQuery<PopulatedProject>(
+  return useCmsQuery<{ data: PopulatedProject }>(
     ['projects', id],
     () => api.get(`/projects/${id}`),
     {
@@ -29,7 +29,7 @@ export function useCreateProject() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Partial<Project>) =>
-      api.post<{ id: string }>('/projects', data),
+      api.post<{ data: Project }>('/projects', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
@@ -41,7 +41,8 @@ export function useCreateProject() {
 export function useUpdateProject(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Project>) => api.patch(`/projects/${id}`, data),
+    mutationFn: (data: Partial<Project>) =>
+      api.patch<{ data: Project }>(`/projects/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['project', id] });
@@ -54,7 +55,8 @@ export function useUpdateProject(id: string) {
 export function useDeleteProject() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/projects/${id}`),
+    mutationFn: (id: string) =>
+      api.delete<{ data: { id: string } }>(`/projects/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });

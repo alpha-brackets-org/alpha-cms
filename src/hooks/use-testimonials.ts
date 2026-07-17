@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  PaginatedResponse,
   BaseFilters,
   Testimonial,
   PopulatedTestimonial,
+  PaginatedResponse,
 } from '@/types/cms';
 import { api } from '@/lib/api-client';
 import { buildQueryString } from '@/lib/utils';
@@ -17,7 +17,7 @@ export function useTestimonials(filters: BaseFilters = {}) {
 }
 
 export function useTestimonial(id: string) {
-  return useCmsQuery<Testimonial>(
+  return useCmsQuery<{ data: Testimonial }>(
     ['testimonial', id],
     () => api.get(`/testimonials/${id}`),
     { enabled: !!id && id !== 'new' }
@@ -28,7 +28,7 @@ export function useCreateTestimonial() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Partial<Testimonial>) =>
-      api.post<{ id: string }>('/testimonials', data),
+      api.post<{ data: Testimonial }>('/testimonials', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['testimonials'] });
     },
@@ -40,7 +40,7 @@ export function useUpdateTestimonial(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Partial<Testimonial>) =>
-      api.patch(`/testimonials/${id}`, data),
+      api.patch<{ data: Testimonial }>(`/testimonials/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['testimonials'] });
       queryClient.invalidateQueries({ queryKey: ['testimonial', id] });
@@ -52,7 +52,8 @@ export function useUpdateTestimonial(id: string) {
 export function useDeleteTestimonial() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/testimonials/${id}`),
+    mutationFn: (id: string) =>
+      api.delete<{ data: { id: string } }>(`/testimonials/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['testimonials'] });
     },

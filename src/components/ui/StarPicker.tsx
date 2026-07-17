@@ -30,10 +30,11 @@ export function StarPicker({ value, onChange, className }: StarPickerProps) {
           aria-label={`Rate ${i} out of 5`}
         >
           <Star
-            className={`h-6 w-6 transition-colors ${i <= (hovered || value)
-              ? 'fill-amber-400 text-amber-400'
-              : 'text-muted-foreground/30 hover:text-amber-300'
-              }`}
+            className={`h-6 w-6 transition-colors ${
+              i <= (hovered || value)
+                ? 'fill-amber-400 text-amber-400'
+                : 'text-muted-foreground/30 hover:text-amber-300'
+            }`}
           />
         </button>
       ))}

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PaginatedResponse, Campaign, BaseFilters } from '@/types/cms';
+import { Campaign, BaseFilters, PaginatedResponse } from '@/types/cms';
 import { api } from '@/lib/api-client';
 import { buildQueryString } from '@/lib/utils';
 import { useCmsQuery } from './use-cms-query';
@@ -15,10 +15,9 @@ export function useCampaigns(filters: BaseFilters = {}) {
 }
 
 export function useCampaign(id: string) {
-  return useCmsQuery<Campaign>(
+  return useCmsQuery<{ data: Campaign }>(
     ['campaign', id],
-    () =>
-      api.get<{ data: Campaign }>(`${API_URL}/${id}`).then((res) => res.data),
+    () => api.get<{ data: Campaign }>(`${API_URL}/${id}`),
     { enabled: !!id }
   );
 }
@@ -26,7 +25,8 @@ export function useCampaign(id: string) {
 export function useCreateCampaign() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Campaign>) => api.post(API_URL, data),
+    mutationFn: (data: Partial<Campaign>) =>
+      api.post<{ data: Campaign }>(API_URL, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
     },
@@ -37,9 +37,9 @@ export function useSendCampaign() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      api
-        .post<{ data: { sent: number } }>(`${API_URL}/${id}/send`, {})
-        .then((res) => res.data),
+      api.post<{
+        data: { message: string; sent: number; failed: number };
+      }>(`${API_URL}/${id}/send`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
     },

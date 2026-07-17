@@ -1,36 +1,32 @@
 import mongoose from 'mongoose';
-import { apiHandler, sendSuccess, sendCorsResponse } from '@/lib/api-utils';
-import { CollectionName } from '@/types/cms';
+import { apiHandler, sendData, sendCorsResponse } from '@/lib/api-utils';
+import { getDb } from '@/lib/db/dbConnect';
+import { CollectionName, AnalyticsSchema } from '@/schemas/cms';
 
 /**
  * ANALYTICS INGESTION ENDPOINT
  * High-performance endpoint for collecting visitor events from portfolios.
  */
 export const POST = apiHandler(
-  async (request) => {
-    const body = await request.json();
-    const db = mongoose.connection.db;
-
-    const { portfolio, event, path, visitorId, metadata, duration } = body;
-
-    if (!portfolio) {
-      throw new Error('Portfolio ID is required for data attribution');
-    }
+  async (_request, { validatedData }) => {
+    const { portfolio, event, path, visitorId, metadata, duration } =
+      validatedData!;
+    const db = getDb();
 
     // Insert the event record
     await db.collection(CollectionName.ANALYTICS).insertOne({
-      portfolio: new mongoose.Types.ObjectId(portfolio as string),
+      portfolio: new mongoose.Types.ObjectId(portfolio),
       event,
       path,
       visitorId,
-      duration: duration || 0,
+      duration,
       metadata: metadata || {},
       timestamp: new Date(),
     });
 
-    return sendCorsResponse(sendSuccess({ tracked: true }, 201));
+    return sendCorsResponse(sendData({ tracked: true }, 201));
   },
-  { isPublic: true }
+  { isPublic: true, schema: AnalyticsSchema }
 );
 
 // Handle Preflight for CORS

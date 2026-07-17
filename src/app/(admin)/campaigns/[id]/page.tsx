@@ -22,16 +22,17 @@ export default function CampaignDetailPage() {
   const { id } = useParams() as { id: string };
   const { success, error } = useToast();
 
-  const { data: campaign, isLoading } = useCampaign(id);
+  const { data: campaignResponse, isLoading } = useCampaign(id);
+  const campaign = campaignResponse?.data;
   const sendMutation = useSendCampaign();
 
   const handleSend = () => {
     if (!campaign) return;
-    sendMutation.mutate(campaign._id, {
-      onSuccess: (data) => {
+    sendMutation.mutate(campaign._id!, {
+      onSuccess: (res) => {
         success(
           'CAMPAIGN SENT',
-          `Successfully sent to ${data.sent} subscribers.`
+          `Successfully sent to ${res.data.sent} subscribers.`
         );
       },
       onError: (err) => {
@@ -164,7 +165,9 @@ export default function CampaignDetailPage() {
                       Created
                     </span>
                     <span className="font-mono text-xs">
-                      {new Date(campaign.createdAt).toLocaleDateString()}
+                      {campaign.createdAt
+                        ? new Date(campaign.createdAt).toLocaleDateString()
+                        : '—'}
                     </span>
                   </div>
                 </div>

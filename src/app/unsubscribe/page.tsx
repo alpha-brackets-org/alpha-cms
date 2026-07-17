@@ -88,7 +88,7 @@ function UnsubscribeContent() {
             </div>
             <h2 className="text-xl font-black uppercase">Unsubscribed</h2>
             <p className="text-sm text-muted-foreground">
-              {unsubscribeMutation.data?.message ||
+              {unsubscribeMutation.data?.data.message ||
                 'You have been successfully unsubscribed.'}
             </p>
             <p className="pt-4 text-[10px] font-bold uppercase text-muted-foreground/50">

@@ -26,7 +26,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { StarRating } from '@/components/ui/StarRating';
 import { StarPicker } from '@/components/ui/StarPicker';
-import { Testimonial, PopulatedTestimonial, TestimonialStatus } from '@/types/cms';
+import {
+  Testimonial,
+  PopulatedTestimonial,
+  TestimonialStatus,
+} from '@/types/cms';
 
 interface TestimonialFormProps {
   initialData?: PopulatedTestimonial;
@@ -35,7 +39,6 @@ interface TestimonialFormProps {
   submitText: string;
   isNew?: boolean;
 }
-
 
 export function TestimonialForm({
   initialData,
@@ -46,7 +49,8 @@ export function TestimonialForm({
 }: TestimonialFormProps) {
   const [isMounted, setIsMounted] = useState(false);
   const { warning } = useToast();
-  const { data: portfolios } = usePortfolios();
+  const { data: portfoliosResponse } = usePortfolios();
+  const portfolios = portfoliosResponse?.data;
 
   useEffect(() => {
     setIsMounted(true);
@@ -83,7 +87,7 @@ export function TestimonialForm({
       const { portfolio, ...rest } = initialData;
       reset({
         ...rest,
-        portfolio: portfolio ? portfolio._id ?? '' : '',
+        portfolio: portfolio ? (portfolio._id ?? '') : '',
       } as unknown as Testimonial);
     }
   }, [initialData, reset]);
@@ -130,7 +134,12 @@ export function TestimonialForm({
               Modified
             </Badge>
           )}
-          <Button type="submit" disabled={isLoading} size="sm" className="gap-2">
+          <Button
+            type="submit"
+            disabled={isLoading}
+            size="sm"
+            className="gap-2"
+          >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
@@ -151,10 +160,11 @@ export function TestimonialForm({
               <input
                 {...register('name', { required: true })}
                 placeholder="Client Name"
-                className={`w-full border-b-2 bg-transparent text-3xl font-bold transition-colors placeholder:text-muted-foreground/30 focus:outline-none md:text-4xl ${errors.name
+                className={`w-full border-b-2 bg-transparent text-3xl font-bold transition-colors placeholder:text-muted-foreground/30 focus:outline-none md:text-4xl ${
+                  errors.name
                     ? 'border-destructive'
                     : 'border-transparent focus:border-border/50'
-                  } pb-4`}
+                } pb-4`}
               />
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-1">
@@ -210,10 +220,7 @@ export function TestimonialForm({
                 name="rating"
                 control={control}
                 render={({ field }) => (
-                  <StarPicker
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
+                  <StarPicker value={field.value} onChange={field.onChange} />
                 )}
               />
             </div>

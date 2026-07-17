@@ -19,7 +19,7 @@ const MONITOR_PASS = process.env.MONITOR_PASS;
 if (!MONITOR_USER || !MONITOR_PASS) {
   console.error(
     '❌ [MONITOR] MONITOR_USER and MONITOR_PASS must be set. ' +
-    'Refusing to start an unprotected dashboard.'
+      'Refusing to start an unprotected dashboard.'
   );
   process.exit(1);
 }
@@ -73,7 +73,9 @@ async function startMonitor() {
     console.log(
       `✅ [MONITOR] Dashboard running at http://127.0.0.1:${port}/admin/queues`
     );
-    console.log(`🔒 [MONITOR] Protected by HTTP Basic Auth (user: ${MONITOR_USER})`);
+    console.log(
+      `🔒 [MONITOR] Protected by HTTP Basic Auth (user: ${MONITOR_USER})`
+    );
   });
 }
 

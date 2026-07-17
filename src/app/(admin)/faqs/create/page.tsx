@@ -16,7 +16,7 @@ export default function CreateFaqPage() {
   const handleSubmit = (formData: any) => {
     createMutation.mutate(formData, {
       onSuccess: (data) => {
-        router.push(`/faqs/${data.id}`);
+        router.push(`/faqs/${data.data._id}`);
       },
     });
   };

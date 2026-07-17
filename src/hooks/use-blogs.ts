@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  PaginatedResponse,
   Blog,
   PopulatedBlog,
   BlogFilters,
+  PaginatedResponse,
 } from '@/types/cms';
 import { api } from '@/lib/api-client';
 import { buildQueryString } from '@/lib/utils';
@@ -16,7 +16,7 @@ export function useBlogs(filters: BlogFilters = {}) {
 }
 
 export function useBlog(id: string) {
-  return useCmsQuery<PopulatedBlog>(
+  return useCmsQuery<{ data: PopulatedBlog }>(
     ['blog', id],
     () => api.get(`/blogs/${id}`),
     {
@@ -29,7 +29,7 @@ export function useCreateBlog() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Partial<Blog>) =>
-      api.post<{ id: string }>('/blogs', data),
+      api.post<{ data: Blog }>('/blogs', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['blogs'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
@@ -41,7 +41,8 @@ export function useCreateBlog() {
 export function useUpdateBlog(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Blog>) => api.patch(`/blogs/${id}`, data),
+    mutationFn: (data: Partial<Blog>) =>
+      api.patch<{ data: Blog }>(`/blogs/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['blogs'] });
       queryClient.invalidateQueries({ queryKey: ['blog', id] });
@@ -54,7 +55,8 @@ export function useUpdateBlog(id: string) {
 export function useDeleteBlog() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/blogs/${id}`),
+    mutationFn: (id: string) =>
+      api.delete<{ data: { id: string } }>(`/blogs/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['blogs'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });

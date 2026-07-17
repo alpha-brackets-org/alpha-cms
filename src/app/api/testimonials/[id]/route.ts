@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { NextResponse } from 'next/server';
-import { apiHandler, sendNotFound, DbUtils } from '@/lib/api-utils';
+import { apiHandler, sendNotFound, sendData, DbUtils } from '@/lib/api-utils';
+import { getDb } from '@/lib/db/dbConnect';
 import { scopeQuery, portfolioPopulate } from '@/lib/db/portfolio-utils';
 import { CollectionName } from '@/types/cms';
 import { TestimonialSchema } from '@/schemas/cms';
@@ -13,14 +13,14 @@ export const GET = apiHandler(async (_request, { params }) => {
   }
   const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
 
-  const results = await mongoose.connection.db
+  const results = await getDb()
     .collection(CollectionName.TESTIMONIALS)
     .aggregate([{ $match: query }, ...portfolioPopulate()])
     .toArray();
 
   const testimonial = results[0];
   if (!testimonial) return sendNotFound('Testimonial');
-  return NextResponse.json(testimonial);
+  return sendData(testimonial);
 });
 
 // ─── UPDATE TESTIMONIAL ───────────────────────────────────────────────────────
@@ -31,7 +31,9 @@ export const PATCH = apiHandler(
 
     const processedData: Record<string, unknown> = { ...validatedData };
     if (processedData.portfolio) {
-      processedData.portfolio = new mongoose.Types.ObjectId(processedData.portfolio as string);
+      processedData.portfolio = new mongoose.Types.ObjectId(
+        processedData.portfolio as string
+      );
     }
 
     // DbUtils.updateDoc automatically sets updatedAt — no need to pass it manually
@@ -44,13 +46,13 @@ export const PATCH = apiHandler(
     if (result.matchedCount === 0) return sendNotFound('Testimonial');
 
     // Fetch and return the updated document
-    const results = await mongoose.connection.db
+    const results = await getDb()
       .collection(CollectionName.TESTIMONIALS)
       .aggregate([{ $match: query }, ...portfolioPopulate()])
       .toArray();
 
     const updatedTestimonial = results[0];
-    return NextResponse.json(updatedTestimonial || { success: true });
+    return sendData(updatedTestimonial);
   },
   { schema: TestimonialSchema.partial() }
 );
@@ -62,8 +64,12 @@ export const DELETE = apiHandler(async (_request, { params }) => {
     return sendNotFound('Testimonial');
   }
   const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
-  const result = await DbUtils.deleteDoc(CollectionName.TESTIMONIALS, id, query);
+  const result = await DbUtils.deleteDoc(
+    CollectionName.TESTIMONIALS,
+    id,
+    query
+  );
 
   if (result.deletedCount === 0) return sendNotFound('Testimonial');
-  return NextResponse.json({ success: true });
+  return sendData({ id });
 });

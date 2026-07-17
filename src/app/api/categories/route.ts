@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
+import { getDb } from '@/lib/db/dbConnect';
 import { scopeQuery, portfolioPopulate } from '@/lib/db/portfolio-utils';
 import {
-  sendPaginatedResponse,
-  sendSuccess,
+  sendList,
+  sendData,
   apiHandler,
   DbUtils,
   parseSearchParams,
@@ -22,7 +23,7 @@ export const GET = apiHandler(async (request) => {
     query.name = { $regex: search, $options: 'i' };
   }
 
-  const total = await mongoose.connection.db
+  const total = await getDb()
     .collection(CollectionName.CATEGORIES)
     .countDocuments(query);
 
@@ -34,7 +35,7 @@ export const GET = apiHandler(async (request) => {
     ...portfolioPopulate(),
   ];
 
-  const categories = (await mongoose.connection.db
+  const categories = (await getDb()
     .collection(CollectionName.CATEGORIES)
     .aggregate(pipeline)
     .toArray()) as unknown as Category[];
@@ -49,7 +50,7 @@ export const GET = apiHandler(async (request) => {
     } as unknown as Category);
   }
 
-  return sendPaginatedResponse(categories, { total, page, limit });
+  return sendList(categories, { total, page, limit });
 });
 
 export const POST = apiHandler(
@@ -59,17 +60,21 @@ export const POST = apiHandler(
     // Access Control
     if (
       user?.role !== UserRole.ADMIN &&
-      !user?.portfolios?.includes(validatedData.portfolio)
+      !user?.portfolios?.includes(validatedData!.portfolio)
     ) {
       return sendForbidden('You do not have access to this portfolio');
     }
 
     const result = await DbUtils.createDoc(CollectionName.CATEGORIES, {
       ...validatedData,
-      portfolio: new mongoose.Types.ObjectId(validatedData.portfolio),
+      portfolio: new mongoose.Types.ObjectId(validatedData!.portfolio),
     });
+    const created = await DbUtils.findDoc(
+      CollectionName.CATEGORIES,
+      result.insertedId.toString()
+    );
 
-    return sendSuccess({ id: result.insertedId }, 201);
+    return sendData(created, 201);
   },
   { schema: CategorySchema }
 );

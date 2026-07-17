@@ -1,18 +1,10 @@
 import mongoose from 'mongoose';
-import {
-  apiHandler,
-  DbUtils,
-  sendSuccess,
-  sendNotFound,
-} from '@/lib/api-utils';
+import { apiHandler, DbUtils, sendData, sendNotFound } from '@/lib/api-utils';
 import { scopeQuery } from '@/lib/db/portfolio-utils';
 import { CollectionName } from '@/types/cms';
 import { MediaSchema } from '@/schemas/cms';
 import imagekit from '@/lib/imagekit';
-
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
+import { getDb } from '@/lib/db/dbConnect';
 
 // UPDATE MEDIA
 export const PATCH = apiHandler(
@@ -23,7 +15,7 @@ export const PATCH = apiHandler(
     const result = await DbUtils.updateDoc(
       CollectionName.MEDIA,
       id,
-      validatedData,
+      validatedData!,
       query
     );
 
@@ -31,18 +23,19 @@ export const PATCH = apiHandler(
       return sendNotFound('Media Asset');
     }
 
-    return sendSuccess({ success: true });
+    const updated = await DbUtils.findDoc(CollectionName.MEDIA, id, query);
+    return sendData(updated);
   },
   { schema: MediaSchema.partial() }
 );
 
 // DELETE MEDIA
-export const DELETE = apiHandler(async (_request, context: RouteContext) => {
-  const { id } = await context.params;
+export const DELETE = apiHandler(async (_request, { params }) => {
+  const { id } = await params;
   const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
 
   // 1. Get the media doc to find the ImageKit file ID
-  const media = await mongoose.connection.db
+  const media = await getDb()
     .collection(CollectionName.MEDIA)
     .findOne(query);
 
@@ -67,5 +60,5 @@ export const DELETE = apiHandler(async (_request, context: RouteContext) => {
     return sendNotFound('Media Asset');
   }
 
-  return sendSuccess({ success: true, message: 'Asset deleted permanently.' });
+  return sendData({ id });
 });

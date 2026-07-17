@@ -1,9 +1,17 @@
 import crypto from 'crypto';
 
-const ENCRYPTION_KEY =
-  process.env.ENCRYPTION_KEY ||
-  process.env.AUTH_SECRET ||
-  'default_secret_key_must_be_32_chars_long!!';
+function requireEncryptionKey(): string {
+  const key = process.env.ENCRYPTION_KEY || process.env.AUTH_SECRET;
+  if (!key) {
+    throw new Error(
+      'ENCRYPTION_KEY or AUTH_SECRET must be set — refusing to encrypt sensitive data with a hardcoded key.'
+    );
+  }
+  return key;
+}
+
+const ENCRYPTION_KEY = requireEncryptionKey();
+
 const IV_LENGTH = 16; // For AES, this is always 16
 
 /**

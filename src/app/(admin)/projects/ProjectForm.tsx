@@ -64,7 +64,8 @@ export function ProjectForm({
   }, []);
 
   const { data: categoriesResponse } = useCategories();
-  const { data: portfolios } = usePortfolios();
+  const { data: portfoliosResponse } = usePortfolios();
+  const portfolios = portfoliosResponse?.data;
   const categories = categoriesResponse?.data || [];
 
   const {
@@ -235,14 +236,17 @@ export function ProjectForm({
               <input
                 {...register('title')}
                 placeholder="Project Title"
-                className={`w-full border-b-2 bg-transparent text-3xl font-bold transition-colors placeholder:text-muted-foreground/30 focus:outline-none md:text-4xl ${errors.title
+                className={`w-full border-b-2 bg-transparent text-3xl font-bold transition-colors placeholder:text-muted-foreground/30 focus:outline-none md:text-4xl ${
+                  errors.title
                     ? 'border-destructive'
                     : 'border-transparent focus:border-border/50'
-                  } pb-4`}
+                } pb-4`}
               />
               <div className="flex flex-wrap items-center gap-4 rounded-xl border border-white/10 bg-secondary/20 p-3 font-mono text-[10px] text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold uppercase text-primary">Slug:</span>
+                  <span className="font-bold uppercase text-primary">
+                    Slug:
+                  </span>
                   <input
                     {...register('slug')}
                     placeholder="project-slug"
@@ -336,13 +340,15 @@ export function ProjectForm({
                 </div>
               </div>
               <div className="border-t border-white/10 pt-6">
-                <Label className="mb-4 block">OpenGraph Image (Social Sharing)</Label>
+                <Label className="mb-4 block">
+                  OpenGraph Image (Social Sharing)
+                </Label>
                 <Controller
                   name="seo.ogImage"
                   control={control}
                   render={({ field }) => (
                     <MediaPicker
-                      value={field.value}
+                      value={field.value ?? undefined}
                       onChange={field.onChange}
                       label="Social Share Image"
                     />
@@ -359,11 +365,11 @@ export function ProjectForm({
             <SeoAnalyzer
               title={watchedValues.seo?.metaTitle || watchedValues.title}
               description={
-                watchedValues.seo?.metaDescription || watchedValues.excerpt
+                watchedValues.seo?.metaDescription || watchedValues.excerpt || ''
               }
-              content={watchedValues.description}
-              keywords={watchedValues.seo?.keywords}
-              ogImage={watchedValues.seo?.ogImage}
+              content={watchedValues.description ?? ''}
+              keywords={watchedValues.seo?.keywords ?? ''}
+              ogImage={watchedValues.seo?.ogImage ?? ''}
             />
 
             {/* Settings */}
@@ -500,7 +506,7 @@ export function ProjectForm({
                 control={control}
                 render={({ field }) => (
                   <MediaPicker
-                    value={field.value}
+                    value={field.value ?? undefined}
                     onChange={field.onChange}
                     label="Main Thumbnail"
                   />

@@ -32,7 +32,6 @@ import { StarRating } from '@/components/ui/StarRating';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { TestimonialStatus } from '@/types/cms';
 
-
 export default function TestimonialsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 500);
@@ -55,7 +54,7 @@ export default function TestimonialsPage() {
   const deleteMutation = useDeleteTestimonial();
 
   const testimonials = response?.data || [];
-  const total = response?.total || 0;
+  const total = response?.pagination.total || 0;
 
   const handleClearFilters = () => {
     setSearchTerm('');
@@ -278,12 +277,12 @@ export default function TestimonialsPage() {
       </BrutalTable>
 
       {/* Pagination */}
-      {response && response.totalPages > 1 && (
+      {response && response.pagination.totalPages > 1 && (
         <BrutalPagination
           currentPage={page}
-          totalPages={response.totalPages}
-          hasPrevPage={response.hasPrevPage}
-          hasNextPage={response.hasNextPage}
+          totalPages={response.pagination.totalPages}
+          hasPrevPage={response.pagination.hasPrevPage}
+          hasNextPage={response.pagination.hasNextPage}
           onPageChange={setPage}
           totalItems={total}
           itemsCount={testimonials.length}

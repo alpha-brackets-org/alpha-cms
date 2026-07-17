@@ -1,10 +1,10 @@
 import {
   apiHandler,
-  sendSuccess,
+  sendData,
   sendError,
   getCurrentUser,
   parseSearchParams,
-  sendPaginatedResponse,
+  sendList,
 } from '@/lib/api-utils';
 import {
   CollectionName,
@@ -14,13 +14,11 @@ import {
 } from '@/schemas/cms';
 import mongoose from 'mongoose';
 import { scopeQuery } from '@/lib/db/portfolio-utils';
+import { getDb } from '@/lib/db/dbConnect';
 
 export const GET = apiHandler(async (request) => {
-  const user = await getCurrentUser();
-  if (!user) return sendError('Unauthorized', 401);
-
   const { skip, limit, page } = parseSearchParams(request);
-  const db = mongoose.connection.db;
+  const db = getDb();
 
   const query = await scopeQuery({});
 
@@ -36,41 +34,39 @@ export const GET = apiHandler(async (request) => {
     .collection(CollectionName.CAMPAIGNS)
     .countDocuments(query);
 
-  return sendPaginatedResponse(campaigns, { page, limit, total });
+  return sendList(campaigns, { page, limit, total });
 });
 
-export const POST = apiHandler(async (request) => {
-  const user = await getCurrentUser();
-  if (!user) return sendError('Unauthorized', 401);
+export const POST = apiHandler(
+  async (_request, { validatedData }) => {
+    const user = await getCurrentUser();
+    const db = getDb();
 
-  const body = await request.json();
-  const db = mongoose.connection.db;
+    // Authorization check for the target portfolio
+    if (
+      user?.role !== UserRole.ADMIN &&
+      !user?.portfolios?.includes(validatedData!.portfolio)
+    ) {
+      return sendError('Unauthorized portfolio access', 403);
+    }
 
-  const validatedData = CampaignSchema.parse(body);
+    // Remove _id if it exists in validatedData to avoid MongoDB type conflict
+    const { _id, ...campaignData } = validatedData!;
 
-  // Authorization check for the target portfolio
-  if (
-    user.role !== UserRole.ADMIN &&
-    !user.portfolios?.includes(validatedData.portfolio)
-  ) {
-    return sendError('Unauthorized portfolio access', 403);
-  }
+    const campaign = {
+      ...campaignData,
+      portfolio: new mongoose.Types.ObjectId(campaignData.portfolio),
+      status: PublishStatus.DRAFT,
+      recipientCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
-  // Remove _id if it exists in validatedData to avoid MongoDB type conflict
-  const { _id, ...campaignData } = validatedData;
+    const result = await db
+      .collection(CollectionName.CAMPAIGNS)
+      .insertOne(campaign);
 
-  const campaign = {
-    ...campaignData,
-    portfolio: new mongoose.Types.ObjectId(campaignData.portfolio),
-    status: PublishStatus.DRAFT,
-    recipientCount: 0,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  const result = await db
-    .collection(CollectionName.CAMPAIGNS)
-    .insertOne(campaign);
-
-  return sendSuccess({ ...campaign, _id: result.insertedId }, 201);
-});
+    return sendData({ ...campaign, _id: result.insertedId }, 201);
+  },
+  { schema: CampaignSchema }
+);

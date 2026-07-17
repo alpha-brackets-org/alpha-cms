@@ -34,7 +34,8 @@ import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 
 export default function PortfoliosPage() {
-  const { data: portfolios = [], isLoading } = usePortfolios();
+  const { data: portfoliosResponse, isLoading } = usePortfolios();
+  const portfolios = portfoliosResponse?.data || [];
 
   const createMutation = useCreatePortfolio();
   const updateMutation = useUpdatePortfolio();
@@ -116,7 +117,7 @@ export default function PortfoliosPage() {
   const onSubmit = (data: Portfolio) => {
     if (editingPortfolio) {
       updateMutation.mutate(
-        { id: editingPortfolio._id, data },
+        { id: editingPortfolio._id!, data },
         {
           onSuccess: () => closeModal(),
         }
@@ -206,7 +207,7 @@ export default function PortfoliosPage() {
                     <p className="flex items-center gap-2 font-mono text-[10px] italic text-muted-foreground">
                       {portfolio._id}
                       <CopyButton
-                        value={portfolio._id}
+                        value={portfolio._id!}
                         className="opacity-0 transition-opacity group-hover:opacity-100"
                         iconSize={12}
                       />
@@ -229,7 +230,7 @@ export default function PortfoliosPage() {
                     <Edit className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteTrigger(portfolio._id)}
+                    onClick={() => handleDeleteTrigger(portfolio._id!)}
                     className="p-1.5 transition-colors hover:text-destructive"
                     title="Delete Portfolio"
                   >
@@ -728,7 +729,7 @@ export default function PortfoliosPage() {
                     {detailPortfolio._id}
                   </span>
                   <CopyButton
-                    value={detailPortfolio._id}
+                    value={detailPortfolio._id!}
                     iconSize={12}
                     className="opacity-60 hover:opacity-100"
                   />

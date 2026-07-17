@@ -2,8 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Subscriber,
   PopulatedSubscriber,
-  PaginatedResponse,
   SubscriberFilters,
+  PaginatedResponse,
 } from '@/types/cms';
 import { api } from '@/lib/api-client';
 import { buildQueryString } from '@/lib/utils';
@@ -20,7 +20,7 @@ export function useUpdateSubscriber() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Subscriber> }) =>
-      api.patch(`/subscribers/${id}`, data),
+      api.patch<{ data: Subscriber }>(`/subscribers/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscribers'] });
     },
@@ -31,7 +31,8 @@ export function useUpdateSubscriber() {
 export function useDeleteSubscriber() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/subscribers/${id}`),
+    mutationFn: (id: string) =>
+      api.delete<{ data: { id: string } }>(`/subscribers/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscribers'] });
     },
@@ -42,6 +43,6 @@ export function useDeleteSubscriber() {
 export function useUnsubscribe() {
   return useMutation({
     mutationFn: (data: { email: string; portfolioId: string }) =>
-      api.post<{ message: string }>('/subscribers/unsubscribe', data),
+      api.post<{ data: { message: string } }>('/subscribers/unsubscribe', data),
   });
 }

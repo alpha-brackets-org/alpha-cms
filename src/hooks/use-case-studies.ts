@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  PaginatedResponse,
   CaseStudy,
   PopulatedCaseStudy,
   CaseStudyFilters,
+  PaginatedResponse,
 } from '@/types/cms';
 import { api } from '@/lib/api-client';
 import { buildQueryString } from '@/lib/utils';
@@ -17,7 +17,7 @@ export function useCaseStudies(filters: CaseStudyFilters = {}) {
 }
 
 export function useCaseStudy(id: string) {
-  return useCmsQuery<PopulatedCaseStudy>(
+  return useCmsQuery<{ data: PopulatedCaseStudy }>(
     ['case-study', id],
     () => api.get(`/case-studies/${id}`),
     {
@@ -30,7 +30,7 @@ export function useCreateCaseStudy() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Partial<CaseStudy>) =>
-      api.post<{ id: string }>('/case-studies', data),
+      api.post<{ data: CaseStudy }>('/case-studies', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['case-studies'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
@@ -43,7 +43,7 @@ export function useUpdateCaseStudy(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Partial<CaseStudy>) =>
-      api.patch(`/case-studies/${id}`, data),
+      api.patch<{ data: CaseStudy }>(`/case-studies/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['case-studies'] });
       queryClient.invalidateQueries({ queryKey: ['case-study', id] });
@@ -55,7 +55,8 @@ export function useUpdateCaseStudy(id: string) {
 export function useDeleteCaseStudy() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/case-studies/${id}`),
+    mutationFn: (id: string) =>
+      api.delete<{ data: { id: string } }>(`/case-studies/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['case-studies'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });

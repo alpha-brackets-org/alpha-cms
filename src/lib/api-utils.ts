@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { PaginatedResponse } from '@/types/cms';
-import dbConnect from '@/lib/db/dbConnect';
+import { PaginationMeta } from '@/types/cms';
+import dbConnect, { getDb } from '@/lib/db/dbConnect';
 import mongoose from 'mongoose';
 import { verifyToken } from './auth-utils';
 import { z } from 'zod';
 import { User, UserRole } from '@/schemas/cms';
+import { CmsPermission, hasPermission } from '@/lib/auth';
 
 /**
- * Type for Next.js Route Handler Context
+ * Type for Next.js Route Handler Context. Every route should destructure
+ * `params`/`validatedData` directly off this rather than re-declaring its
+ * own local `RouteContext` — a narrower local type breaks under strict
+ * function-parameter checking (contravariance).
  */
-interface RouteContext {
+export interface RouteContext {
   params: Promise<Record<string, string>>;
 }
 
@@ -24,7 +28,7 @@ export async function getCurrentUser(): Promise<User | null> {
     const payload = await verifyToken(token);
     if (!payload) return null;
 
-    const user = await mongoose.connection.db
+    const user = await getDb()
       .collection('users')
       .findOne({ _id: new mongoose.Types.ObjectId(payload.userId) });
 
@@ -46,8 +50,16 @@ export async function getCurrentUser(): Promise<User | null> {
 export interface ApiHandlerOptions<T extends z.ZodSchema = z.ZodSchema> {
   isPublic?: boolean;
   schema?: T;
+  /** Named permission required to call this route (checked once the user is authenticated). */
+  permission?: CmsPermission;
 }
 
+// NOTE: `validatedData` is typed as optional here because it genuinely is
+// `undefined` when no `schema` option is passed. When a route DOES pass
+// `{ schema: X }`, validation happens before `handler` runs (a failed parse
+// throws and `handler` is never called) — so `validatedData` is guaranteed
+// present in that case. Routes that pass a schema can safely assert
+// non-null at the point of use (`validatedData!`) rather than re-checking.
 export function apiHandler<T extends z.ZodSchema = z.ZodSchema>(
   handler: (
     req: Request,
@@ -67,7 +79,7 @@ export function apiHandler<T extends z.ZodSchema = z.ZodSchema>(
         }
       }
 
-      let validatedData: z.infer<T> | null = null;
+      let validatedData: z.infer<T> | undefined;
       if (
         options.schema &&
         (req.method === 'POST' ||
@@ -78,18 +90,25 @@ export function apiHandler<T extends z.ZodSchema = z.ZodSchema>(
         validatedData = options.schema.parse(body);
       }
 
-      // Brutal Role Protection & Authentication
-      if (!options.isPublic && req.method !== 'GET') {
+      // Role Protection & Authentication — applies to every method (GET included)
+      // unless the route explicitly opts out via { isPublic: true }.
+      if (!options.isPublic) {
         const user = await getCurrentUser();
 
-        // Enforce authentication for mutations
         if (!user) {
           return sendError('AUTHENTICATION REQUIRED', 401);
         }
 
         // Viewers should never be able to perform mutations (POST, PUT, DELETE)
-        if (user.role === UserRole.VIEWER) {
+        if (req.method !== 'GET' && user.role === UserRole.VIEWER) {
           return sendError('VIEWER ROLE - ACCESS DENIED', 403);
+        }
+
+        // Named permission check, when the route declares one
+        if (options.permission && !hasPermission(user, options.permission)) {
+          return sendForbidden(
+            'You do not have permission to perform this action'
+          );
         }
       }
 
@@ -97,7 +116,12 @@ export function apiHandler<T extends z.ZodSchema = z.ZodSchema>(
     } catch (error) {
       console.error('API_HANDLER_ERROR:', error);
 
-      if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'name' in error &&
+        error.name === 'ZodError'
+      ) {
         const issues = (error as z.ZodError).issues;
         return sendError(issues.map((e) => e.message).join(', '), 400);
       }
@@ -108,15 +132,22 @@ export function apiHandler<T extends z.ZodSchema = z.ZodSchema>(
         return sendBadRequest('Invalid ID format');
       }
 
-      return sendError(
-        error instanceof Error ? error.message : 'An unexpected error occurred',
-        500
-      );
+      return sendError('Internal server error', 500);
     }
   };
 }
 
-export function sendPaginatedResponse<T>(
+/**
+ * Standard envelope for a single resource (GET one, POST create, PATCH update, DELETE).
+ */
+export function sendData(data: unknown, status: number = 200) {
+  return NextResponse.json({ data }, { status });
+}
+
+/**
+ * Standard envelope for a list of resources (GET many).
+ */
+export function sendList<T>(
   data: T[],
   options: {
     page?: number;
@@ -128,8 +159,7 @@ export function sendPaginatedResponse<T>(
 
   const totalPages = Math.ceil(total / limit) || 1;
 
-  const response: PaginatedResponse<T> = {
-    data,
+  const pagination: PaginationMeta = {
     total,
     limit,
     totalPages,
@@ -139,7 +169,7 @@ export function sendPaginatedResponse<T>(
     hasNextPage: page < totalPages,
   };
 
-  return NextResponse.json(response);
+  return NextResponse.json({ data, pagination });
 }
 
 /**
@@ -210,20 +240,12 @@ export function parseSearchParams(request: Request) {
   };
 }
 
-
 export function sendError(message: string, status: number = 500) {
   return NextResponse.json({ error: message }, { status });
 }
 
 export function sendBadRequest(message: string) {
   return NextResponse.json({ error: message }, { status: 400 });
-}
-
-export function sendSuccess(
-  data: unknown = { success: true },
-  status: number = 200
-) {
-  return NextResponse.json(data, { status });
 }
 
 /**
@@ -268,7 +290,7 @@ export function corsOptions() {
  */
 export const DbUtils = {
   async createDoc(collection: string, data: Record<string, unknown>) {
-    return await mongoose.connection.db.collection(collection).insertOne({
+    return await getDb().collection(collection).insertOne({
       ...data,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -281,7 +303,7 @@ export const DbUtils = {
     scopedQuery?: Record<string, unknown>
   ) {
     const query = scopedQuery || { _id: new mongoose.Types.ObjectId(id) };
-    return await mongoose.connection.db.collection(collection).findOne(query);
+    return await getDb().collection(collection).findOne(query);
   },
 
   async updateDoc(
@@ -296,7 +318,7 @@ export const DbUtils = {
       _id: new mongoose.Types.ObjectId(id as string),
     };
 
-    return await mongoose.connection.db
+    return await getDb()
       .collection(collection)
       .updateOne(query, { $set: { ...updateData, updatedAt: new Date() } });
   },
@@ -309,6 +331,6 @@ export const DbUtils = {
     const query = scopedQuery || {
       _id: new mongoose.Types.ObjectId(id as string),
     };
-    return await mongoose.connection.db.collection(collection).deleteOne(query);
+    return await getDb().collection(collection).deleteOne(query);
   },
 };

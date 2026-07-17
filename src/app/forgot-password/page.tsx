@@ -20,11 +20,8 @@ export default function ForgotPasswordPage() {
     setMessage('');
 
     forgotMutation.mutate(email, {
-      onSuccess: (data) => {
-        setMessage(data.message);
-      },
-      onError: (err) => {
-        setError(err.message || 'REQUEST FAILED');
+      onSuccess: (res) => {
+        setMessage(res.data.message);
       },
     });
   };

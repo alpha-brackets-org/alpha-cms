@@ -1,30 +1,28 @@
-import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
-import { apiHandler } from '@/lib/api-utils';
+import { apiHandler, sendError, sendData } from '@/lib/api-utils';
 import { comparePassword, signToken } from '@/lib/auth-utils';
+import { getDb } from '@/lib/db/dbConnect';
 
 export const POST = apiHandler(
   async (req) => {
     const { email, password } = await req.json();
 
-    const user = await mongoose.connection.db
-      .collection('users')
-      .findOne({ email: { $regex: new RegExp('^' + email + '$', 'i') } });
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return sendError('IDENTITY NOT FOUND', 401);
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await getDb().collection('users').findOne({
+      $expr: { $eq: [{ $toLower: '$email' }, normalizedEmail] },
+    });
 
     if (!user || !user.password) {
-      return NextResponse.json(
-        { error: 'IDENTITY NOT FOUND' },
-        { status: 401 }
-      );
+      return sendError('IDENTITY NOT FOUND', 401);
     }
 
     const isValid = await comparePassword(password, user.password);
 
     if (!isValid) {
-      return NextResponse.json(
-        { error: 'INVALID ACCESS KEY' },
-        { status: 401 }
-      );
+      return sendError('INVALID ACCESS KEY', 401);
     }
 
     const token = await signToken({
@@ -33,8 +31,7 @@ export const POST = apiHandler(
       role: user.role,
     });
 
-    const response = NextResponse.json({
-      success: true,
+    const response = sendData({
       user: {
         _id: user._id,
         email: user.email,

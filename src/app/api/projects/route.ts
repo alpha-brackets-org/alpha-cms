@@ -1,18 +1,18 @@
 import mongoose from 'mongoose';
+import { getDb } from '@/lib/db/dbConnect';
 import {
   scopeQuery,
   portfolioPopulate,
   categoryPopulate,
 } from '@/lib/db/portfolio-utils';
 import {
-  sendPaginatedResponse,
-  sendSuccess,
+  sendList,
+  sendData,
   apiHandler,
   DbUtils,
   parseSearchParams,
   getCurrentUser,
   sendForbidden,
-  sendError,
 } from '@/lib/api-utils';
 import {
   CollectionName,
@@ -20,6 +20,7 @@ import {
   MongoPipeline,
   UserRole,
 } from '@/types/cms';
+import { ProjectSchema } from '@/schemas/cms';
 
 export const GET = apiHandler(async (request) => {
   const { search, status, portfolio, page, limit, skip } =
@@ -53,7 +54,7 @@ export const GET = apiHandler(async (request) => {
     }
   }
 
-  const total = await mongoose.connection.db
+  const total = await getDb()
     .collection(CollectionName.PROJECTS)
     .countDocuments(query);
 
@@ -66,33 +67,41 @@ export const GET = apiHandler(async (request) => {
     ...portfolioPopulate(),
   ];
 
-  const projects = await mongoose.connection.db
+  const projects = await getDb()
     .collection(CollectionName.PROJECTS)
     .aggregate(pipeline)
     .toArray();
 
-  return sendPaginatedResponse(projects, { page, limit, total });
+  return sendList(projects, { page, limit, total });
 });
 
-export const POST = apiHandler(async (request) => {
-  const user = await getCurrentUser();
-  const body = await request.json();
+export const POST = apiHandler(
+  async (_request, { validatedData }) => {
+    const user = await getCurrentUser();
 
-  if (!body.portfolio) {
-    return sendError('Portfolio assignment is required', 400);
-  }
+    // Access Control
+    if (
+      user?.role !== UserRole.ADMIN &&
+      !user?.portfolios?.includes(validatedData!.portfolio)
+    ) {
+      return sendForbidden('You do not have access to this portfolio');
+    }
 
-  // Access Control
-  if (
-    user?.role !== UserRole.ADMIN &&
-    !user?.portfolios?.includes(body.portfolio)
-  ) {
-    return sendForbidden('You do not have access to this portfolio');
-  }
+    const processedBody = {
+      ...validatedData,
+      portfolio: new mongoose.Types.ObjectId(validatedData!.portfolio),
+    };
 
-  body.portfolio = new mongoose.Types.ObjectId(body.portfolio as string);
+    const result = await DbUtils.createDoc(
+      CollectionName.PROJECTS,
+      processedBody
+    );
+    const created = await DbUtils.findDoc(
+      CollectionName.PROJECTS,
+      result.insertedId.toString()
+    );
 
-  const result = await DbUtils.createDoc(CollectionName.PROJECTS, body);
-
-  return sendSuccess({ id: result.insertedId }, 201);
-});
+    return sendData(created, 201);
+  },
+  { schema: ProjectSchema }
+);

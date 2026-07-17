@@ -105,7 +105,8 @@ export function MediaLibrary({
   };
 
   const [uploadPortfolio, setUploadPortfolio] = useState<string>('');
-  const { data: portfolios } = usePortfolios();
+  const { data: portfoliosResponse } = usePortfolios();
+  const portfolios = portfoliosResponse?.data;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -148,7 +149,9 @@ export function MediaLibrary({
   const handleDelete = async () => {
     if (selectedAssets.length === 0) return;
 
-    const ids = selectedAssets.map((a) => a._id);
+    const ids = selectedAssets
+      .map((a) => a._id)
+      .filter((id): id is string => id !== undefined);
     batchDeleteMedia.mutate(ids, {
       onSuccess: () => {
         setIsConfirmOpen(false);

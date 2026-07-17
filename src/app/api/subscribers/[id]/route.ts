@@ -1,15 +1,6 @@
-import {
-  apiHandler,
-  DbUtils,
-  sendSuccess,
-  sendNotFound,
-} from '@/lib/api-utils';
+import { apiHandler, DbUtils, sendData, sendNotFound } from '@/lib/api-utils';
 import { CollectionName } from '@/types/cms';
 import { SubscriberSchema } from '@/schemas/cms';
-
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
 
 // UPDATE SUBSCRIBER (e.g. Change status)
 export const PATCH = apiHandler(
@@ -19,21 +10,22 @@ export const PATCH = apiHandler(
     const result = await DbUtils.updateDoc(
       CollectionName.SUBSCRIBERS,
       id,
-      validatedData
+      validatedData!
     );
 
     if (result.matchedCount === 0) {
       return sendNotFound('Subscriber');
     }
 
-    return sendSuccess({ success: true });
+    const updated = await DbUtils.findDoc(CollectionName.SUBSCRIBERS, id);
+    return sendData(updated);
   },
   { schema: SubscriberSchema.partial() }
 );
 
 // DELETE SUBSCRIBER
-export const DELETE = apiHandler(async (_request, context: RouteContext) => {
-  const { id } = await context.params;
+export const DELETE = apiHandler(async (_request, { params }) => {
+  const { id } = await params;
 
   const result = await DbUtils.deleteDoc(CollectionName.SUBSCRIBERS, id);
 
@@ -41,8 +33,5 @@ export const DELETE = apiHandler(async (_request, context: RouteContext) => {
     return sendNotFound('Subscriber');
   }
 
-  return sendSuccess({
-    success: true,
-    message: 'Subscriber deleted permanently.',
-  });
+  return sendData({ id });
 });

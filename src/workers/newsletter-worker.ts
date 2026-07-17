@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { Worker } from 'bullmq';
 import mongoose from 'mongoose';
-import dbConnect from '../lib/db/dbConnect';
+import dbConnect, { getDb } from '../lib/db/dbConnect';
 import { redisConnection } from '../lib/redis';
 import { NEWSLETTER_QUEUE_NAME } from '../lib/queues/newsletter-queue';
 import {
@@ -38,7 +38,7 @@ async function startWorker() {
         `📦 [NEWSLETTER WORKER] Processing job: ${job.id} | ${contentType.toUpperCase()}: ${contentId}`
       );
 
-      const db = mongoose.connection.db;
+      const db = getDb();
 
       // 1. Fetch Portfolio
       const portfolio = await db.collection(CollectionName.PORTFOLIOS).findOne({

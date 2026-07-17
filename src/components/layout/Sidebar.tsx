@@ -35,7 +35,8 @@ import { Label } from '@/components/ui/label';
 export const Sidebar = ({ onClose }: { onClose?: () => void }) => {
   const pathname = usePathname();
   const { user, loading: isAuthLoading } = useAuth();
-  const { data: portfolios = [], isLoading } = usePortfolios();
+  const { data: portfoliosResponse, isLoading } = usePortfolios();
+  const portfolios = portfoliosResponse?.data || [];
   const { activePortfolio, setActivePortfolio } = usePortfolio();
   const logoutMutation = useLogout();
 
@@ -52,7 +53,12 @@ export const Sidebar = ({ onClose }: { onClose?: () => void }) => {
     { name: 'Categories', icon: Layers, href: '/categories', adminOnly: false },
     { name: 'Blogs', icon: FileText, href: '/blogs', adminOnly: false },
     { name: 'FAQs', icon: HelpCircle, href: '/faqs', adminOnly: false },
-    { name: 'Testimonials', icon: MessageSquareQuote, href: '/testimonials', adminOnly: false },
+    {
+      name: 'Testimonials',
+      icon: MessageSquareQuote,
+      href: '/testimonials',
+      adminOnly: false,
+    },
     {
       name: 'Case Studies',
       icon: Briefcase,

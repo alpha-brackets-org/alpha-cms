@@ -2,16 +2,14 @@ import mongoose from 'mongoose';
 import {
   apiHandler,
   DbUtils,
-  sendSuccess,
+  sendData,
   sendNotFound,
   sendError,
 } from '@/lib/api-utils';
 import { scopeQuery } from '@/lib/db/portfolio-utils';
+import { runCascade } from '@/lib/db/cascade';
 import { CollectionName, CategorySchema } from '@/schemas/cms';
-
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
+import { getDb } from '@/lib/db/dbConnect';
 
 // UPDATE CATEGORY
 export const PATCH = apiHandler(
@@ -28,16 +26,16 @@ export const PATCH = apiHandler(
     // Usually categories are managed by Admins or senior Editors.
     // scopeQuery already ensures portfolio isolation.
 
-    if (validatedData?.portfolio) {
-      validatedData.portfolio = new mongoose.Types.ObjectId(
-        String(validatedData.portfolio)
+    if (validatedData!.portfolio) {
+      validatedData!.portfolio = new mongoose.Types.ObjectId(
+        String(validatedData!.portfolio)
       ) as unknown as string;
     }
 
     const result = await DbUtils.updateDoc(
       CollectionName.CATEGORIES,
       id,
-      validatedData,
+      validatedData!,
       query
     );
 
@@ -45,14 +43,15 @@ export const PATCH = apiHandler(
       return sendNotFound('Category');
     }
 
-    return sendSuccess({ success: true });
+    const updated = await DbUtils.findDoc(CollectionName.CATEGORIES, id, query);
+    return sendData(updated);
   },
   { schema: CategorySchema.partial() }
 );
 
 // DELETE CATEGORY
-export const DELETE = apiHandler(async (_request, context: RouteContext) => {
-  const { id } = await context.params;
+export const DELETE = apiHandler(async (_request, { params }) => {
+  const { id } = await params;
   const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
 
   if (id === 'default-uncategorized') {
@@ -62,28 +61,34 @@ export const DELETE = apiHandler(async (_request, context: RouteContext) => {
   const categoryId = new mongoose.Types.ObjectId(id);
   const categoryIdStr = id;
 
-  // 1. Unlink Blogs
-  await mongoose.connection.db
-    .collection(CollectionName.BLOGS)
-    .updateMany(
-      { $or: [{ category: categoryId }, { category: categoryIdStr }] },
-      { $set: { category: null } }
-    );
+  const result = await runCascade(async (session) => {
+    // 1. Unlink Blogs
+    await getDb()
+      .collection(CollectionName.BLOGS)
+      .updateMany(
+        { $or: [{ category: categoryId }, { category: categoryIdStr }] },
+        { $set: { category: null } },
+        { session }
+      );
 
-  // 2. Unlink Case Studies
-  await mongoose.connection.db
-    .collection(CollectionName.CASE_STUDIES)
-    .updateMany(
-      { $or: [{ category: categoryId }, { category: categoryIdStr }] },
-      { $set: { category: null } }
-    );
+    // 2. Unlink Case Studies
+    await getDb()
+      .collection(CollectionName.CASE_STUDIES)
+      .updateMany(
+        { $or: [{ category: categoryId }, { category: categoryIdStr }] },
+        { $set: { category: null } },
+        { session }
+      );
 
-  // 3. Delete Category
-  const result = await DbUtils.deleteDoc(CollectionName.CATEGORIES, id, query);
+    // 3. Delete Category
+    return getDb()
+      .collection(CollectionName.CATEGORIES)
+      .deleteOne(query, { session });
+  }, `category ${id} cascade delete`);
 
   if (result.deletedCount === 0) {
     return sendNotFound('Category');
   }
 
-  return sendSuccess({ success: true });
+  return sendData({ id });
 });

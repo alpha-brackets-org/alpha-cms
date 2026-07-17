@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PaginatedResponse, Lead, LeadFilters } from '@/types/cms';
+import { Lead, LeadFilters, PaginatedResponse } from '@/types/cms';
 import { api } from '@/lib/api-client';
 import { buildQueryString } from '@/lib/utils';
 import { useCmsQuery } from './use-cms-query';
@@ -11,14 +11,16 @@ export function useLeads(filters: LeadFilters = {}) {
 }
 
 export function useLead(id: string) {
-  return useCmsQuery<Lead>(['lead', id], () => api.get(`/leads/${id}`));
+  return useCmsQuery<{ data: Lead }>(['lead', id], () =>
+    api.get(`/leads/${id}`)
+  );
 }
 
 export function useUpdateLead() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Lead> }) =>
-      api.patch(`/leads/${id}`, data),
+      api.patch<{ data: Lead }>(`/leads/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
     },
@@ -29,7 +31,8 @@ export function useUpdateLead() {
 export function useDeleteLead() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/leads/${id}`),
+    mutationFn: (id: string) =>
+      api.delete<{ data: { id: string } }>(`/leads/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });

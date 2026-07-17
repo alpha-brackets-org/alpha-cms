@@ -58,7 +58,8 @@ export function BlogForm({
   }, []);
 
   const { data: categoriesResponse } = useCategories();
-  const { data: portfolios } = usePortfolios();
+  const { data: portfoliosResponse } = usePortfolios();
+  const portfolios = portfoliosResponse?.data;
   const { error, warning } = useToast();
 
   const {
@@ -264,7 +265,7 @@ export function BlogForm({
                 control={control}
                 render={({ field }) => (
                   <RichTextEditor
-                    content={field.value}
+                    content={field.value ?? ''}
                     onChange={field.onChange}
                   />
                 )}
@@ -321,13 +322,13 @@ export function BlogForm({
         <div className="hidden w-80 shrink-0 overflow-y-auto border-l border-white/10 xl:block">
           <div className="space-y-4 p-4">
             <SeoAnalyzer
-              title={watchedValues.seo?.metaTitle || watchedValues.title}
+              title={watchedValues.seo?.metaTitle || watchedValues.title || ''}
               description={
-                watchedValues.seo?.metaDescription || watchedValues.excerpt
+                watchedValues.seo?.metaDescription || watchedValues.excerpt || ''
               }
-              content={watchedValues.content}
-              keywords={watchedValues.seo?.keywords}
-              ogImage={watchedValues.seo?.ogImage}
+              content={watchedValues.content ?? ''}
+              keywords={watchedValues.seo?.keywords ?? ''}
+              ogImage={watchedValues.seo?.ogImage ?? ''}
             />
 
             <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
@@ -447,7 +448,7 @@ export function BlogForm({
                 control={control}
                 render={({ field }) => (
                   <MediaPicker
-                    value={field.value}
+                    value={field.value ?? undefined}
                     onChange={field.onChange}
                     label="OpenGraph Image"
                   />

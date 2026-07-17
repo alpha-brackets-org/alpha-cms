@@ -25,7 +25,8 @@ export default function DashboardPage() {
   const { user: currentUser } = useAuth();
   const { activePortfolio } = usePortfolio();
   const [leadMonths, setLeadMonths] = useState(6);
-  const { data: liveStats, isLoading } = useStats(leadMonths);
+  const { data: statsResponse, isLoading } = useStats(leadMonths);
+  const liveStats = statsResponse?.data;
 
   const stats = [
     {
@@ -198,7 +199,7 @@ export default function DashboardPage() {
             <div className="min-h-[300px]">
               {isLoading ? (
                 <Skeleton className="h-[300px] w-full" />
-              ) : liveStats?.leadsMonthly?.length > 0 ? (
+              ) : liveStats?.leadsMonthly && liveStats.leadsMonthly.length > 0 ? (
                 <LeadGrowthChart data={liveStats.leadsMonthly} />
               ) : (
                 <div className="flex h-[300px] items-center justify-center rounded-xl border border-dashed border-white/10 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -344,7 +345,9 @@ export default function DashboardPage() {
                   Node Env
                 </span>
                 <Badge variant="default" className="h-4 px-2 py-0 text-[8px]">
-                  {process.env.NODE_ENV === 'development' ? 'DEVELOPMENT' : 'PRODUCTION'}
+                  {process.env.NODE_ENV === 'development'
+                    ? 'DEVELOPMENT'
+                    : 'PRODUCTION'}
                 </Badge>
               </div>
             </div>

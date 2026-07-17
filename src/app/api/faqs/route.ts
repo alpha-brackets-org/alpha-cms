@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
+import { getDb } from '@/lib/db/dbConnect';
 import { scopeQuery, portfolioPopulate } from '@/lib/db/portfolio-utils';
 import {
-  sendPaginatedResponse,
-  sendSuccess,
+  sendList,
+  sendData,
   apiHandler,
   DbUtils,
   parseSearchParams,
@@ -41,7 +42,7 @@ export const GET = apiHandler(async (request) => {
   }
 
   // Total count for pagination
-  const total = await mongoose.connection.db
+  const total = await getDb()
     .collection(CollectionName.FAQS)
     .countDocuments(query);
 
@@ -54,12 +55,12 @@ export const GET = apiHandler(async (request) => {
     ...portfolioPopulate(),
   ];
 
-  const faqs = await mongoose.connection.db
+  const faqs = await getDb()
     .collection(CollectionName.FAQS)
     .aggregate(pipeline)
     .toArray();
 
-  return sendPaginatedResponse(faqs, { page, limit, total });
+  return sendList(faqs, { page, limit, total });
 });
 
 // CREATE NEW FAQ
@@ -70,7 +71,7 @@ export const POST = apiHandler(
     // Access Control
     if (
       user?.role !== UserRole.ADMIN &&
-      !user?.portfolios?.includes(validatedData.portfolio)
+      !user?.portfolios?.includes(validatedData!.portfolio)
     ) {
       return sendForbidden('You do not have access to this portfolio');
     }
@@ -78,12 +79,16 @@ export const POST = apiHandler(
     // Ensure portfolio is stored as ObjectId
     const processedBody = {
       ...validatedData,
-      portfolio: new mongoose.Types.ObjectId(validatedData.portfolio),
+      portfolio: new mongoose.Types.ObjectId(validatedData!.portfolio),
     };
 
     const result = await DbUtils.createDoc(CollectionName.FAQS, processedBody);
+    const created = await DbUtils.findDoc(
+      CollectionName.FAQS,
+      result.insertedId.toString()
+    );
 
-    return sendSuccess({ id: result.insertedId }, 201);
+    return sendData(created, 201);
   },
   { schema: FaqSchema }
 );

@@ -1,18 +1,19 @@
 import mongoose from 'mongoose';
 import { scopeQuery } from '@/lib/db/portfolio-utils';
 import {
-  sendPaginatedResponse,
+  sendList,
+  sendData,
   apiHandler,
   DbUtils,
-  sendSuccess,
   sendBadRequest,
   parseSearchParams,
   getCurrentUser,
   sendForbidden,
-  sendError,
 } from '@/lib/api-utils';
 import { CollectionName, UserRole, MongoQuery } from '@/types/cms';
+import { MediaSchema } from '@/schemas/cms';
 import imagekit from '@/lib/imagekit';
+import { getDb } from '@/lib/db/dbConnect';
 
 export const GET = apiHandler(async (request) => {
   const { portfolio, page, limit, skip, folder, tag, search } =
@@ -29,11 +30,11 @@ export const GET = apiHandler(async (request) => {
     ];
   }
 
-  const total = await mongoose.connection.db
+  const total = await getDb()
     .collection(CollectionName.MEDIA)
     .countDocuments(query);
 
-  const media = await mongoose.connection.db
+  const media = await getDb()
     .collection(CollectionName.MEDIA)
     .find(query)
     .sort({ createdAt: -1 })
@@ -41,35 +42,37 @@ export const GET = apiHandler(async (request) => {
     .limit(limit)
     .toArray();
 
-  return sendPaginatedResponse(media, { total, page, limit });
+  return sendList(media, { total, page, limit });
 });
 
-export const POST = apiHandler(async (request) => {
-  const user = await getCurrentUser();
-  const body = await request.json();
+export const POST = apiHandler(
+  async (_request, { validatedData }) => {
+    const user = await getCurrentUser();
 
-  if (!body.portfolio) {
-    return sendError('Portfolio assignment is required', 400);
-  }
+    // Access Control
+    if (
+      user?.role !== UserRole.ADMIN &&
+      !user?.portfolios?.includes(validatedData!.portfolio)
+    ) {
+      return sendForbidden('You do not have access to this portfolio');
+    }
 
-  // Access Control
-  if (
-    user?.role !== UserRole.ADMIN &&
-    !user?.portfolios?.includes(body.portfolio)
-  ) {
-    return sendForbidden('You do not have access to this portfolio');
-  }
+    // Ensure portfolio is stored as ObjectId
+    const processedBody = {
+      ...validatedData,
+      portfolio: new mongoose.Types.ObjectId(validatedData!.portfolio),
+    };
 
-  // Ensure portfolio is stored as ObjectId
-  const processedBody = {
-    ...body,
-    portfolio: new mongoose.Types.ObjectId(body.portfolio as string),
-  };
+    const result = await DbUtils.createDoc(CollectionName.MEDIA, processedBody);
+    const created = await DbUtils.findDoc(
+      CollectionName.MEDIA,
+      result.insertedId.toString()
+    );
 
-  const result = await DbUtils.createDoc(CollectionName.MEDIA, processedBody);
-
-  return sendSuccess({ id: result.insertedId }, 201);
-});
+    return sendData(created, 201);
+  },
+  { schema: MediaSchema }
+);
 
 export const DELETE = apiHandler(async (request) => {
   const { ids } = await request.json();
@@ -82,7 +85,7 @@ export const DELETE = apiHandler(async (request) => {
   const query = await scopeQuery({ _id: { $in: objectIds } });
 
   // 1. Get file IDs for ImageKit cleanup
-  const mediaItems = await mongoose.connection.db
+  const mediaItems = await getDb()
     .collection(CollectionName.MEDIA)
     .find(query)
     .toArray();
@@ -99,13 +102,9 @@ export const DELETE = apiHandler(async (request) => {
   }
 
   // 3. Delete from Database
-  const result = await mongoose.connection.db
+  const result = await getDb()
     .collection(CollectionName.MEDIA)
     .deleteMany(query);
 
-  return sendSuccess({
-    success: true,
-    deletedCount: result.deletedCount,
-    message: `${result.deletedCount} assets deleted permanently.`,
-  });
+  return sendData({ ids, deletedCount: result.deletedCount });
 });

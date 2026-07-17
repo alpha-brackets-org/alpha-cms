@@ -49,12 +49,7 @@ export type {
 export type { Portfolio, Media, User, Category, Stats } from '@/schemas/cms';
 
 // CRM / Marketing
-export type {
-  Lead,
-  Subscriber,
-  Campaign,
-  Analytics,
-} from '@/schemas/cms';
+export type { Lead, Subscriber, Campaign, Analytics } from '@/schemas/cms';
 
 // =============================================================================
 // POPULATED VARIANTS — resolved portfolio/category references
@@ -82,8 +77,7 @@ export type PopulatedFaq = Omit<Faq, 'portfolio'> & {
 // PAGINATION
 // =============================================================================
 
-export interface PaginatedResponse<T> {
-  data: T[];
+export interface PaginationMeta {
   total: number;
   limit: number;
   totalPages: number;
@@ -91,6 +85,11 @@ export interface PaginatedResponse<T> {
   pagingCounter: number;
   hasPrevPage: boolean;
   hasNextPage: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: PaginationMeta;
 }
 
 // =============================================================================

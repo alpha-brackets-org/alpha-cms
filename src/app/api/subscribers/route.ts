@@ -1,23 +1,16 @@
-import mongoose from 'mongoose';
+import { getDb } from '@/lib/db/dbConnect';
 import { scopeQuery, portfolioPopulate } from '@/lib/db/portfolio-utils';
 import {
-  sendPaginatedResponse,
+  sendList,
   apiHandler,
   parseSearchParams,
   parseEnumParam,
-  getCurrentUser,
-  sendError,
 } from '@/lib/api-utils';
 import { CollectionName, MongoQuery, MongoPipeline } from '@/types/cms';
 import { SubscriberStatus, SubscriberSource } from '@/schemas/cms';
 
 // GET ALL SUBSCRIBERS
 export const GET = apiHandler(async (request) => {
-  const user = await getCurrentUser();
-  if (!user) {
-    return sendError('AUTHENTICATION REQUIRED', 401);
-  }
-
   const { search, status, source, portfolio, page, limit, skip } =
     parseSearchParams(request);
 
@@ -41,7 +34,7 @@ export const GET = apiHandler(async (request) => {
   }
 
   // Total count for pagination
-  const total = await mongoose.connection.db
+  const total = await getDb()
     .collection(CollectionName.SUBSCRIBERS)
     .countDocuments(query);
 
@@ -54,10 +47,10 @@ export const GET = apiHandler(async (request) => {
     ...portfolioPopulate(),
   ];
 
-  const subscribers = await mongoose.connection.db
+  const subscribers = await getDb()
     .collection(CollectionName.SUBSCRIBERS)
     .aggregate(pipeline)
     .toArray();
 
-  return sendPaginatedResponse(subscribers, { page, limit, total });
+  return sendList(subscribers, { page, limit, total });
 });

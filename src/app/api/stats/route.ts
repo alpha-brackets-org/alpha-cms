@@ -1,23 +1,12 @@
-import mongoose from 'mongoose';
-import {
-  apiHandler,
-  parseSearchParams,
-  sendSuccess,
-  getCurrentUser,
-  sendError,
-} from '@/lib/api-utils';
+import { apiHandler, parseSearchParams, sendData } from '@/lib/api-utils';
 import { scopeQuery } from '@/lib/db/portfolio-utils';
 import { CollectionName } from '@/schemas/cms';
+import { getDb } from '@/lib/db/dbConnect';
 
 export const GET = apiHandler(async (request) => {
-  const user = await getCurrentUser();
-  if (!user) {
-    return sendError('AUTHENTICATION REQUIRED', 401);
-  }
-
   const { portfolio } = parseSearchParams(request);
   const query = await scopeQuery({}, portfolio);
-  const db = mongoose.connection.db;
+  const db = getDb();
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -176,7 +165,7 @@ export const GET = apiHandler(async (request) => {
       ? ((totalLeadsCount / totalVisitors) * 100).toFixed(2)
       : 0;
 
-  return sendSuccess({
+  return sendData({
     blogs: blogsTotal,
     blogsTrend: `+${blogsNew} this week`,
     projects: projectsTotal,

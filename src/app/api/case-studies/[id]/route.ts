@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { NextResponse } from 'next/server';
-import { apiHandler, sendNotFound, DbUtils } from '@/lib/api-utils';
+import { apiHandler, sendNotFound, sendData, DbUtils } from '@/lib/api-utils';
+import { getDb } from '@/lib/db/dbConnect';
 import {
   scopeQuery,
   portfolioPopulate,
@@ -17,7 +17,7 @@ export const GET = apiHandler(async (_request, { params }) => {
   const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
 
   // Use aggregation to get populated details
-  const projects = await mongoose.connection.db
+  const projects = await getDb()
     .collection(CollectionName.CASE_STUDIES)
     .aggregate([
       { $match: query },
@@ -28,7 +28,7 @@ export const GET = apiHandler(async (_request, { params }) => {
 
   const project = projects[0];
   if (!project) return sendNotFound('Case Study');
-  return NextResponse.json(project);
+  return sendData(project);
 });
 
 // UPDATE CASE STUDY
@@ -38,7 +38,7 @@ export const PATCH = apiHandler(
     const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
 
     // 1. Fetch current status to detect change
-    const currentDoc = await mongoose.connection.db
+    const currentDoc = await getDb()
       .collection(CollectionName.CASE_STUDIES)
       .findOne(query);
 
@@ -48,7 +48,7 @@ export const PATCH = apiHandler(
     const result = await DbUtils.updateDoc(
       CollectionName.CASE_STUDIES,
       id,
-      validatedData,
+      validatedData!,
       query
     );
     if (result.matchedCount === 0) return sendNotFound('Case Study');
@@ -73,7 +73,12 @@ export const PATCH = apiHandler(
   }
   */
 
-    return NextResponse.json({ success: true });
+    const updated = await DbUtils.findDoc(
+      CollectionName.CASE_STUDIES,
+      id,
+      query
+    );
+    return sendData(updated);
   },
   { schema: CaseStudySchema.partial() }
 );
@@ -92,5 +97,5 @@ export const DELETE = apiHandler(async (_request, { params }) => {
   );
 
   if (result.deletedCount === 0) return sendNotFound('Case Study');
-  return NextResponse.json({ success: true });
+  return sendData({ id });
 });

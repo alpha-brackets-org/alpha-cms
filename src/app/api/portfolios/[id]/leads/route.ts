@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import {
   apiHandler,
   DbUtils,
-  sendSuccess,
+  sendData,
   sendBadRequest,
   sendNotFound,
 } from '@/lib/api-utils';
@@ -14,30 +14,27 @@ import {
   CaseStudy,
   LeadSource,
   LeadStatus,
+  ContactFormLeadSchema,
+  LeadCaptureSchema,
 } from '@/schemas/cms';
 import { sendLeadMagnetEmail } from '@/lib/newsletter-engine';
 import { getSignedUrl } from '@/lib/imagekit';
+import { getDb } from '@/lib/db/dbConnect';
 
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
+// The case-study lead magnet path doesn't take `portfolio` from the body — it's the URL param.
+const CaseStudyLeadSchema = LeadCaptureSchema.omit({ portfolio: true });
 
 /**
  * PUBLIC LEAD GENERATION ENDPOINT
- * Captures leads for specific case study downloads.
+ * Captures leads for specific case study downloads, or a general contact-form message.
  */
 export const POST = apiHandler(
-  async (request, context: RouteContext) => {
-    const { id: portfolioId } = await context.params;
+  async (request, { params }) => {
+    const { id: portfolioId } = await params;
     const body = await request.json();
+    const { source, caseStudyId } = body;
 
-    const { email, caseStudyId, intent, metadata, firstName, lastName, phone, company, jobTitle, source, message } = body;
-
-    if (!email) {
-      return sendBadRequest('Email is required.');
-    }
-
-    const db = mongoose.connection.db;
+    const db = getDb();
     const portfolioObjId = new mongoose.Types.ObjectId(portfolioId);
 
     // 1. Fetch Portfolio
@@ -48,11 +45,16 @@ export const POST = apiHandler(
 
     // --- PATH A: GENERAL CONTACT FORM LEAD ---
     if (source === LeadSource.CONTACT_FORM || !caseStudyId) {
-      if (!firstName || !lastName) {
-        return sendBadRequest('First and Last name are required for contact forms.');
+      const validation = ContactFormLeadSchema.safeParse(body);
+      if (!validation.success) {
+        return sendBadRequest(validation.error.issues[0].message);
       }
+      const { firstName, lastName, email, phone, company, jobTitle, message } =
+        validation.data;
 
-      const notes = message ? [{ content: message, createdAt: new Date().toISOString() }] : [];
+      const notes = message
+        ? [{ content: message, createdAt: new Date().toISOString() }]
+        : [];
 
       await DbUtils.createDoc(CollectionName.LEADS, {
         firstName,
@@ -69,7 +71,7 @@ export const POST = apiHandler(
         updatedAt: new Date(),
       });
 
-      return sendSuccess(
+      return sendData(
         {
           message: 'Thank you! Your message has been sent successfully.',
         },
@@ -78,6 +80,12 @@ export const POST = apiHandler(
     }
 
     // --- PATH B: CASE STUDY DOWNLOAD LEAD MAGNET ---
+    const caseStudyValidation = CaseStudyLeadSchema.safeParse(body);
+    if (!caseStudyValidation.success) {
+      return sendBadRequest(caseStudyValidation.error.issues[0].message);
+    }
+    const { email, intent, metadata } = caseStudyValidation.data;
+
     const contentObjId = new mongoose.Types.ObjectId(caseStudyId as string);
 
     const caseStudy = (await db
@@ -127,7 +135,7 @@ export const POST = apiHandler(
         to: email,
         portfolio,
         content: caseStudy,
-        intent: intent,
+        intent: intent || undefined,
       });
       console.log(
         `[LEAD GEN] Content delivered to ${email} for case study: ${caseStudyId}`
@@ -145,7 +153,7 @@ export const POST = apiHandler(
       ? getSignedUrl(caseStudy.pdfUrl, 900)
       : `https://${portfolio.domain}/case-study/${caseStudy.slug}`;
 
-    return sendSuccess(
+    return sendData(
       {
         message: caseStudy.pdfUrl
           ? 'Access granted. Your PDF download is ready.'

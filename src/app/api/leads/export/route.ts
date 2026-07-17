@@ -6,14 +6,14 @@ import {
   parseSearchParams,
 } from '@/lib/api-utils';
 import { CollectionName } from '@/schemas/cms';
-import mongoose from 'mongoose';
+import { getDb } from '@/lib/db/dbConnect';
 import { scopeQuery } from '@/lib/db/portfolio-utils';
 
 export const GET = apiHandler(async (request) => {
   const user = await getCurrentUser();
   if (!user) return sendError('Unauthorized', 401);
 
-  const db = mongoose.connection.db;
+  const db = getDb();
   const { portfolio } = parseSearchParams(request);
 
   // Apply multi-tenant scoping

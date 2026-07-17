@@ -32,6 +32,10 @@ import {
   LeadSourceSchema,
   UserRoleSchema,
   AnalyticsEventSchema,
+  LeadCaptureSchema,
+  ContactFormLeadSchema,
+  dataResponse,
+  listResponse,
 } from '@/schemas/cms';
 const registry = new OpenAPIRegistry();
 
@@ -80,12 +84,14 @@ const PortfolioConfigSchema = z.object({
   domain: z.string(),
   active: z.boolean(),
   maintenanceMode: z.boolean(),
-  newsletterConfig: z.object({
-    accentColor: z.string(),
-    logoUrl: z.string().nullable(),
-    senderName: z.string(),
-    footerText: z.string(),
-  }).openapi('PortfolioConfig'),
+  newsletterConfig: z
+    .object({
+      accentColor: z.string(),
+      logoUrl: z.string().nullable(),
+      senderName: z.string(),
+      footerText: z.string(),
+    })
+    .openapi('PortfolioConfig'),
   customScripts: z.object({ head: z.string(), footer: z.string() }),
   socialLinks: z.array(z.object({ platform: z.string(), url: z.string() })),
 });
@@ -163,7 +169,7 @@ registry.registerPath({
   responses: {
     200: {
       description: 'Live system metrics',
-      content: { 'application/json': { schema: StatsSchema } },
+      content: { 'application/json': { schema: dataResponse(StatsSchema) } },
     },
   },
 });
@@ -177,8 +183,11 @@ registry.registerPath({
   summary: 'List Portfolios',
   responses: {
     200: {
+      // Unpaginated on purpose — there are only ever a handful of portfolios.
       description: 'List of portfolios',
-      content: { 'application/json': { schema: z.array(PortfolioSchema) } },
+      content: {
+        'application/json': { schema: dataResponse(z.array(PortfolioSchema)) },
+      },
     },
   },
 });
@@ -191,7 +200,14 @@ registry.registerPath({
   request: {
     body: { content: { 'application/json': { schema: PortfolioSchema } } },
   },
-  responses: { 201: { description: 'Created' } },
+  responses: {
+    201: {
+      description: 'Created',
+      content: {
+        'application/json': { schema: dataResponse(PortfolioSchema) },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -201,9 +217,18 @@ registry.registerPath({
   summary: 'Update Portfolio',
   request: {
     params: z.object({ id: z.string() }),
-    body: { content: { 'application/json': { schema: PortfolioSchema } } },
+    body: {
+      content: { 'application/json': { schema: PortfolioSchema.partial() } },
+    },
   },
-  responses: { 200: { description: 'Updated' } },
+  responses: {
+    200: {
+      description: 'Updated',
+      content: {
+        'application/json': { schema: dataResponse(PortfolioSchema) },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -214,7 +239,16 @@ registry.registerPath({
   request: {
     params: z.object({ id: z.string() }),
   },
-  responses: { 200: { description: 'Deleted' } },
+  responses: {
+    200: {
+      description: 'Deleted (cascades across every portfolio-scoped collection)',
+      content: {
+        'application/json': {
+          schema: dataResponse(z.object({ id: z.string() })),
+        },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -234,9 +268,7 @@ registry.registerPath({
     200: {
       description: 'Public configuration data',
       content: {
-        'application/json': {
-          schema: PortfolioConfigSchema,
-        },
+        'application/json': { schema: dataResponse(PortfolioConfigSchema) },
       },
     },
   },
@@ -251,8 +283,11 @@ registry.registerPath({
   summary: 'List Users',
   responses: {
     200: {
+      // Unpaginated on purpose — same reasoning as /portfolios.
       description: 'List of administrative users',
-      content: { 'application/json': { schema: z.array(UserSchema) } },
+      content: {
+        'application/json': { schema: dataResponse(z.array(UserSchema)) },
+      },
     },
   },
 });
@@ -265,7 +300,13 @@ registry.registerPath({
   request: {
     body: { content: { 'application/json': { schema: UserSchema } } },
   },
-  responses: { 201: { description: 'Authorized' } },
+  responses: {
+    201: {
+      description: 'Authorized',
+      content: { 'application/json': { schema: dataResponse(UserSchema) } },
+    },
+    409: { description: 'Email already registered to another operator' },
+  },
 });
 
 registry.registerPath({
@@ -275,9 +316,15 @@ registry.registerPath({
   summary: 'Update User Credentials',
   request: {
     params: z.object({ id: z.string() }),
-    body: { content: { 'application/json': { schema: UserSchema } } },
+    body: { content: { 'application/json': { schema: UserSchema.partial() } } },
   },
-  responses: { 200: { description: 'Updated' } },
+  responses: {
+    200: {
+      description: 'Updated',
+      content: { 'application/json': { schema: dataResponse(UserSchema) } },
+    },
+    409: { description: 'Email already registered to another operator' },
+  },
 });
 
 registry.registerPath({
@@ -288,7 +335,16 @@ registry.registerPath({
   request: {
     params: z.object({ id: z.string() }),
   },
-  responses: { 200: { description: 'Deleted' } },
+  responses: {
+    200: {
+      description: 'Deleted',
+      content: {
+        'application/json': {
+          schema: dataResponse(z.object({ id: z.string() })),
+        },
+      },
+    },
+  },
 });
 
 // Authentication
@@ -302,10 +358,12 @@ registry.registerPath({
     body: {
       content: {
         'application/json': {
-          schema: z.object({
-            email: z.string().email(),
-            password: z.string(),
-          }).openapi('LoginRequest'),
+          schema: z
+            .object({
+              email: z.email(),
+              password: z.string(),
+            })
+            .openapi('LoginRequest'),
         },
       },
     },
@@ -315,14 +373,15 @@ registry.registerPath({
       description: 'Successfully authenticated',
       content: {
         'application/json': {
-          schema: z.object({
-            success: z.boolean(),
-            user: z.object({
-              _id: z.string(),
-              email: z.string(),
-              role: z.string(),
-            }).openapi('LoginResponse'),
-          }),
+          schema: dataResponse(
+            z.object({
+              user: z.object({
+                _id: z.string(),
+                email: z.string(),
+                role: z.string(),
+              }),
+            })
+          ).openapi('LoginResponse'),
         },
       },
     },
@@ -340,9 +399,11 @@ registry.registerPath({
     body: {
       content: {
         'application/json': {
-          schema: z.object({
-            email: z.string().email(),
-          }).openapi('ForgotPasswordRequest'),
+          schema: z
+            .object({
+              email: z.email(),
+            })
+            .openapi('ForgotPasswordRequest'),
         },
       },
     },
@@ -352,13 +413,13 @@ registry.registerPath({
       description: 'Reset link sent if email exists',
       content: {
         'application/json': {
-          schema: z.object({
-            success: z.boolean(),
-            message: z.string(),
-          }).openapi('ForgotPasswordResponse'),
+          schema: dataResponse(z.object({ message: z.string() })).openapi(
+            'ForgotPasswordResponse'
+          ),
         },
       },
     },
+    429: { description: 'Too many attempts — rate limited' },
   },
 });
 
@@ -372,10 +433,12 @@ registry.registerPath({
     body: {
       content: {
         'application/json': {
-          schema: z.object({
-            token: z.string(),
-            password: z.string(),
-          }).openapi('ResetPasswordRequest'),
+          schema: z
+            .object({
+              token: z.string(),
+              password: z.string(),
+            })
+            .openapi('ResetPasswordRequest'),
         },
       },
     },
@@ -385,10 +448,9 @@ registry.registerPath({
       description: 'Password restored successfully',
       content: {
         'application/json': {
-          schema: z.object({
-            success: z.boolean(),
-            message: z.string(),
-          }).openapi('ResetPasswordResponse'),
+          schema: dataResponse(z.object({ message: z.string() })).openapi(
+            'ResetPasswordResponse'
+          ),
         },
       },
     },
@@ -404,19 +466,19 @@ registry.registerPath({
   summary: 'Current User Session',
   responses: {
     200: {
-      description: 'Current user data or null',
+      description: 'Current user data, or null when unauthenticated',
       content: {
         'application/json': {
-          schema: z.object({
-            user: z
+          schema: dataResponse(
+            z
               .object({
                 _id: z.string(),
                 email: z.string(),
                 role: z.string(),
                 portfolios: z.array(z.string()),
-              }).openapi('AuthMeResponse')
-              .nullable(),
-          }),
+              })
+              .nullable()
+          ).openapi('AuthMeResponse'),
         },
       },
     },
@@ -433,10 +495,12 @@ registry.registerPath({
     body: {
       content: {
         'application/json': {
-          schema: z.object({
-            currentPassword: z.string(),
-            newPassword: z.string(),
-          }).openapi('ChangePasswordRequest'),
+          schema: z
+            .object({
+              currentPassword: z.string(),
+              newPassword: z.string(),
+            })
+            .openapi('ChangePasswordRequest'),
         },
       },
     },
@@ -446,10 +510,9 @@ registry.registerPath({
       description: 'Password updated successfully',
       content: {
         'application/json': {
-          schema: z.object({
-            success: z.boolean(),
-            message: z.string(),
-          }).openapi('ChangePasswordResponse'),
+          schema: dataResponse(z.object({ message: z.string() })).openapi(
+            'ChangePasswordResponse'
+          ),
         },
       },
     },
@@ -469,9 +532,9 @@ registry.registerPath({
       description: 'Successfully logged out',
       content: {
         'application/json': {
-          schema: z.object({
-            success: z.boolean(),
-          }).openapi('LogoutResponse'),
+          schema: dataResponse(z.object({ loggedOut: z.boolean() })).openapi(
+            'LogoutResponse'
+          ),
         },
       },
     },
@@ -486,8 +549,9 @@ registry.registerPath({
   method: 'post',
   path: '/portfolios/{id}/leads',
   tags: ['Leads & Newsletter'],
-  description: 'Submit gated content lead. Triggers automated delivery.',
-  summary: 'Gated Content Lead',
+  description:
+    'Submit either a general contact-form lead, or a case-study lead-magnet request (branches on `source`/`caseStudyId`). Triggers automated delivery for the lead-magnet case.',
+  summary: 'Portfolio Lead / Contact Form',
   request: {
     params: z.object({
       id: z.string().openapi({ description: 'Portfolio ID' }),
@@ -495,24 +559,34 @@ registry.registerPath({
     body: {
       content: {
         'application/json': {
-          schema: LeadSchema,
+          schema: z.union([
+            ContactFormLeadSchema,
+            LeadCaptureSchema.omit({ portfolio: true }),
+          ]),
         },
       },
     },
   },
   responses: {
     201: {
-      description: 'Lead registered and email sent',
+      description:
+        'Lead registered (contact-form message sent, or lead-magnet email delivered)',
       content: {
         'application/json': {
-          schema: z.object({
-            success: z.boolean(),
-            message: z.string(),
-            downloadUrl: z.string().openapi({
-              description: 'Direct link to the requested case study',
-              example: 'https://saadqadir.com/case-study/healthline-platform',
-            }).openapi('SubmitLeadResponse'),
-          }),
+          schema: dataResponse(
+            z.object({
+              message: z.string(),
+              downloadUrl: z
+                .string()
+                .optional()
+                .openapi({
+                  description:
+                    'Only present for case-study lead-magnet requests',
+                  example:
+                    'https://saadqadir.com/case-study/healthline-platform',
+                }),
+            })
+          ).openapi('SubmitLeadResponse'),
         },
       },
     },
@@ -540,12 +614,25 @@ registry.registerPath({
     },
   },
   responses: {
-    201: {
-      description: 'Subscription confirmed',
+    200: {
+      description: 'Previously-unsubscribed email re-activated',
       content: {
-        'application/json': { schema: z.object({ success: z.boolean() }).openapi('SubscribeResponse') },
+        'application/json': {
+          schema: dataResponse(z.object({ message: z.string() })).openapi(
+            'SubscribeResponse'
+          ),
+        },
       },
     },
+    201: {
+      description: 'New subscription created',
+      content: {
+        'application/json': {
+          schema: dataResponse(z.object({ message: z.string() })),
+        },
+      },
+    },
+    409: { description: 'Email is already actively subscribed' },
   },
 });
 
@@ -559,10 +646,12 @@ registry.registerPath({
     body: {
       content: {
         'application/json': {
-          schema: z.object({
-            email: z.string().email(),
-            portfolioId: z.string(),
-          }).openapi('UnsubscribeRequest').openapi('SubscribeRequest'),
+          schema: z
+            .object({
+              email: z.email(),
+              portfolioId: z.string(),
+            })
+            .openapi('UnsubscribeRequest'),
         },
       },
     },
@@ -572,7 +661,9 @@ registry.registerPath({
       description: 'Successfully unsubscribed',
       content: {
         'application/json': {
-          schema: z.object({ success: z.boolean(), message: z.string() }).openapi('UnsubscribeResponse'),
+          schema: dataResponse(z.object({ message: z.string() })).openapi(
+            'UnsubscribeResponse'
+          ),
         },
       },
     },
@@ -600,9 +691,9 @@ registry.registerPath({
       description: 'Event tracked successfully',
       content: {
         'application/json': {
-          schema: z.object({
-            tracked: z.boolean(),
-          }).openapi('AnalyticsCollectResponse'),
+          schema: dataResponse(z.object({ tracked: z.boolean() })).openapi(
+            'AnalyticsCollectResponse'
+          ),
         },
       },
     },
@@ -620,18 +711,20 @@ registry.registerPath({
       ...PaginationQueryParams,
       ...PortfolioQueryParam,
       ...SearchQueryParam,
-      source: SubscriberSourceSchema
-        .optional()
-        .openapi({ param: { name: 'source', in: 'query' } }),
-      status: SubscriberStatusSchema
-        .optional()
-        .openapi({ param: { name: 'status', in: 'query' } }),
+      source: SubscriberSourceSchema.optional().openapi({
+        param: { name: 'source', in: 'query' },
+      }),
+      status: SubscriberStatusSchema.optional().openapi({
+        param: { name: 'status', in: 'query' },
+      }),
     }),
   },
   responses: {
     200: {
       description: 'Paginated subscribers',
-      content: { 'application/json': { schema: z.array(SubscriberSchema) } },
+      content: {
+        'application/json': { schema: listResponse(SubscriberSchema) },
+      },
     },
   },
 });
@@ -643,9 +736,18 @@ registry.registerPath({
   summary: 'Update Subscriber',
   request: {
     params: z.object({ id: z.string() }),
-    body: { content: { 'application/json': { schema: SubscriberSchema } } },
+    body: {
+      content: { 'application/json': { schema: SubscriberSchema.partial() } },
+    },
   },
-  responses: { 200: { description: 'Updated' } },
+  responses: {
+    200: {
+      description: 'Updated',
+      content: {
+        'application/json': { schema: dataResponse(SubscriberSchema) },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -656,7 +758,16 @@ registry.registerPath({
   request: {
     params: z.object({ id: z.string() }),
   },
-  responses: { 200: { description: 'Deleted' } },
+  responses: {
+    200: {
+      description: 'Deleted',
+      content: {
+        'application/json': {
+          schema: dataResponse(z.object({ id: z.string() })),
+        },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -675,7 +786,7 @@ registry.registerPath({
   responses: {
     200: {
       description: 'Paginated leads',
-      content: { 'application/json': { schema: z.array(LeadSchema) } },
+      content: { 'application/json': { schema: listResponse(LeadSchema) } },
     },
   },
 });
@@ -693,6 +804,7 @@ registry.registerPath({
   },
   responses: {
     200: {
+      // Not part of the {data}/{data,pagination} envelope — this route returns a raw file.
       description: 'CSV file download',
       content: {
         'text/csv': {
@@ -715,7 +827,7 @@ registry.registerPath({
   responses: {
     200: {
       description: 'The lead document',
-      content: { 'application/json': { schema: LeadSchema } },
+      content: { 'application/json': { schema: dataResponse(LeadSchema) } },
     },
   },
 });
@@ -727,9 +839,14 @@ registry.registerPath({
   summary: 'Update Lead Status/Notes',
   request: {
     params: z.object({ id: z.string() }),
-    body: { content: { 'application/json': { schema: LeadSchema } } },
+    body: { content: { 'application/json': { schema: LeadSchema.partial() } } },
   },
-  responses: { 200: { description: 'Updated' } },
+  responses: {
+    200: {
+      description: 'Updated',
+      content: { 'application/json': { schema: dataResponse(LeadSchema) } },
+    },
+  },
 });
 
 registry.registerPath({
@@ -740,7 +857,16 @@ registry.registerPath({
   request: {
     params: z.object({ id: z.string() }),
   },
-  responses: { 200: { description: 'Deleted' } },
+  responses: {
+    200: {
+      description: 'Deleted',
+      content: {
+        'application/json': {
+          schema: dataResponse(z.object({ id: z.string() })),
+        },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -757,7 +883,9 @@ registry.registerPath({
   responses: {
     200: {
       description: 'List of newsletter campaigns',
-      content: { 'application/json': { schema: z.array(CampaignSchema) } },
+      content: {
+        'application/json': { schema: listResponse(CampaignSchema) },
+      },
     },
   },
 });
@@ -770,7 +898,14 @@ registry.registerPath({
   request: {
     body: { content: { 'application/json': { schema: CampaignSchema } } },
   },
-  responses: { 201: { description: 'Created' } },
+  responses: {
+    201: {
+      description: 'Created',
+      content: {
+        'application/json': { schema: dataResponse(CampaignSchema) },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -784,8 +919,39 @@ registry.registerPath({
   responses: {
     200: {
       description: 'The campaign document',
-      content: { 'application/json': { schema: CampaignSchema } },
+      content: {
+        'application/json': { schema: dataResponse(CampaignSchema) },
+      },
     },
+    404: { description: 'Campaign not found' },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/campaigns/{id}/send',
+  tags: ['Leads & Newsletter'],
+  description: 'Send a draft campaign to every active subscriber of its portfolio',
+  summary: 'Send Campaign',
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: {
+    200: {
+      description: 'Campaign sent',
+      content: {
+        'application/json': {
+          schema: dataResponse(
+            z.object({
+              message: z.string(),
+              sent: z.number(),
+              failed: z.number(),
+            })
+          ).openapi('SendCampaignResponse'),
+        },
+      },
+    },
+    400: { description: 'Campaign already sent, or no active subscribers' },
     404: { description: 'Campaign not found' },
   },
 });
@@ -798,7 +964,17 @@ registry.registerPath({
   request: {
     params: z.object({ id: z.string() }),
   },
-  responses: { 200: { description: 'Deleted' } },
+  responses: {
+    200: {
+      description: 'Deleted',
+      content: {
+        'application/json': {
+          schema: dataResponse(z.object({ id: z.string() })),
+        },
+      },
+    },
+    404: { description: 'Campaign not found' },
+  },
 });
 
 /**
@@ -818,15 +994,17 @@ registry.registerPath({
       ...PortfolioQueryParam,
       ...SearchQueryParam,
       ...CategoryQueryParam,
-      status: PublishStatusSchema
-        .optional()
-        .openapi({ param: { name: 'status', in: 'query' } }),
+      status: PublishStatusSchema.optional().openapi({
+        param: { name: 'status', in: 'query' },
+      }),
     }),
   },
   responses: {
     200: {
       description: 'Paginated blog posts',
-      content: { 'application/json': { schema: z.array(PopulatedBlogSchema) } },
+      content: {
+        'application/json': { schema: listResponse(PopulatedBlogSchema) },
+      },
     },
   },
 });
@@ -839,7 +1017,14 @@ registry.registerPath({
   request: {
     body: { content: { 'application/json': { schema: BlogSchema } } },
   },
-  responses: { 201: { description: 'Created' } },
+  responses: {
+    201: {
+      description: 'Created',
+      content: {
+        'application/json': { schema: dataResponse(PopulatedBlogSchema) },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -851,7 +1036,14 @@ registry.registerPath({
     params: z.object({ id: z.string() }),
     body: { content: { 'application/json': { schema: BlogSchema } } },
   },
-  responses: { 200: { description: 'Updated' } },
+  responses: {
+    200: {
+      description: 'Updated',
+      content: {
+        'application/json': { schema: dataResponse(PopulatedBlogSchema) },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -865,7 +1057,9 @@ registry.registerPath({
   responses: {
     200: {
       description: 'The blog post document',
-      content: { 'application/json': { schema: PopulatedBlogSchema } },
+      content: {
+        'application/json': { schema: dataResponse(PopulatedBlogSchema) },
+      },
     },
   },
 });
@@ -878,7 +1072,16 @@ registry.registerPath({
   request: {
     params: z.object({ id: z.string() }),
   },
-  responses: { 200: { description: 'Deleted' } },
+  responses: {
+    200: {
+      description: 'Deleted',
+      content: {
+        'application/json': {
+          schema: dataResponse(z.object({ id: z.string() })),
+        },
+      },
+    },
+  },
 });
 
 // Case Studies
@@ -894,15 +1097,17 @@ registry.registerPath({
       ...PortfolioQueryParam,
       ...SearchQueryParam,
       ...CategoryQueryParam,
-      status: PublishStatusSchema
-        .optional()
-        .openapi({ param: { name: 'status', in: 'query' } }),
+      status: PublishStatusSchema.optional().openapi({
+        param: { name: 'status', in: 'query' },
+      }),
     }),
   },
   responses: {
     200: {
       description: 'List of case studies',
-      content: { 'application/json': { schema: z.array(PopulatedCaseStudySchema) } },
+      content: {
+        'application/json': { schema: listResponse(PopulatedCaseStudySchema) },
+      },
     },
   },
 });
@@ -915,7 +1120,14 @@ registry.registerPath({
   request: {
     body: { content: { 'application/json': { schema: CaseStudySchema } } },
   },
-  responses: { 201: { description: 'Created' } },
+  responses: {
+    201: {
+      description: 'Created',
+      content: {
+        'application/json': { schema: dataResponse(CaseStudySchema) },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -927,7 +1139,14 @@ registry.registerPath({
     params: z.object({ id: z.string() }),
     body: { content: { 'application/json': { schema: CaseStudySchema } } },
   },
-  responses: { 200: { description: 'Updated' } },
+  responses: {
+    200: {
+      description: 'Updated',
+      content: {
+        'application/json': { schema: dataResponse(CaseStudySchema) },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -941,7 +1160,9 @@ registry.registerPath({
   responses: {
     200: {
       description: 'The case study document',
-      content: { 'application/json': { schema: PopulatedCaseStudySchema } },
+      content: {
+        'application/json': { schema: dataResponse(PopulatedCaseStudySchema) },
+      },
     },
   },
 });
@@ -954,7 +1175,16 @@ registry.registerPath({
   request: {
     params: z.object({ id: z.string() }),
   },
-  responses: { 200: { description: 'Deleted' } },
+  responses: {
+    200: {
+      description: 'Deleted',
+      content: {
+        'application/json': {
+          schema: dataResponse(z.object({ id: z.string() })),
+        },
+      },
+    },
+  },
 });
 
 // Projects
@@ -969,15 +1199,17 @@ registry.registerPath({
       ...PaginationQueryParams,
       ...PortfolioQueryParam,
       ...SearchQueryParam,
-      status: PublishStatusSchema
-        .optional()
-        .openapi({ param: { name: 'status', in: 'query' } }),
+      status: PublishStatusSchema.optional().openapi({
+        param: { name: 'status', in: 'query' },
+      }),
     }),
   },
   responses: {
     200: {
       description: 'List of projects',
-      content: { 'application/json': { schema: z.array(PopulatedProjectSchema) } },
+      content: {
+        'application/json': { schema: listResponse(PopulatedProjectSchema) },
+      },
     },
   },
 });
@@ -990,7 +1222,14 @@ registry.registerPath({
   request: {
     body: { content: { 'application/json': { schema: ProjectSchema } } },
   },
-  responses: { 201: { description: 'Created' } },
+  responses: {
+    201: {
+      description: 'Created',
+      content: {
+        'application/json': { schema: dataResponse(ProjectSchema) },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -1002,7 +1241,14 @@ registry.registerPath({
     params: z.object({ id: z.string() }),
     body: { content: { 'application/json': { schema: ProjectSchema } } },
   },
-  responses: { 200: { description: 'Updated' } },
+  responses: {
+    200: {
+      description: 'Updated',
+      content: {
+        'application/json': { schema: dataResponse(ProjectSchema) },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -1016,7 +1262,9 @@ registry.registerPath({
   responses: {
     200: {
       description: 'The project document',
-      content: { 'application/json': { schema: PopulatedProjectSchema } },
+      content: {
+        'application/json': { schema: dataResponse(PopulatedProjectSchema) },
+      },
     },
   },
 });
@@ -1029,7 +1277,16 @@ registry.registerPath({
   request: {
     params: z.object({ id: z.string() }),
   },
-  responses: { 200: { description: 'Deleted' } },
+  responses: {
+    200: {
+      description: 'Deleted',
+      content: {
+        'application/json': {
+          schema: dataResponse(z.object({ id: z.string() })),
+        },
+      },
+    },
+  },
 });
 
 // FAQs
@@ -1044,15 +1301,15 @@ registry.registerPath({
       ...PaginationQueryParams,
       ...PortfolioQueryParam,
       ...SearchQueryParam,
-      status: PublishStatusSchema
-        .optional()
-        .openapi({ param: { name: 'status', in: 'query' } }),
+      status: PublishStatusSchema.optional().openapi({
+        param: { name: 'status', in: 'query' },
+      }),
     }),
   },
   responses: {
     200: {
       description: 'Paginated FAQs',
-      content: { 'application/json': { schema: z.array(FaqSchema) } },
+      content: { 'application/json': { schema: listResponse(FaqSchema) } },
     },
   },
 });
@@ -1065,7 +1322,12 @@ registry.registerPath({
   request: {
     body: { content: { 'application/json': { schema: FaqSchema } } },
   },
-  responses: { 201: { description: 'Created' } },
+  responses: {
+    201: {
+      description: 'Created',
+      content: { 'application/json': { schema: dataResponse(FaqSchema) } },
+    },
+  },
 });
 
 registry.registerPath({
@@ -1079,7 +1341,7 @@ registry.registerPath({
   responses: {
     200: {
       description: 'The FAQ document',
-      content: { 'application/json': { schema: FaqSchema } },
+      content: { 'application/json': { schema: dataResponse(FaqSchema) } },
     },
     404: { description: 'FAQ not found' },
   },
@@ -1094,7 +1356,12 @@ registry.registerPath({
     params: z.object({ id: z.string() }),
     body: { content: { 'application/json': { schema: FaqSchema } } },
   },
-  responses: { 200: { description: 'Updated' } },
+  responses: {
+    200: {
+      description: 'Updated',
+      content: { 'application/json': { schema: dataResponse(FaqSchema) } },
+    },
+  },
 });
 
 registry.registerPath({
@@ -1105,7 +1372,16 @@ registry.registerPath({
   request: {
     params: z.object({ id: z.string() }),
   },
-  responses: { 200: { description: 'Deleted' } },
+  responses: {
+    200: {
+      description: 'Deleted',
+      content: {
+        'application/json': {
+          schema: dataResponse(z.object({ id: z.string() })),
+        },
+      },
+    },
+  },
 });
 
 // Testimonials
@@ -1120,9 +1396,9 @@ registry.registerPath({
       ...PaginationQueryParams,
       ...PortfolioQueryParam,
       ...SearchQueryParam,
-      status: TestimonialStatusSchema
-        .optional()
-        .openapi({ param: { name: 'status', in: 'query' } }),
+      status: TestimonialStatusSchema.optional().openapi({
+        param: { name: 'status', in: 'query' },
+      }),
     }),
   },
   responses: {
@@ -1130,7 +1406,7 @@ registry.registerPath({
       description: 'Paginated testimonials',
       content: {
         'application/json': {
-          schema: z.array(PopulatedTestimonialSchema),
+          schema: listResponse(PopulatedTestimonialSchema),
         },
       },
     },
@@ -1156,9 +1432,7 @@ registry.registerPath({
       description: 'Created',
       content: {
         'application/json': {
-          schema: z.object({
-            id: z.string(),
-          }),
+          schema: dataResponse(TestimonialSchema),
         },
       },
     },
@@ -1178,7 +1452,7 @@ registry.registerPath({
       description: 'The testimonial document',
       content: {
         'application/json': {
-          schema: PopulatedTestimonialSchema,
+          schema: dataResponse(PopulatedTestimonialSchema),
         },
       },
     },
@@ -1208,9 +1482,7 @@ registry.registerPath({
       description: 'Updated',
       content: {
         'application/json': {
-          schema: z.object({
-            success: z.boolean(),
-          }),
+          schema: dataResponse(PopulatedTestimonialSchema),
         },
       },
     },
@@ -1233,9 +1505,7 @@ registry.registerPath({
       description: 'Deleted',
       content: {
         'application/json': {
-          schema: z.object({
-            success: z.boolean(),
-          }),
+          schema: dataResponse(z.object({ id: z.string() })),
         },
       },
     },
@@ -1257,11 +1527,13 @@ registry.registerPath({
       description: 'Authentication parameters',
       content: {
         'application/json': {
-          schema: z.object({
-            token: z.string(),
-            expire: z.number(),
-            signature: z.string(),
-          }).openapi('MediaAuthResponse'),
+          schema: z
+            .object({
+              token: z.string(),
+              expire: z.number(),
+              signature: z.string(),
+            })
+            .openapi('MediaAuthResponse'),
         },
       },
     },
@@ -1280,7 +1552,10 @@ registry.registerPath({
       content: {
         'multipart/form-data': {
           schema: z.object({
-            file: z.unknown().openapi({ type: 'string', format: 'binary' }).openapi('MediaUploadRequest'),
+            file: z
+              .unknown()
+              .openapi({ type: 'string', format: 'binary' })
+              .openapi('MediaUploadRequest'),
             portfolio: z.string(),
             virtualFolder: z.string().optional(),
           }),
@@ -1288,7 +1563,14 @@ registry.registerPath({
       },
     },
   },
-  responses: { 201: { description: 'Uploaded' } },
+  responses: {
+    201: {
+      description: 'Uploaded',
+      content: {
+        'application/json': { schema: dataResponse(MediaSchema) },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -1300,7 +1582,14 @@ registry.registerPath({
     params: z.object({ id: z.string() }),
     body: { content: { 'application/json': { schema: MediaSchema } } },
   },
-  responses: { 200: { description: 'Updated' } },
+  responses: {
+    200: {
+      description: 'Updated',
+      content: {
+        'application/json': { schema: dataResponse(MediaSchema) },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -1311,7 +1600,49 @@ registry.registerPath({
   request: {
     params: z.object({ id: z.string() }),
   },
-  responses: { 200: { description: 'Deleted' } },
+  responses: {
+    200: {
+      description: 'Deleted',
+      content: {
+        'application/json': {
+          schema: dataResponse(z.object({ id: z.string() })),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'delete',
+  path: '/media',
+  tags: ['Media & Assets'],
+  summary: 'Bulk Delete Media Assets',
+  description:
+    'Deletes multiple media assets by ID, cleaning up ImageKit files first',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({ ids: z.array(z.string()) }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Deleted',
+      content: {
+        'application/json': {
+          schema: dataResponse(
+            z.object({
+              ids: z.array(z.string()),
+              deletedCount: z.number(),
+            })
+          ),
+        },
+      },
+    },
+  },
 });
 
 /**
@@ -1333,7 +1664,7 @@ registry.registerPath({
   responses: {
     200: {
       description: 'List of categories',
-      content: { 'application/json': { schema: z.array(CategorySchema) } },
+      content: { 'application/json': { schema: listResponse(CategorySchema) } },
     },
   },
 });
@@ -1346,7 +1677,14 @@ registry.registerPath({
   request: {
     body: { content: { 'application/json': { schema: CategorySchema } } },
   },
-  responses: { 201: { description: 'Created' } },
+  responses: {
+    201: {
+      description: 'Created',
+      content: {
+        'application/json': { schema: dataResponse(CategorySchema) },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -1358,7 +1696,14 @@ registry.registerPath({
     params: z.object({ id: z.string() }),
     body: { content: { 'application/json': { schema: CategorySchema } } },
   },
-  responses: { 200: { description: 'Updated' } },
+  responses: {
+    200: {
+      description: 'Updated',
+      content: {
+        'application/json': { schema: dataResponse(CategorySchema) },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -1369,7 +1714,16 @@ registry.registerPath({
   request: {
     params: z.object({ id: z.string() }),
   },
-  responses: { 200: { description: 'Deleted' } },
+  responses: {
+    200: {
+      description: 'Deleted',
+      content: {
+        'application/json': {
+          schema: dataResponse(z.object({ id: z.string() })),
+        },
+      },
+    },
+  },
 });
 
 registry.registerPath({
@@ -1392,7 +1746,7 @@ registry.registerPath({
   responses: {
     200: {
       description: 'List of media files',
-      content: { 'application/json': { schema: z.array(MediaSchema) } },
+      content: { 'application/json': { schema: listResponse(MediaSchema) } },
     },
   },
 });

@@ -3,7 +3,7 @@ import { parseSearchParams, apiHandler } from '@/lib/api-utils';
 import { z } from 'zod';
 import mongoose from 'mongoose';
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/dbConnect';
+import dbConnect, { getDb } from '@/lib/db/dbConnect';
 import { UserRole } from '@/schemas/cms';
 
 // Mock cookies for getCurrentUser inside apiHandler tests
@@ -18,7 +18,7 @@ vi.mock('next/headers', () => ({
       }
       return undefined;
     },
-    delete: () => { },
+    delete: () => {},
   }),
 }));
 
@@ -26,7 +26,11 @@ vi.mock('next/headers', () => ({
 vi.mock('@/lib/auth-utils', () => ({
   verifyToken: async (token: string) => {
     if (token === 'valid_token') {
-      return { userId: '6a1ed4e9bb6ec19dd0361d5a', email: 'test@test.com', role: 'admin' };
+      return {
+        userId: '6a1ed4e9bb6ec19dd0361d5a',
+        email: 'test@test.com',
+        role: 'admin',
+      };
     }
     return null;
   },
@@ -79,16 +83,18 @@ describe('apiHandler Wrapper', () => {
   beforeAll(async () => {
     await dbConnect();
     // Spy on user findOne in tests
-    vi.spyOn(mongoose.connection.db, 'collection').mockImplementation((name: string) => {
-      if (name === 'users') {
+    vi.spyOn(getDb(), 'collection').mockImplementation(
+      (name: string) => {
+        if (name === 'users') {
+          return {
+            findOne: async () => mockUserRecord,
+          } as unknown as ReturnType<ReturnType<typeof getDb>['collection']>;
+        }
         return {
-          findOne: async () => mockUserRecord,
-        } as unknown as ReturnType<typeof mongoose.connection.db.collection>;
+          countDocuments: async () => 0,
+        } as unknown as ReturnType<ReturnType<typeof getDb>['collection']>;
       }
-      return {
-        countDocuments: async () => 0,
-      } as unknown as ReturnType<typeof mongoose.connection.db.collection>;
-    });
+    );
   });
 
   afterAll(() => {
@@ -96,9 +102,12 @@ describe('apiHandler Wrapper', () => {
   });
 
   it('handles successful handler executions', async () => {
-    const handler = apiHandler(async () => {
-      return NextResponse.json({ ok: true });
-    }, { isPublic: true });
+    const handler = apiHandler(
+      async () => {
+        return NextResponse.json({ ok: true });
+      },
+      { isPublic: true }
+    );
 
     const req = new Request('http://localhost/api/test');
     const res = await handler(req, { params: Promise.resolve({}) });
@@ -108,31 +117,39 @@ describe('apiHandler Wrapper', () => {
 
   it('returns 500 when handler throws an error', async () => {
     // Hide expected console.error output during test execution
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const handler = apiHandler(async () => {
-      throw new Error('Database connection failed unexpectedly');
-    }, { isPublic: true });
+    const handler = apiHandler(
+      async () => {
+        throw new Error('Database connection failed unexpectedly');
+      },
+      { isPublic: true }
+    );
 
     const req = new Request('http://localhost/api/test');
     const res = await handler(req, { params: Promise.resolve({}) });
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toBe('Database connection failed unexpectedly');
+    // Internal error details are never leaked to the client — only logged server-side.
+    expect(body.error).toBe('Internal server error');
+    expect(consoleSpy).toHaveBeenCalled();
 
     consoleSpy.mockRestore();
   });
 
   it('returns 400 when schema validation fails on POST requests', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const schema = z.object({
       email: z.string().email(),
     });
 
-    const handler = apiHandler(async () => {
-      return NextResponse.json({ success: true });
-    }, { isPublic: true, schema });
+    const handler = apiHandler(
+      async () => {
+        return NextResponse.json({ success: true });
+      },
+      { isPublic: true, schema }
+    );
 
     const req = new Request('http://localhost/api/test', {
       method: 'POST',

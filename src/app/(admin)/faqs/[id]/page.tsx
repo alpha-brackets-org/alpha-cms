@@ -15,7 +15,8 @@ export default function EditFaqPage() {
   const params = useParams();
   const id = params.id as string;
 
-  const { data: faq, isLoading } = useFaq(id);
+  const { data: response, isLoading } = useFaq(id);
+  const faq = response?.data;
   const updateMutation = useUpdateFaq(id);
   const deleteMutation = useDeleteFaq();
 

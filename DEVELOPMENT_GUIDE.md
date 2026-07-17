@@ -69,6 +69,7 @@ The Alpha CMS uses a robust Role-Based Access Control and Multi-Tenant Isolation
 
 - **Safe Category Deletion**: Deleting a category automatically unlinks all associated blogs and case studies (re-assigning them to `null` / Uncategorized).
 - **Portfolio Cascade**: Deleting a portfolio will **permanently delete** all associated blogs, case studies, and media assets. This is non-reversible.
+- **Cascade Transactions**: Multi-collection cascades (portfolio delete, category delete) run through `runCascade()` in `src/lib/db/cascade.ts`, which wraps the steps in a MongoDB transaction when the connection supports it (replica set / Atlas — production). On a standalone MongoDB instance (the default local-dev setup), transactions aren't available; `runCascade()` detects this and falls back to running the same steps sequentially without atomicity, logging a `CASCADE_NON_TRANSACTIONAL` warning. In that fallback mode, a failure partway through a cascade can leave orphaned data — for full atomicity in local development, run MongoDB as a single-node replica set.
 
 ---
 

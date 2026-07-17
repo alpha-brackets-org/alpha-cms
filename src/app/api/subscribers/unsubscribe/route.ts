@@ -1,11 +1,10 @@
-import mongoose from 'mongoose';
 import {
   apiHandler,
-  sendSuccess,
+  sendData,
   sendBadRequest,
   sendNotFound,
 } from '@/lib/api-utils';
-import { CollectionName, SubscriberStatus } from '@/types/cms';
+import { unsubscribeSubscriber } from '@/lib/subscribers';
 
 /**
  * PUBLIC UNSUBSCRIBE ENDPOINT
@@ -18,26 +17,13 @@ export const POST = apiHandler(
       return sendBadRequest('Email and Portfolio ID are required.');
     }
 
-    const db = mongoose.connection.db;
-
-    const result = await db.collection(CollectionName.SUBSCRIBERS).updateOne(
-      {
-        email: email.toLowerCase(),
-        portfolio: new mongoose.Types.ObjectId(portfolioId),
-      },
-      {
-        $set: {
-          status: SubscriberStatus.UNSUBSCRIBED,
-          updatedAt: new Date(),
-        },
-      }
-    );
+    const result = await unsubscribeSubscriber(email, portfolioId);
 
     if (result.matchedCount === 0) {
       return sendNotFound('Subscriber');
     }
 
-    return sendSuccess({ message: 'You have been successfully unsubscribed.' });
+    return sendData({ message: 'You have been successfully unsubscribed.' });
   },
   { isPublic: true }
 );

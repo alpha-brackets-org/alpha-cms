@@ -133,15 +133,25 @@ export const TagSchema = z.object({
 });
 
 // Zod schemas for enums to generate clean, referenced OpenAPI definitions
-export const PublishStatusSchema = z.enum(PublishStatus).openapi('PublishStatus');
-export const TestimonialStatusSchema = z.enum(TestimonialStatus).openapi('TestimonialStatus');
+export const PublishStatusSchema = z
+  .enum(PublishStatus)
+  .openapi('PublishStatus');
+export const TestimonialStatusSchema = z
+  .enum(TestimonialStatus)
+  .openapi('TestimonialStatus');
 export const MediaFolderSchema = z.enum(MediaFolder).openapi('MediaFolder');
-export const SubscriberStatusSchema = z.enum(SubscriberStatus).openapi('SubscriberStatus');
-export const SubscriberSourceSchema = z.enum(SubscriberSource).openapi('SubscriberSource');
+export const SubscriberStatusSchema = z
+  .enum(SubscriberStatus)
+  .openapi('SubscriberStatus');
+export const SubscriberSourceSchema = z
+  .enum(SubscriberSource)
+  .openapi('SubscriberSource');
 export const LeadStatusSchema = z.enum(LeadStatus).openapi('LeadStatus');
 export const LeadSourceSchema = z.enum(LeadSource).openapi('LeadSource');
 export const UserRoleSchema = z.enum(UserRole).openapi('UserRole');
-export const AnalyticsEventSchema = z.enum(AnalyticsEvent).openapi('AnalyticsEvent');
+export const AnalyticsEventSchema = z
+  .enum(AnalyticsEvent)
+  .openapi('AnalyticsEvent');
 export const ContentTypeSchema = z.enum(ContentType).openapi('ContentType');
 
 // =============================================================================
@@ -169,7 +179,8 @@ export const BlogSchema = z
     seo: SEOMetadataSchema.nullish(),
     portfolio: PortfolioIdSchema,
   })
-  .extend(BaseSchema.shape).openapi('Blog');
+  .extend(BaseSchema.shape)
+  .openapi('Blog');
 
 export const CaseStudySchema = z
   .object({
@@ -191,7 +202,8 @@ export const CaseStudySchema = z
     seo: SEOMetadataSchema.nullish(),
     portfolio: PortfolioIdSchema,
   })
-  .extend(BaseSchema.shape).openapi('CaseStudy');
+  .extend(BaseSchema.shape)
+  .openapi('CaseStudy');
 
 export const ProjectSchema = z
   .object({
@@ -211,7 +223,8 @@ export const ProjectSchema = z
     seo: SEOMetadataSchema.nullish(),
     portfolio: PortfolioIdSchema,
   })
-  .extend(BaseSchema.shape).openapi('Project');
+  .extend(BaseSchema.shape)
+  .openapi('Project');
 
 export const FaqSchema = z
   .object({
@@ -222,7 +235,8 @@ export const FaqSchema = z
     order: z.number().default(0),
     group: z.string().nullish(),
   })
-  .extend(BaseSchema.shape).openapi('Faq');
+  .extend(BaseSchema.shape)
+  .openapi('Faq');
 
 export const TestimonialSchema = z
   .object({
@@ -239,7 +253,8 @@ export const TestimonialSchema = z
     platform: z.string().nullish(),
     portfolio: PortfolioIdSchema,
   })
-  .extend(BaseSchema.shape).openapi('Testimonial');
+  .extend(BaseSchema.shape)
+  .openapi('Testimonial');
 
 // =============================================================================
 // SECTION 5 — INFRASTRUCTURE SCHEMAS (Portfolio, Media, User, Category)
@@ -283,7 +298,8 @@ export const PortfolioSchema = z
       .default([]),
     maintenanceMode: z.boolean().default(false),
   })
-  .extend(BaseSchema.shape).openapi('Portfolio');
+  .extend(BaseSchema.shape)
+  .openapi('Portfolio');
 
 export const MediaSchema = z
   .object({
@@ -299,7 +315,8 @@ export const MediaSchema = z
     tags: z.array(z.string()).default([]),
     portfolio: PortfolioIdSchema,
   })
-  .extend(BaseSchema.shape).openapi('Media');
+  .extend(BaseSchema.shape)
+  .openapi('Media');
 
 export const UserSchema = z
   .object({
@@ -310,7 +327,8 @@ export const UserSchema = z
     resetToken: z.string().optional(),
     resetTokenExpiry: z.date().optional(),
   })
-  .extend(BaseSchema.shape).openapi('User');
+  .extend(BaseSchema.shape)
+  .openapi('User');
 
 export const CategorySchema = z
   .object({
@@ -319,7 +337,8 @@ export const CategorySchema = z
     portfolio: PortfolioIdSchema,
     isDefault: z.boolean().optional(),
   })
-  .extend(BaseSchema.shape).openapi('Category');
+  .extend(BaseSchema.shape)
+  .openapi('Category');
 
 // =============================================================================
 // SECTION 6 — CRM / MARKETING SCHEMAS (Lead, Subscriber, Campaign, Analytics)
@@ -347,7 +366,39 @@ export const LeadSchema = z
       .default([]),
     portfolio: PortfolioIdSchema,
   })
-  .extend(BaseSchema.shape).openapi('Lead');
+  .extend(BaseSchema.shape)
+  .openapi('Lead');
+
+/** Public case-study lead-magnet capture (leads/capture, portfolios/[id]/leads). */
+export const LeadCaptureSchema = z
+  .object({
+    firstName: z.string().min(1),
+    lastName: z.string().min(1),
+    email: z.email(),
+    company: z.string().nullish(),
+    jobTitle: z.string().nullish(),
+    phone: z.string().nullish(),
+    portfolio: PortfolioIdSchema,
+    caseStudyId: z
+      .string()
+      .regex(/^[0-9a-fA-F]{24}$/, 'Invalid case study reference'),
+    intent: z.string().nullish(),
+    metadata: z.record(z.string(), z.unknown()).nullish(),
+  })
+  .openapi('LeadCapture');
+
+/** Public general contact-form lead (portfolios/[id]/leads). */
+export const ContactFormLeadSchema = z
+  .object({
+    firstName: z.string().min(1),
+    lastName: z.string().min(1),
+    email: z.email(),
+    company: z.string().nullish(),
+    jobTitle: z.string().nullish(),
+    phone: z.string().nullish(),
+    message: z.string().nullish(),
+  })
+  .openapi('ContactFormLead');
 
 export const SubscriberSchema = z
   .object({
@@ -360,7 +411,8 @@ export const SubscriberSchema = z
     intent: z.string().nullish(),
     metadata: z.record(z.string(), z.unknown()).nullish(),
   })
-  .extend(BaseSchema.shape).openapi('Subscriber');
+  .extend(BaseSchema.shape)
+  .openapi('Subscriber');
 
 export const CampaignSchema = z
   .object({
@@ -378,7 +430,8 @@ export const CampaignSchema = z
       })
       .nullish(),
   })
-  .extend(BaseSchema.shape).openapi('Campaign');
+  .extend(BaseSchema.shape)
+  .openapi('Campaign');
 
 export const AnalyticsSchema = z
   .object({
@@ -396,46 +449,49 @@ export const AnalyticsSchema = z
       })
       .optional(),
   })
-  .extend(BaseSchema.shape).openapi('Analytics');
+  .extend(BaseSchema.shape)
+  .openapi('Analytics');
 
-export const StatsSchema = z.object({
-  blogs: z.number(),
-  blogsTrend: z.string(),
-  projects: z.number(),
-  projectsTrend: z.string(),
-  media: z.number(),
-  mediaTrend: z.string(),
-  portfolios: z.number(),
-  portfoliosTrend: z.string(),
-  categories: z.number().optional(),
-  users: z.number().optional(),
-  campaigns: z.number().optional(),
-  analytics: z.number().optional(),
-  breakdown: z
-    .array(
-      z.object({
-        _id: z.string(),
-        name: z.string(),
-        blogCount: z.number(),
-        projectCount: z.number(),
-        visitorCount: z.number().optional(),
+export const StatsSchema = z
+  .object({
+    blogs: z.number(),
+    blogsTrend: z.string(),
+    projects: z.number(),
+    projectsTrend: z.string(),
+    media: z.number(),
+    mediaTrend: z.string(),
+    portfolios: z.number(),
+    portfoliosTrend: z.string(),
+    categories: z.number().optional(),
+    users: z.number().optional(),
+    campaigns: z.number().optional(),
+    analytics: z.number().optional(),
+    breakdown: z
+      .array(
+        z.object({
+          _id: z.string(),
+          name: z.string(),
+          blogCount: z.number(),
+          projectCount: z.number(),
+          visitorCount: z.number().optional(),
+        })
+      )
+      .optional(),
+    traffic: z
+      .object({
+        totalSessions: z.number(),
+        averageDuration: z.number(),
+        bounceRate: z.number(),
       })
-    )
-    .optional(),
-  traffic: z
-    .object({
-      totalSessions: z.number(),
-      averageDuration: z.number(),
-      bounceRate: z.number(),
-    })
-    .optional(),
-  leadsMonthly: z
-    .array(z.object({ month: z.string(), count: z.number() }))
-    .optional(),
-  totalVisitors: z.number().optional(),
-  totalLeads: z.number().optional(),
-  conversionRate: z.number().optional(),
-}).openapi('Stats');
+      .optional(),
+    leadsMonthly: z
+      .array(z.object({ month: z.string(), count: z.number() }))
+      .optional(),
+    totalVisitors: z.number().optional(),
+    totalLeads: z.number().optional(),
+    conversionRate: z.number().optional(),
+  })
+  .openapi('Stats');
 
 // =============================================================================
 // SECTION 7 — INFERRED TYPESCRIPT TYPES
@@ -490,3 +546,36 @@ export const PopulatedTestimonialSchema = TestimonialSchema.extend({
   portfolio: PopulatedPortfolioRef,
 }).openapi('PopulatedTestimonial');
 export type PopulatedTestimonial = z.infer<typeof PopulatedTestimonialSchema>;
+
+// =============================================================================
+// SECTION 9 — RESPONSE ENVELOPE (mirrors sendData/sendList in src/lib/api-utils.ts)
+// =============================================================================
+
+/** Matches PaginationMeta in src/types/cms.ts — kept as the one shared definition. */
+export const PaginationMetaSchema = z
+  .object({
+    total: z.number(),
+    limit: z.number(),
+    totalPages: z.number(),
+    page: z.number(),
+    pagingCounter: z.number(),
+    hasPrevPage: z.boolean(),
+    hasNextPage: z.boolean(),
+  })
+  .openapi('PaginationMeta');
+
+/**
+ * Documents a single-resource response: `{ data: T }`.
+ * Use in swagger.ts wherever a route returns `sendData(doc)`.
+ */
+export function dataResponse<T extends z.ZodTypeAny>(schema: T) {
+  return z.object({ data: schema });
+}
+
+/**
+ * Documents a list response: `{ data: T[], pagination: PaginationMeta }`.
+ * Use in swagger.ts wherever a route returns `sendList(items, {...})`.
+ */
+export function listResponse<T extends z.ZodTypeAny>(schema: T) {
+  return z.object({ data: z.array(schema), pagination: PaginationMetaSchema });
+}

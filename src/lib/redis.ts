@@ -12,7 +12,9 @@ let redis: Redis | undefined;
 
 export function getRedisInstance(): Redis {
   if (!process.env.REDIS_URL) {
-    throw new Error('[alpha-cms] REDIS_URL environment variable is required but not set.');
+    throw new Error(
+      '[alpha-cms] REDIS_URL environment variable is required but not set.'
+    );
   }
 
   if (!redis) {
@@ -35,13 +37,17 @@ export function getRedisInstance(): Redis {
 export const redisConnection = {
   get host() {
     if (!process.env.REDIS_URL) {
-      throw new Error('[alpha-cms] REDIS_URL environment variable is required but not set.');
+      throw new Error(
+        '[alpha-cms] REDIS_URL environment variable is required but not set.'
+      );
     }
     return parsedUrl.hostname;
   },
   get port() {
     if (!process.env.REDIS_URL) {
-      throw new Error('[alpha-cms] REDIS_URL environment variable is required but not set.');
+      throw new Error(
+        '[alpha-cms] REDIS_URL environment variable is required but not set.'
+      );
     }
     return parseInt(parsedUrl.port || '6379', 10);
   },
