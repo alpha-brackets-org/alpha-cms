@@ -15,11 +15,18 @@ import {
 import Link from 'next/link';
 import Cookies from 'js-cookie';
 import { useToast } from '@/hooks/use-toast';
+import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning';
 import { usePortfolios } from '@/hooks/use-portfolios';
 import { MediaPicker } from '@/components/cms/MediaPicker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -80,6 +87,8 @@ export function TestimonialForm({
     },
   });
 
+  useUnsavedChangesWarning(isDirty);
+
   const watchedValues = watch();
 
   useEffect(() => {
@@ -119,7 +128,7 @@ export function TestimonialForm({
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-widest">
+            <h2 className="text-sm font-semibold">
               {isNew ? 'New Testimonial' : 'Edit Testimonial'}
             </h2>
             <p className="font-mono text-[9px] lowercase text-primary">
@@ -145,7 +154,7 @@ export function TestimonialForm({
             ) : (
               <Save className="h-4 w-4" />
             )}
-            {isLoading ? 'SAVING...' : submitText}
+            {isLoading ? 'Saving...' : submitText}
           </Button>
         </div>
       </div>
@@ -160,7 +169,7 @@ export function TestimonialForm({
               <input
                 {...register('name', { required: true })}
                 placeholder="Client Name"
-                className={`w-full border-b-2 bg-transparent text-3xl font-bold transition-colors placeholder:text-muted-foreground/30 focus:outline-none md:text-4xl ${
+                className={`w-full border-b bg-transparent text-3xl font-bold transition-colors placeholder:text-muted-foreground/30 focus:outline-none md:text-4xl ${
                   errors.name
                     ? 'border-destructive'
                     : 'border-transparent focus:border-border/50'
@@ -168,7 +177,7 @@ export function TestimonialForm({
               />
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-1">
-                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  <Label className="text-xs text-muted-foreground">
                     Role / Title
                   </Label>
                   <Input
@@ -178,7 +187,7 @@ export function TestimonialForm({
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  <Label className="text-xs text-muted-foreground">
                     Company
                   </Label>
                   <Input
@@ -194,7 +203,7 @@ export function TestimonialForm({
             <div className="space-y-3 rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl">
               <div className="flex items-center gap-2 border-b border-white/10 pb-4">
                 <MessageSquareQuote className="h-5 w-5 text-primary" />
-                <Label className="text-sm font-bold uppercase tracking-widest">
+                <Label className="text-sm font-semibold">
                   Testimonial Content
                 </Label>
               </div>
@@ -205,7 +214,7 @@ export function TestimonialForm({
                 className={`text-base leading-relaxed ${errors.content ? 'border-destructive' : ''}`}
               />
               {errors.content && (
-                <p className="text-[9px] font-bold uppercase text-destructive">
+                <p className="text-xs font-medium text-destructive">
                   Content is required
                 </p>
               )}
@@ -213,7 +222,7 @@ export function TestimonialForm({
 
             {/* Rating */}
             <div className="space-y-3 rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl">
-              <Label className="block border-b border-white/10 pb-3 text-sm font-bold uppercase tracking-widest">
+              <Label className="block border-b border-white/10 pb-3 text-sm font-semibold">
                 Star Rating
               </Label>
               <Controller
@@ -229,9 +238,7 @@ export function TestimonialForm({
             <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl">
               <div className="flex items-center gap-2 border-b border-white/10 pb-4">
                 <LinkIcon className="h-4 w-4 text-primary" />
-                <Label className="text-sm font-bold uppercase tracking-widest">
-                  Source
-                </Label>
+                <Label className="text-sm font-semibold">Source</Label>
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
@@ -260,7 +267,7 @@ export function TestimonialForm({
           <div className="space-y-4 p-4">
             {/* Preview Card */}
             <div className="rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
-              <h3 className="mb-4 flex items-center gap-2 border-b border-white/10 pb-3 text-[10px] font-bold uppercase tracking-widest">
+              <h3 className="mb-4 flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-semibold">
                 <MessageSquareQuote className="h-4 w-4 text-primary" />
                 Live Preview
               </h3>
@@ -288,7 +295,7 @@ export function TestimonialForm({
                     </p>
                   )}
                   {watchedValues.platform && (
-                    <p className="mt-1 text-[9px] font-bold uppercase text-primary/70">
+                    <p className="mt-1 text-xs font-medium text-primary/70">
                       via {watchedValues.platform}
                     </p>
                   )}
@@ -298,40 +305,58 @@ export function TestimonialForm({
 
             {/* Settings */}
             <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
-              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-[10px] font-bold uppercase tracking-widest">
+              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-semibold">
                 <Settings className="h-4 w-4 text-primary" /> Settings
               </h3>
 
               <div className="space-y-2">
                 <Label>Status</Label>
-                <Select {...register('status')}>
-                  {Object.values(TestimonialStatus).map((s) => (
-                    <option key={s} value={s} className="bg-black text-white">
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </option>
-                  ))}
-                </Select>
+                <Controller
+                  control={control}
+                  name="status"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.values(TestimonialStatus).map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s.charAt(0).toUpperCase() + s.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
 
               {isMounted && !Cookies.get('alpha_active_portfolio') && isNew && (
                 <div className="space-y-2">
                   <Label>Assign to Portfolio</Label>
-                  <Select {...register('portfolio')}>
-                    <option value="" disabled className="bg-black text-white">
-                      Select a portfolio
-                    </option>
-                    {portfolios?.map((p) => (
-                      <option
-                        key={p._id}
-                        value={p._id}
-                        className="bg-black text-white"
+                  <Controller
+                    control={control}
+                    name="portfolio"
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
                       >
-                        {p.name}
-                      </option>
-                    ))}
-                  </Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a portfolio" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {portfolios?.map((p) => (
+                            <SelectItem key={p._id} value={p._id!}>
+                              {p.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                   {errors.portfolio && (
-                    <p className="text-[9px] font-bold uppercase text-destructive">
+                    <p className="text-xs font-medium text-destructive">
                       {errors.portfolio.message}
                     </p>
                   )}
@@ -362,7 +387,7 @@ export function TestimonialForm({
 
             {/* Avatar */}
             <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
-              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-[10px] font-bold uppercase tracking-widest">
+              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-semibold">
                 <ImageIcon className="h-4 w-4 text-primary" /> Client Avatar
               </h3>
               <Controller

@@ -84,8 +84,14 @@ async function runSetup() {
     const leadCol = db.collection('leads');
     await leadCol.createIndex({ portfolio: 1 });
     await leadCol.createIndex({ status: 1 });
-    await leadCol.createIndex({ email: 1 });
-    console.log(`   - Created performance indexes for leads`);
+    await leadCol.createIndex({ email: 1, portfolio: 1 }, { unique: true });
+    console.log(`   - Created unique index: { email: 1, portfolio: 1 }`);
+
+    // Special Handling: Users
+    console.log(`📦 Setting up indexes for [users]...`);
+    const userCol = db.collection('users');
+    await userCol.createIndex({ email: 1 }, { unique: true });
+    console.log(`   - Created unique index: { email: 1 }`);
 
     console.log('\n✨ Indexing Migration Complete.\n');
 

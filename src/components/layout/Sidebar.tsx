@@ -29,7 +29,13 @@ import { isAdmin } from '@/lib/auth';
 import { usePortfolio } from '@/providers/PortfolioProvider';
 import { useLogout } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 
 export const Sidebar = ({ onClose }: { onClose?: () => void }) => {
@@ -74,7 +80,7 @@ export const Sidebar = ({ onClose }: { onClose?: () => void }) => {
     {
       name: 'API Docs',
       icon: Settings,
-      href: '/api-docs',
+      href: '/api',
       adminOnly: true,
       newTab: true,
     },
@@ -88,11 +94,9 @@ export const Sidebar = ({ onClose }: { onClose?: () => void }) => {
       {/* Brand Header */}
       <div className="flex items-center justify-between border-b border-border p-6">
         <div>
-          <h1 className="text-xl font-bold tracking-ultrawide text-primary">
-            ALPHA CMS
-          </h1>
-          <p className="mt-1 text-[10px] uppercase text-muted-foreground">
-            CMS INFRASTRUCTURE
+          <h1 className="text-xl font-semibold text-primary">Alpha CMS</h1>
+          <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
+            CMS Infrastructure
           </p>
         </div>
         <Button
@@ -114,17 +118,23 @@ export const Sidebar = ({ onClose }: { onClose?: () => void }) => {
           )}
         </div>
         <Select
-          value={activePortfolio || ''}
-          onChange={(e) => handlePortfolioChange(e.target.value)}
+          value={activePortfolio || 'all'}
+          onValueChange={(val) =>
+            handlePortfolioChange(val === 'all' ? '' : val)
+          }
           disabled={isLoading}
-          className="h-10"
         >
-          <option value="">All Portfolios</option>
-          {portfolios.map((p) => (
-            <option key={p._id} value={p._id}>
-              {p.name}
-            </option>
-          ))}
+          <SelectTrigger className="h-10">
+            <SelectValue placeholder="All Portfolios" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Portfolios</SelectItem>
+            {portfolios.map((p) => (
+              <SelectItem key={p._id} value={p._id || ''}>
+                {p.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
       </div>
 
@@ -162,32 +172,25 @@ export const Sidebar = ({ onClose }: { onClose?: () => void }) => {
         {/* User Profile */}
         <div className="rounded-xl border border-white/10 bg-card p-3 shadow-sm transition-all hover:shadow-md">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-primary/10 text-xs font-bold text-primary">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-primary/10 text-xs font-semibold text-primary">
               {user?.email?.[0].toUpperCase() || '?'}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[10px] font-bold uppercase tracking-tight">
-                {user?.email || 'Guest Operator'}
-              </p>
+              <p className="truncate text-xs font-medium">{user?.email}</p>
               <div className="mt-1 flex items-center gap-2">
-                <span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-primary">
+                <span className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-primary">
                   <Shield className="h-2 w-2" />
-                  {user?.role || 'VIEWER'}
+                  {user?.role}
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 bg-secondary/30 px-4 py-3 text-[10px] font-bold uppercase tracking-brutal">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-          <span className="text-muted-foreground">System Active</span>
-        </div>
-
         <Button
           variant="ghost"
           onClick={handleLogout}
-          className="flex w-full items-center justify-start gap-3 rounded-lg border border-transparent px-4 py-3 text-xs font-bold uppercase tracking-widest text-destructive transition-colors hover:border-destructive/20 hover:bg-destructive/10"
+          className="flex w-full items-center justify-start gap-3 rounded-lg border border-transparent px-4 py-3 text-sm font-medium text-destructive transition-colors hover:border-destructive/20 hover:bg-destructive/10"
         >
           <LogOut className="h-4 w-4" />
           Log Out

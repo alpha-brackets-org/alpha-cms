@@ -87,6 +87,7 @@ export const DELETE = apiHandler(async (_request, { params }) => {
     CollectionName.LEADS,
     CollectionName.SUBSCRIBERS,
     CollectionName.CAMPAIGNS,
+    CollectionName.TESTIMONIALS,
   ];
 
   const result = await runCascade(async (session) => {

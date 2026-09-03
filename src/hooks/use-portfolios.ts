@@ -26,6 +26,7 @@ export function useCreatePortfolio() {
       queryClient.invalidateQueries({ queryKey: ['portfolios'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
+    meta: { successMessage: 'Portfolio provisioned successfully!' },
   });
 }
 
@@ -39,6 +40,22 @@ export function useUpdatePortfolio() {
       queryClient.invalidateQueries({ queryKey: ['portfolio', id] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
+    meta: { successMessage: 'Portfolio updated successfully!' },
+  });
+}
+
+export function useRegenerateApiKey() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.post<{ data: { apiKey: string } }>(
+        `/portfolios/${id}/api-key/regenerate`,
+        {}
+      ),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['portfolios'] });
+      queryClient.invalidateQueries({ queryKey: ['portfolios', id] });
+    },
   });
 }
 
@@ -51,5 +68,6 @@ export function useDeletePortfolio() {
       queryClient.invalidateQueries({ queryKey: ['portfolios'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
+    meta: { successMessage: 'Portfolio deleted permanently.' },
   });
 }

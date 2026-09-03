@@ -24,7 +24,13 @@ import { usePortfolios } from '@/hooks/use-portfolios';
 import { usePortfolio } from '@/providers/PortfolioProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { BrutalConfirm } from '@/components/ui/BrutalConfirm';
 import { useToast } from '@/hooks/use-toast';
@@ -34,6 +40,7 @@ import { Media } from '@/types/cms';
 import { MediaFolder } from '@/schemas/cms';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { useDebounce } from '@/hooks/use-debounce';
+import { QueryErrorState } from '@/components/ui/QueryErrorState';
 
 interface MediaLibraryProps {
   onSelect?: (media: Media) => void;
@@ -53,11 +60,11 @@ export function MediaLibrary({
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 500);
 
-  const { data: response, isLoading } = useMedia(
-    activePortfolio,
-    activeFolder,
-    debouncedSearch
-  );
+  const {
+    data: response,
+    isLoading,
+    isError,
+  } = useMedia(activePortfolio, activeFolder, debouncedSearch);
   const { success, error } = useToast();
 
   const batchDeleteMedia = useBatchDeleteMedia();
@@ -165,9 +172,9 @@ export function MediaLibrary({
   };
 
   return (
-    <div className="flex h-[80vh] flex-col overflow-hidden border-4 border-border bg-card shadow-[16px_16px_0px_0px_rgba(0,0,0,1)]">
+    <div className="flex h-[80vh] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
       {/* Library Toolbar */}
-      <div className="flex items-center justify-between border-b-4 border-border bg-secondary/50 p-4">
+      <div className="flex items-center justify-between border-b border-border bg-secondary/50 p-4">
         <div className="flex max-w-md flex-1 items-center gap-4">
           <div className="w-full">
             <Input
@@ -175,16 +182,13 @@ export function MediaLibrary({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               leftSection={<Search className="h-4 w-4" />}
-              className="h-10 rounded-none border-2 border-border text-xs"
+              className="h-10 border-border text-xs"
             />
           </div>
           {selectedAssets.length > 0 && (
             <div className="flex items-center gap-2">
-              <Badge
-                variant="brutal"
-                className="h-10 shrink-0 whitespace-nowrap px-4"
-              >
-                {selectedAssets.length} SELECTED
+              <Badge className="h-10 shrink-0 whitespace-nowrap px-4">
+                {selectedAssets.length} selected
               </Badge>
               <Button
                 variant="outline"
@@ -193,7 +197,7 @@ export function MediaLibrary({
                 title="Deselect all"
               >
                 <X className="mr-2 h-4 w-4" />
-                DESELECT
+                Deselect
               </Button>
             </div>
           )}
@@ -203,21 +207,18 @@ export function MediaLibrary({
           {!activePortfolio && (
             <Select
               value={uploadPortfolio}
-              onChange={(e) => setUploadPortfolio(e.target.value)}
-              className="h-10 border-border bg-background px-3 py-0 text-[9px]"
+              onValueChange={(val) => setUploadPortfolio(val)}
             >
-              <option value="" className="bg-black text-white">
-                Target Portfolio...
-              </option>
-              {portfolios?.map((p) => (
-                <option
-                  key={p._id}
-                  value={p._id}
-                  className="bg-black text-white"
-                >
-                  {p.name}
-                </option>
-              ))}
+              <SelectTrigger className="h-10 border-border bg-background px-3 py-0 text-xs">
+                <SelectValue placeholder="Target Portfolio..." />
+              </SelectTrigger>
+              <SelectContent>
+                {portfolios?.map((p) => (
+                  <SelectItem key={p._id} value={p._id!}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           )}
 
@@ -228,20 +229,16 @@ export function MediaLibrary({
               onClick={() => setIsConfirmOpen(true)}
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              DELETE ({selectedAssets.length})
+              Delete ({selectedAssets.length})
             </Button>
           )}
-          <Button
-            variant="brutal"
-            className="relative h-10 px-4"
-            disabled={isUploading}
-          >
+          <Button className="relative h-10 px-4" disabled={isUploading}>
             {isUploading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Upload className="mr-2 h-4 w-4" />
             )}
-            {isUploading ? `UPLOADING (${uploadCount})...` : 'UPLOAD ASSETS'}
+            {isUploading ? `Uploading (${uploadCount})...` : 'Upload assets'}
             <input
               type="file"
               multiple
@@ -255,9 +252,9 @@ export function MediaLibrary({
 
       <div className="flex flex-1 overflow-hidden">
         {/* Folders Sidebar */}
-        <div className="flex w-48 shrink-0 flex-col border-r-4 border-border bg-secondary/10">
-          <div className="border-b-2 border-border/50 p-4">
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+        <div className="flex w-48 shrink-0 flex-col border-r border-border bg-secondary/10">
+          <div className="border-b border-border/50 p-4">
+            <h4 className="text-xs uppercase tracking-wide text-muted-foreground">
               Library Folders
             </h4>
           </div>
@@ -266,7 +263,7 @@ export function MediaLibrary({
               { id: 'all', name: 'All Assets', icon: ImageIcon },
               ...Object.values(MediaFolder).map((folder) => ({
                 id: folder,
-                name: folder.toUpperCase(),
+                name: folder.charAt(0).toUpperCase() + folder.slice(1),
                 icon: Folder,
               })),
             ].map((folder) => (
@@ -274,7 +271,7 @@ export function MediaLibrary({
                 key={folder.id}
                 onClick={() => setActiveFolder(folder.id)}
                 className={cn(
-                  'flex w-full items-center gap-3 border-l-4 px-4 py-3 text-[10px] font-bold uppercase transition-all',
+                  'flex w-full items-center gap-3 border-l-2 px-4 py-3 text-xs font-medium transition-colors',
                   activeFolder === folder.id
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-transparent hover:bg-secondary/20'
@@ -293,12 +290,14 @@ export function MediaLibrary({
             <div className="flex h-full items-center justify-center">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
             </div>
+          ) : isError ? (
+            <div className="flex h-full items-center justify-center">
+              <QueryErrorState />
+            </div>
           ) : media.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center opacity-30">
               <ImageIcon className="mb-4 h-16 w-16" />
-              <p className="font-bold uppercase tracking-widest">
-                No assets found
-              </p>
+              <p className="text-sm font-medium">No assets found</p>
             </div>
           ) : (
             <div
@@ -318,9 +317,9 @@ export function MediaLibrary({
                     key={asset._id}
                     onClick={() => handleAssetClick(asset)}
                     className={cn(
-                      'group relative aspect-square cursor-pointer border-2 transition-all',
+                      'group relative aspect-square cursor-pointer overflow-hidden rounded-lg border transition-all',
                       isSelected
-                        ? 'scale-95 border-primary ring-4 ring-primary/20'
+                        ? 'scale-95 border-primary ring-2 ring-primary/20'
                         : 'border-border hover:border-primary/50'
                     )}
                   >
@@ -336,16 +335,16 @@ export function MediaLibrary({
                     ) : isVideo(asset.mimeType, asset.filename) ? (
                       <div className="flex h-full w-full flex-col items-center justify-center bg-secondary/20">
                         <Video className="mb-2 h-8 w-8 text-primary" />
-                        <span className="text-[8px] font-bold">VIDEO</span>
+                        <span className="text-xs font-medium">Video</span>
                       </div>
                     ) : (
                       <div className="flex h-full w-full flex-col items-center justify-center bg-secondary/20">
                         <FileIcon className="mb-2 h-8 w-8 text-muted-foreground" />
-                        <span className="text-[8px] font-bold">DOCUMENT</span>
+                        <span className="text-xs font-medium">Document</span>
                       </div>
                     )}
                     {isSelected && (
-                      <div className="absolute right-1 top-1 z-10 bg-primary p-0.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                      <div className="absolute right-1 top-1 z-10 rounded-full bg-primary p-0.5 shadow-sm">
                         <Check className="h-3 w-3 text-primary-foreground" />
                       </div>
                     )}
@@ -358,11 +357,9 @@ export function MediaLibrary({
 
         {/* Info Sidebar (WordPress style) */}
         {lastSelected && (
-          <div className="animate-in slide-in-from-right w-80 shrink-0 overflow-y-auto border-l-4 border-border bg-secondary/20 duration-200">
-            <div className="sticky top-0 z-20 flex items-center justify-between border-b-2 border-border bg-background/95 p-4 backdrop-blur-sm">
-              <h3 className="text-sm font-black uppercase tracking-tighter">
-                Asset Details
-              </h3>
+          <div className="animate-in slide-in-from-right w-80 shrink-0 overflow-y-auto border-l border-border bg-secondary/20 duration-200">
+            <div className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background/95 p-4 backdrop-blur-sm">
+              <h3 className="text-sm font-semibold">Asset Details</h3>
               <button
                 onClick={() => setSelectedAssets([])}
                 className="hover:text-primary"
@@ -372,7 +369,7 @@ export function MediaLibrary({
             </div>
 
             <div className="space-y-6 p-6">
-              <div className="relative aspect-video border-2 border-border bg-background shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <div className="relative aspect-video rounded-lg border border-border bg-background shadow-sm">
                 {isImage(lastSelected.mimeType, lastSelected.filename) ? (
                   <Image
                     src={lastSelected.imageKitUrl}
@@ -390,8 +387,8 @@ export function MediaLibrary({
                 ) : (
                   <div className="flex h-full w-full flex-col items-center justify-center">
                     <FileIcon className="h-12 w-12 text-muted-foreground" />
-                    <span className="mt-2 text-[10px] font-bold uppercase">
-                      No Preview Available
+                    <span className="mt-2 text-xs text-muted-foreground">
+                      No preview available
                     </span>
                   </div>
                 )}
@@ -399,36 +396,36 @@ export function MediaLibrary({
 
               <div className="space-y-4">
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                  <label className="text-xs uppercase tracking-wide text-muted-foreground">
                     Filename
                   </label>
-                  <p className="truncate text-xs font-bold">
+                  <p className="truncate text-xs font-medium">
                     {lastSelected.filename}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                    <label className="text-xs uppercase tracking-wide text-muted-foreground">
                       Dimensions
                     </label>
-                    <p className="text-xs font-bold">
+                    <p className="text-xs font-medium">
                       {lastSelected.width} × {lastSelected.height}
                     </p>
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                    <label className="text-xs uppercase tracking-wide text-muted-foreground">
                       Size
                     </label>
-                    <p className="text-xs font-bold">
+                    <p className="text-xs font-medium">
                       {(lastSelected.filesize / 1024).toFixed(1)} KB
                     </p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                    Alt Text (Accessibility)
+                  <label className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Alt text (accessibility)
                   </label>
                   <Input
                     value={lastSelected.altText || ''}
@@ -442,46 +439,50 @@ export function MediaLibrary({
                       );
                       updateMutation.mutate(
                         { id: lastSelected._id!, data: { altText: newAlt } },
-                        { onSuccess: () => success('ALT TEXT UPDATED') }
+                        { onSuccess: () => success('Alt text updated') }
                       );
                     }}
                     placeholder="Describe the image..."
-                    className="mt-1 h-8 rounded-none border-2 border-border text-[10px]"
+                    className="mt-1 h-8 border-border text-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                    Virtual Folder
+                  <label className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Virtual folder
                   </label>
                   <Select
                     value={lastSelected.folder || MediaFolder.UNORGANIZED}
-                    onChange={(e) => {
-                      const val = e.target.value as MediaFolder;
-                      const updated = { ...lastSelected, folder: val };
+                    onValueChange={(val) => {
+                      const folderVal = val as MediaFolder;
+                      const updated = { ...lastSelected, folder: folderVal };
                       setSelectedAssets((prev) =>
                         prev.map((a) =>
                           a._id === lastSelected._id ? updated : a
                         )
                       );
                       updateMutation.mutate(
-                        { id: lastSelected._id!, data: { folder: val } },
-                        { onSuccess: () => success('FOLDER UPDATED') }
+                        { id: lastSelected._id!, data: { folder: folderVal } },
+                        { onSuccess: () => success('Folder updated') }
                       );
                     }}
-                    className="mt-1 h-8 border-2 border-border text-[10px]"
                   >
-                    {Object.values(MediaFolder).map((folder) => (
-                      <option key={folder} value={folder}>
-                        {folder.toUpperCase()}
-                      </option>
-                    ))}
+                    <SelectTrigger className="mt-1 h-8 border-border text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.values(MediaFolder).map((folder) => (
+                        <SelectItem key={folder} value={folder}>
+                          {folder.charAt(0).toUpperCase() + folder.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                    Tags (Comma Separated)
+                  <label className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Tags (comma separated)
                   </label>
                   <Input
                     value={lastSelected.tags?.join(', ') || ''}
@@ -504,11 +505,11 @@ export function MediaLibrary({
                         .filter(Boolean);
                       updateMutation.mutate(
                         { id: lastSelected._id!, data: { tags } },
-                        { onSuccess: () => success('TAGS UPDATED') }
+                        { onSuccess: () => success('Tags updated') }
                       );
                     }}
                     placeholder="logo, dark-mode, etc..."
-                    className="mt-1 h-8 rounded-none border-2 border-border text-[10px]"
+                    className="mt-1 h-8 border-border text-xs"
                   />
                 </div>
 
@@ -516,11 +517,11 @@ export function MediaLibrary({
                   <CopyButton
                     value={lastSelected.imageKitUrl}
                     showText
-                    className="h-10 w-full justify-center border-2 border-border bg-secondary/50 font-bold hover:border-primary hover:bg-secondary"
+                    className="h-10 w-full justify-center border-border bg-secondary/50 font-medium hover:border-primary hover:bg-secondary"
                   />
                   <Button
                     variant="outline"
-                    className="h-9 w-full justify-start gap-2 text-[10px]"
+                    className="h-9 w-full justify-start gap-2 text-xs"
                     asChild
                   >
                     <a
@@ -528,14 +529,14 @@ export function MediaLibrary({
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <ExternalLink className="h-3.5 w-3.5" /> VIEW FULL SIZE
+                      <ExternalLink className="h-3.5 w-3.5" /> View full size
                     </a>
                   </Button>
                 </div>
 
                 {allowSelection && (
                   <Button
-                    className="mt-4 w-full py-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                    className="mt-4 w-full py-6 shadow-sm"
                     onClick={() => {
                       if (multiSelect && onSelectMultiple) {
                         onSelectMultiple(selectedAssets);
@@ -545,8 +546,8 @@ export function MediaLibrary({
                     }}
                   >
                     {multiSelect
-                      ? `SELECT ${selectedAssets.length} ASSETS`
-                      : 'SELECT THIS ASSET'}
+                      ? `Select ${selectedAssets.length} assets`
+                      : 'Select this asset'}
                   </Button>
                 )}
               </div>
@@ -565,7 +566,7 @@ export function MediaLibrary({
             : 'Delete Asset?'
         }
         message={`Are you sure you want to permanently delete ${selectedAssets.length > 1 ? 'these assets' : 'this asset'}? This action cannot be undone and will remove the file(s) from ImageKit.`}
-        confirmText="DELETE PERMANENTLY"
+        confirmText="Delete permanently"
         isLoading={batchDeleteMedia.isPending}
       />
     </div>

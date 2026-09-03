@@ -22,18 +22,16 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 const toastVariants = cva(
-  'group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden border-2 p-6 pr-8 shadow-brutal transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full',
+  'group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-xl border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full',
   {
     variants: {
       variant: {
         default: 'border-border bg-card text-foreground',
         destructive:
-          'destructive group border-destructive bg-destructive text-destructive-foreground shadow-[4px_4px_0px_0px_rgba(220,38,38,1)]',
-        success:
-          'border-primary bg-background text-foreground shadow-[4px_4px_0px_0px_rgba(var(--primary-rgb),1)]',
-        warning:
-          'border-amber-500 bg-background text-foreground shadow-[4px_4px_0px_0px_rgba(245,158,11,1)]',
-        info: 'border-blue-500 bg-background text-foreground shadow-[4px_4px_0px_0px_rgba(59,130,246,1)]',
+          'destructive group border-destructive bg-destructive text-destructive-foreground',
+        success: 'border-primary bg-background text-foreground',
+        warning: 'border-amber-500 bg-background text-foreground',
+        info: 'border-blue-500 bg-background text-foreground',
       },
     },
     defaultVariants: {
@@ -64,7 +62,7 @@ const ToastAction = React.forwardRef<
   <ToastPrimitives.Action
     ref={ref}
     className={cn(
-      'inline-flex h-8 shrink-0 items-center justify-center border-2 bg-transparent px-3 text-sm font-bold uppercase tracking-widest ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-muted/40 group-[.destructive]:hover:border-destructive/30 group-[.destructive]:hover:bg-destructive group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive',
+      'inline-flex h-8 shrink-0 items-center justify-center rounded-full border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-muted/40 group-[.destructive]:hover:border-destructive/30 group-[.destructive]:hover:bg-destructive group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive',
       className
     )}
     {...props}
@@ -96,7 +94,7 @@ const ToastTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Title
     ref={ref}
-    className={cn('text-sm font-bold uppercase tracking-widest', className)}
+    className={cn('text-sm font-semibold', className)}
     {...props}
   />
 ));
@@ -108,10 +106,7 @@ const ToastDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Description
     ref={ref}
-    className={cn(
-      'mt-1 text-[10px] font-medium uppercase tracking-brutal opacity-70',
-      className
-    )}
+    className={cn('mt-1 text-xs text-muted-foreground', className)}
     {...props}
   />
 ));

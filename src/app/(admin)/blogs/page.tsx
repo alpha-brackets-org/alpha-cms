@@ -11,7 +11,13 @@ import { usePortfolio } from '@/providers/PortfolioProvider';
 import { BrutalConfirm } from '@/components/ui/BrutalConfirm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { PublishStatus } from '@/types/cms';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -22,6 +28,8 @@ import {
 } from '@/components/ui/BrutalTable';
 import { BrutalPagination } from '@/components/ui/BrutalPagination';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { QueryErrorState } from '@/components/ui/QueryErrorState';
 
 export default function BlogsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -40,7 +48,11 @@ export default function BlogsPage() {
     title: string;
   } | null>(null);
 
-  const { data: response, isLoading } = useBlogs({
+  const {
+    data: response,
+    isLoading,
+    isError,
+  } = useBlogs({
     search: debouncedSearch,
     status,
     category,
@@ -80,17 +92,15 @@ export default function BlogsPage() {
       {/* Page Header */}
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="mb-2 text-3xl font-bold uppercase tracking-tight">
-            Blogs
-          </h2>
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          <h2 className="mb-2 text-3xl font-semibold tracking-tight">Blogs</h2>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
             Manage your articles and stories
           </p>
         </div>
         <Button asChild>
           <Link href="/blogs/create" className="gap-2">
             <Plus className="h-4 w-4" />
-            NEW ARTICLE
+            New Article
           </Link>
         </Button>
       </div>
@@ -116,19 +126,22 @@ export default function BlogsPage() {
             <Label className="mb-1 block opacity-60">Status</Label>
             <Select
               value={status}
-              onChange={(e) => {
-                setStatus(e.target.value);
+              onValueChange={(val) => {
+                setStatus(val);
                 setPage(1);
               }}
-              wrapperClassName="min-w-[140px] shrink-0"
-              className="h-10 text-xs font-bold uppercase tracking-wide"
             >
-              <option value="all">All Status</option>
-              {Object.values(PublishStatus).map((stat) => (
-                <option key={stat} value={stat}>
-                  {stat.toUpperCase()}
-                </option>
-              ))}
+              <SelectTrigger className="h-10 min-w-[140px] shrink-0 text-xs font-medium">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                {Object.values(PublishStatus).map((stat) => (
+                  <SelectItem key={stat} value={stat}>
+                    {stat.toUpperCase()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
@@ -136,19 +149,22 @@ export default function BlogsPage() {
             <Label className="mb-1 block opacity-60">Category</Label>
             <Select
               value={category}
-              onChange={(e) => {
-                setCategory(e.target.value);
+              onValueChange={(val) => {
+                setCategory(val);
                 setPage(1);
               }}
-              wrapperClassName="min-w-[160px] shrink-0"
-              className="h-10 text-xs font-bold uppercase tracking-wide"
             >
-              <option value="all">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat._id} value={cat._id}>
-                  {cat.name}
-                </option>
-              ))}
+              <SelectTrigger className="h-10 min-w-[160px] shrink-0 text-xs font-medium">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat._id} value={cat._id!}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
@@ -157,7 +173,7 @@ export default function BlogsPage() {
               variant="outline"
               onClick={handleClearFilters}
               disabled={!searchTerm && status === 'all' && category === 'all'}
-              className="h-10 px-6 text-xs font-bold uppercase tracking-wide"
+              className="h-10 px-6 text-xs font-medium"
             >
               Clear
             </Button>
@@ -206,12 +222,18 @@ export default function BlogsPage() {
               </BrutalTableCell>
             </BrutalTableRow>
           ))
+        ) : isError ? (
+          <BrutalTableRow>
+            <BrutalTableCell colSpan={6}>
+              <QueryErrorState />
+            </BrutalTableCell>
+          </BrutalTableRow>
         ) : blogs.length === 0 ? (
           <BrutalTableRow>
             <BrutalTableCell colSpan={6} className="p-20 text-center">
               <div className="flex flex-col items-center gap-4 opacity-40">
                 <Search className="h-12 w-12" />
-                <p className="text-[10px] font-bold uppercase tracking-ultrawide">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   No articles matched your filters
                 </p>
               </div>
@@ -235,28 +257,18 @@ export default function BlogsPage() {
               </BrutalTableCell>
               {!activePortfolio && (
                 <BrutalTableCell>
-                  <div className="text-[10px] font-bold uppercase tracking-tight">
+                  <div className="text-xs font-medium uppercase tracking-wide">
                     {blog.portfolio?.name}
                   </div>
                 </BrutalTableCell>
               )}
               <BrutalTableCell>
-                <div className="text-[10px] font-medium uppercase opacity-80">
+                <div className="text-xs font-medium uppercase opacity-80">
                   {blog.category?.name}
                 </div>
               </BrutalTableCell>
               <BrutalTableCell>
-                <Badge
-                  variant={
-                    blog.status === 'published'
-                      ? 'default'
-                      : blog.status === 'draft'
-                        ? 'secondary'
-                        : 'outline'
-                  }
-                >
-                  {blog.status}
-                </Badge>
+                <StatusBadge status={blog.status} />
               </BrutalTableCell>
               <BrutalTableCell>
                 <div className="flex items-center gap-2 text-[10px] font-medium text-muted-foreground">
@@ -268,14 +280,14 @@ export default function BlogsPage() {
                 <div className="flex justify-end gap-2 opacity-40 transition-opacity group-hover:opacity-100">
                   <Link
                     href={`/blogs/${blog._id}`}
-                    className="border border-transparent p-2 transition-colors hover:border-border hover:bg-secondary"
+                    className="rounded-full p-2 transition-colors hover:bg-secondary"
                   >
                     <Edit className="h-4 w-4 text-muted-foreground" />
                   </Link>
                   <button
                     onClick={() => handleDeleteTrigger(blog._id!, blog.title)}
                     disabled={deleteMutation.isPending}
-                    className="group/del border border-transparent p-2 transition-colors hover:border-destructive/20 hover:bg-destructive/10 disabled:opacity-30"
+                    className="group/del rounded-full p-2 transition-colors hover:bg-destructive/10 disabled:opacity-30"
                   >
                     <Trash2 className="h-4 w-4 text-muted-foreground group-hover/del:text-destructive" />
                   </button>
@@ -305,9 +317,9 @@ export default function BlogsPage() {
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         isLoading={deleteMutation.isPending}
-        title="DELETE ARTICLE?"
-        message={`Are you sure you want to delete "${targetBlog?.title.toUpperCase()}"? This action is irreversible and will remove the content from all live portfolios.`}
-        confirmText="DELETE NOW"
+        title="Delete Article?"
+        message={`Are you sure you want to delete "${targetBlog?.title}"? This action is irreversible and will remove the content from all live portfolios.`}
+        confirmText="Delete Now"
         isDestructive={true}
       />
     </div>

@@ -1,7 +1,13 @@
 import mongoose from 'mongoose';
-import { apiHandler, sendData, sendCorsResponse } from '@/lib/api-utils';
+import {
+  apiHandler,
+  sendData,
+  sendCorsResponse,
+  sendError,
+} from '@/lib/api-utils';
 import { getDb } from '@/lib/db/dbConnect';
 import { CollectionName, AnalyticsSchema } from '@/schemas/cms';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 /**
  * ANALYTICS INGESTION ENDPOINT
@@ -9,6 +15,12 @@ import { CollectionName, AnalyticsSchema } from '@/schemas/cms';
  */
 export const POST = apiHandler(
   async (_request, { validatedData }) => {
+    const ip = getClientIp(_request);
+    const { allowed } = await checkRateLimit('analytics-collect', ip, 120, 60);
+    if (!allowed) {
+      return sendError('Too many requests.', 429);
+    }
+
     const { portfolio, event, path, visitorId, metadata, duration } =
       validatedData!;
     const db = getDb();

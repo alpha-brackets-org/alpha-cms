@@ -35,9 +35,7 @@ export const DELETE = apiHandler(async (_request, { params }) => {
   const query = await scopeQuery({ _id: new mongoose.Types.ObjectId(id) });
 
   // 1. Get the media doc to find the ImageKit file ID
-  const media = await getDb()
-    .collection(CollectionName.MEDIA)
-    .findOne(query);
+  const media = await getDb().collection(CollectionName.MEDIA).findOne(query);
 
   if (!media) {
     return sendNotFound('Media Asset');

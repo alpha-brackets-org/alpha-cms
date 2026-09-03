@@ -30,6 +30,23 @@ export function encrypt(text: string): string {
   return iv.toString('hex') + ':' + encrypted.toString('hex');
 }
 
+/**
+ * Generates a new plaintext API key for a portfolio. Only ever shown to the
+ * user once, at generation time — never persisted or retrievable again.
+ */
+export function generateApiKey(): string {
+  return `pk_live_${crypto.randomBytes(32).toString('hex')}`;
+}
+
+/**
+ * One-way hash of an API key for storage/comparison. Unlike encrypt()/decrypt(),
+ * this is never reversed — we only ever need to verify an incoming key against
+ * the stored hash, never re-display the plaintext.
+ */
+export function hashApiKey(key: string): string {
+  return crypto.createHash('sha256').update(key).digest('hex');
+}
+
 export function decrypt(text: string): string {
   try {
     const textParts = text.split(':');

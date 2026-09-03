@@ -125,7 +125,6 @@ function ResetPasswordForm() {
           <Button
             type="submit"
             disabled={resetMutation.isPending}
-            variant="brutal"
             className="w-full py-8 text-xs"
           >
             {resetMutation.isPending ? 'ENCRYPTING...' : 'RE-ESTABLISH ACCESS'}

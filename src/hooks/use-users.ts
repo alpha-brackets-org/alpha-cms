@@ -12,21 +12,24 @@ export function useUsers() {
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<User>) => api.post<{ data: User }>('/users', data),
+    mutationFn: (data: Partial<User>) =>
+      api.post<{ data: User }>('/users', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
+    meta: { successMessage: 'User created successfully!' },
   });
 }
 
-export function useUpdateUser(id: string) {
+export function useUpdateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<User>) =>
+    mutationFn: ({ id, data }: { id: string; data: Partial<User> }) =>
       api.patch<{ data: User }>(`/users/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
+    meta: { successMessage: 'User updated successfully!' },
   });
 }
 
@@ -38,5 +41,6 @@ export function useDeleteUser() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
+    meta: { successMessage: 'User deleted permanently.' },
   });
 }

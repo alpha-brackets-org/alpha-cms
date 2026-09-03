@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { SubscriberStatus, SubscriberSource } from '@/schemas/cms';
+import { getSubscriberSourceStyle } from '@/lib/badge-colors';
 import { useDebounce } from '@/hooks/use-debounce';
 import {
   BrutalTable,
@@ -20,8 +21,15 @@ import {
   BrutalTableCell,
 } from '@/components/ui/BrutalTable';
 import { BrutalPagination } from '@/components/ui/BrutalPagination';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { QueryErrorState } from '@/components/ui/QueryErrorState';
 
 export default function SubscribersPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,7 +42,7 @@ export default function SubscribersPage() {
     limit: 10,
   });
 
-  const { data, isLoading } = useSubscribers({
+  const { data, isLoading, isError } = useSubscribers({
     ...filters,
     search: debouncedSearch,
   });
@@ -69,17 +77,17 @@ export default function SubscribersPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className="mb-2 text-3xl font-black uppercase tracking-tight">
+          <h2 className="mb-2 text-3xl font-semibold tracking-tight">
             Newsletter Audience
           </h2>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
             Monitor and manage cross-portfolio subscribers
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex-1 md:w-64">
             <Input
-              placeholder="SEARCH EMAIL..."
+              placeholder="Search email..."
               className="h-10 text-xs font-medium"
               leftSection={<Search className="h-4 w-4" />}
               value={searchTerm}
@@ -91,61 +99,69 @@ export default function SubscribersPage() {
           </div>
           <Select
             value={filters.status}
-            onChange={(e) =>
-              setFilters({ ...filters, status: e.target.value, page: 1 })
+            onValueChange={(val) =>
+              setFilters({ ...filters, status: val, page: 1 })
             }
-            wrapperClassName="w-40 shrink-0"
-            className="h-10 text-[11px] font-bold uppercase tracking-wide"
           >
-            <option value="all">ALL STATUS</option>
-            {Object.values(SubscriberStatus).map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
+            <SelectTrigger className="h-10 w-40 shrink-0 text-xs font-medium">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              {Object.values(SubscriberStatus).map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
           <Select
             value={filters.source}
-            onChange={(e) =>
-              setFilters({ ...filters, source: e.target.value, page: 1 })
+            onValueChange={(val) =>
+              setFilters({ ...filters, source: val, page: 1 })
             }
-            wrapperClassName="w-48 shrink-0"
-            className="h-10 text-[11px] font-bold uppercase tracking-wide"
           >
-            <option value="all">ALL SOURCES</option>
-            {Object.values(SubscriberSource).map((source) => (
-              <option key={source} value={source}>
-                {source.replace(/_/g, ' ').toUpperCase()}
-              </option>
-            ))}
+            <SelectTrigger className="h-10 w-48 shrink-0 text-xs font-medium">
+              <SelectValue placeholder="All Sources" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Sources</SelectItem>
+              {Object.values(SubscriberSource).map((source) => (
+                <SelectItem key={source} value={source}>
+                  {source
+                    .replace(/_/g, ' ')
+                    .replace(/\b\w/g, (c) => c.toUpperCase())}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         </div>
       </div>
 
       {/* Stats Quick View */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-        <div className="rounded-2xl border border-white/10 bg-primary/20 p-6 shadow-sm backdrop-blur-xl">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-primary/80">
+        <div className="rounded-2xl border border-border bg-primary/10 p-6 shadow-sm">
+          <p className="text-xs uppercase tracking-wide text-primary/80">
             Total Subscribers
           </p>
-          <p className="text-4xl font-bold text-primary">
+          <p className="text-4xl font-semibold text-primary">
             {data?.pagination.total || 0}
           </p>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            Active Nodes
+        <div className="rounded-2xl border border-border bg-card/50 p-6 shadow-sm">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            Active Subscribers
           </p>
-          <p className="text-4xl font-bold text-foreground">
+          <p className="text-4xl font-semibold text-foreground">
             {data?.data.filter((s) => s.status === SubscriberStatus.ACTIVE)
               .length || 0}
           </p>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-secondary/50 p-6 shadow-sm backdrop-blur-xl">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        <div className="rounded-2xl border border-border bg-secondary/50 p-6 shadow-sm">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
             Portfolios Reached
           </p>
-          <p className="text-4xl font-bold text-foreground">
+          <p className="text-4xl font-semibold text-foreground">
             {new Set(data?.data.map((s) => s.portfolio._id)).size || 0}
           </p>
         </div>
@@ -184,13 +200,19 @@ export default function SubscribersPage() {
               </BrutalTableCell>
             </BrutalTableRow>
           ))
+        ) : isError ? (
+          <BrutalTableRow>
+            <BrutalTableCell colSpan={6}>
+              <QueryErrorState />
+            </BrutalTableCell>
+          </BrutalTableRow>
         ) : data?.data.length === 0 ? (
           <BrutalTableRow>
             <BrutalTableCell colSpan={6} className="p-20 text-center">
               <div className="flex flex-col items-center justify-center opacity-50">
                 <Mail className="mb-4 h-12 w-12" />
-                <p className="text-xs font-black uppercase tracking-widest">
-                  No subscribers detected in perimeter
+                <p className="text-xs uppercase tracking-wide">
+                  No subscribers found
                 </p>
               </div>
             </BrutalTableCell>
@@ -200,60 +222,31 @@ export default function SubscribersPage() {
             <BrutalTableRow key={subscriber._id}>
               <BrutalTableCell>
                 <div className="flex items-center gap-3">
-                  <div className="rounded-full border border-white/10 bg-secondary p-2 text-muted-foreground">
+                  <div className="rounded-full border border-border bg-secondary p-2 text-muted-foreground">
                     <Mail className="h-4 w-4" />
                   </div>
-                  <span className="font-mono text-sm font-bold">
+                  <span className="font-mono text-sm font-medium">
                     {subscriber.email}
                   </span>
                 </div>
               </BrutalTableCell>
               <BrutalTableCell>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase tracking-tighter text-muted-foreground">
+                  <span className="text-xs font-medium text-muted-foreground">
                     {subscriber.portfolio.name}
                   </span>
                 </div>
               </BrutalTableCell>
               <BrutalTableCell>
                 {(() => {
-                  const sourceStyles: Record<
-                    SubscriberSource,
-                    { color: string; label: string }
-                  > = {
-                    [SubscriberSource.NEWSLETTER]: {
-                      color: 'border-blue-500 text-blue-500 bg-blue-500/5',
-                      label: SubscriberSource.NEWSLETTER.replace(
-                        /_/g,
-                        ' '
-                      ).toUpperCase(),
-                    },
-                    [SubscriberSource.CASE_STUDY_DOWNLOAD]: {
-                      color: 'border-amber-500 text-amber-500 bg-amber-500/5',
-                      label: SubscriberSource.CASE_STUDY_DOWNLOAD.replace(
-                        /_/g,
-                        ' '
-                      ).toUpperCase(),
-                    },
-                    [SubscriberSource.MANUAL]: {
-                      color:
-                        'border-purple-500 text-purple-500 bg-purple-500/5',
-                      label: SubscriberSource.MANUAL.replace(
-                        /_/g,
-                        ' '
-                      ).toUpperCase(),
-                    },
-                  };
-
-                  const config =
-                    sourceStyles[subscriber.source as SubscriberSource] ||
-                    sourceStyles[SubscriberSource.NEWSLETTER];
-
+                  const config = getSubscriberSourceStyle(
+                    subscriber.source as SubscriberSource
+                  );
                   return (
                     <Badge
                       variant="outline"
                       className={cn(
-                        'rounded-none border-2 px-2 py-0 text-[9px] font-black uppercase tracking-tighter',
+                        'px-2 py-0 text-[10px] uppercase tracking-wide',
                         config.color
                       )}
                     >
@@ -278,7 +271,7 @@ export default function SubscribersPage() {
                   )}
                   {subscriber.downloadHistory &&
                     subscriber.downloadHistory.length > 0 && (
-                      <p className="mt-1 text-[8px] font-bold uppercase tracking-widest text-primary">
+                      <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-primary">
                         {subscriber.downloadHistory.length} Downloads
                       </p>
                     )}
@@ -297,15 +290,15 @@ export default function SubscribersPage() {
                         ? 'default'
                         : 'destructive'
                     }
-                    className="rounded-none border-2 border-foreground px-3 py-0.5 font-black uppercase tracking-widest"
+                    className="px-3 py-0.5 text-[10px] uppercase tracking-wide"
                   >
                     {subscriber.status === SubscriberStatus.ACTIVE ? (
                       <span className="flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3" /> ACTIVE
+                        <CheckCircle2 className="h-3 w-3" /> Active
                       </span>
                     ) : (
                       <span className="flex items-center gap-1">
-                        <XCircle className="h-3 w-3" /> UNSUBSCRIBED
+                        <XCircle className="h-3 w-3" /> Unsubscribed
                       </span>
                     )}
                   </Badge>
@@ -316,7 +309,7 @@ export default function SubscribersPage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => handleDeleteTrigger(subscriber._id!)}
-                  className="h-10 w-10 border-2 border-transparent hover:border-foreground hover:bg-destructive hover:text-destructive-foreground"
+                  className="h-10 w-10 transition-colors hover:bg-destructive hover:text-destructive-foreground"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -345,9 +338,9 @@ export default function SubscribersPage() {
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         isLoading={deleteMutation.isPending}
-        title="WIPE SUBSCRIBER?"
+        title="Delete Subscriber?"
         message="This will permanently delete this subscriber from the database. They will no longer receive any updates from this portfolio."
-        confirmText="ERASE IDENTITY"
+        confirmText="Delete Subscriber"
       />
     </div>
   );

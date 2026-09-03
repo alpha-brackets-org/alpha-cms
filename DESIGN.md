@@ -2,7 +2,7 @@
 
 This documents the design system as it is actually implemented in `src/styles/globals.css`, `tailwind.config.js`, and `src/components/ui`. Treat this as the source of truth for visual work — it supersedes the "raw/sharp-corner brutalism" description in [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) §2, which describes an earlier stage of the system. The codebase has moved to a **dark, glassy, "Modernized Brutal"** look: high-contrast dark theme, soft rounded corners, translucent cards, signal-green accent.
 
-If DEVELOPMENT_GUIDE.md's rules and this file conflict on a _visual_ detail (corner radius, shadow style), follow this file, since it reflects what's actually shipped. For non-visual rules in that section (Radix primitives, `asChild`, `BrutalConfirm` for destructive actions), DEVELOPMENT_GUIDE.md still governs.
+If DEVELOPMENT*GUIDE.md's rules and this file conflict on a \_visual* detail (corner radius, shadow style), follow this file, since it reflects what's actually shipped. For non-visual rules in that section (Radix primitives, `asChild`, `BrutalConfirm` for destructive actions), DEVELOPMENT_GUIDE.md still governs.
 
 ## Theme
 

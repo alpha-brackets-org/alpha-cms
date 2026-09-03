@@ -10,7 +10,13 @@ import { usePortfolio } from '@/providers/PortfolioProvider';
 import { BrutalConfirm } from '@/components/ui/BrutalConfirm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { PublishStatus } from '@/types/cms';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -21,6 +27,8 @@ import {
 } from '@/components/ui/BrutalTable';
 import { BrutalPagination } from '@/components/ui/BrutalPagination';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { QueryErrorState } from '@/components/ui/QueryErrorState';
 
 export default function ProjectsPage() {
   const { activePortfolio } = usePortfolio();
@@ -43,10 +51,14 @@ export default function ProjectsPage() {
   const { data: categoriesResponse } = useCategories();
   const categories = categoriesResponse?.data || [];
 
-  const { data: response, isLoading } = useProjects({
+  const {
+    data: response,
+    isLoading,
+    isError,
+  } = useProjects({
     search: debouncedSearch,
-    status: status === 'all' ? undefined : status,
-    category: category === 'all' ? undefined : category,
+    status,
+    category,
     page,
     limit,
     portfolio: activePortfolio || undefined,
@@ -83,17 +95,17 @@ export default function ProjectsPage() {
       {/* Header */}
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="mb-2 text-3xl font-bold uppercase tracking-tight">
+          <h2 className="mb-2 text-3xl font-semibold tracking-tight">
             Projects
           </h2>
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Manage your high-visual technical showcases
           </p>
         </div>
         <Button asChild>
           <Link href="/projects/create" className="gap-2">
             <Plus className="h-4 w-4" />
-            NEW PROJECT
+            New Project
           </Link>
         </Button>
       </div>
@@ -119,19 +131,22 @@ export default function ProjectsPage() {
             <Label className="mb-1 block opacity-60">Status</Label>
             <Select
               value={status}
-              onChange={(e) => {
-                setStatus(e.target.value);
+              onValueChange={(val) => {
+                setStatus(val);
                 setPage(1);
               }}
-              wrapperClassName="w-full md:w-40 shrink-0"
-              className="h-10 text-xs font-bold uppercase tracking-wide"
             >
-              <option value="all">All Status</option>
-              {Object.values(PublishStatus).map((stat) => (
-                <option key={stat} value={stat}>
-                  {stat.toUpperCase()}
-                </option>
-              ))}
+              <SelectTrigger className="h-10 w-full shrink-0 text-xs font-medium md:w-40">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                {Object.values(PublishStatus).map((stat) => (
+                  <SelectItem key={stat} value={stat}>
+                    {stat.charAt(0).toUpperCase() + stat.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
@@ -139,19 +154,22 @@ export default function ProjectsPage() {
             <Label className="mb-1 block opacity-60">Category</Label>
             <Select
               value={category}
-              onChange={(e) => {
-                setCategory(e.target.value);
+              onValueChange={(val) => {
+                setCategory(val);
                 setPage(1);
               }}
-              wrapperClassName="w-full md:w-40 shrink-0"
-              className="h-10 text-xs font-bold uppercase tracking-wide"
             >
-              <option value="all">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat._id} value={cat._id}>
-                  {cat.name.toUpperCase()}
-                </option>
-              ))}
+              <SelectTrigger className="h-10 w-full shrink-0 text-xs font-medium md:w-40">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat._id} value={cat._id!}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
@@ -160,7 +178,7 @@ export default function ProjectsPage() {
               variant="outline"
               onClick={handleClearFilters}
               disabled={!searchTerm && status === 'all' && category === 'all'}
-              className="h-10 px-6 text-xs font-bold uppercase tracking-wide"
+              className="h-10 px-6 text-xs font-medium"
             >
               Clear
             </Button>
@@ -168,7 +186,17 @@ export default function ProjectsPage() {
         </div>
       </div>
 
-      <BrutalTable headers={['Project', 'Tech Stack', 'Status', 'Actions']}>
+      <BrutalTable
+        headers={
+          [
+            'Project',
+            !activePortfolio && 'Portfolio',
+            'Tech Stack',
+            'Status',
+            'Actions',
+          ].filter(Boolean) as string[]
+        }
+      >
         {isLoading ? (
           [...Array(5)].map((_, i) => (
             <BrutalTableRow key={i}>
@@ -176,6 +204,11 @@ export default function ProjectsPage() {
                 <Skeleton className="mb-2 h-4 w-48" />
                 <Skeleton className="h-3 w-24" />
               </BrutalTableCell>
+              {!activePortfolio && (
+                <BrutalTableCell>
+                  <Skeleton className="h-4 w-24" />
+                </BrutalTableCell>
+              )}
               <BrutalTableCell>
                 <Skeleton className="h-4 w-32" />
               </BrutalTableCell>
@@ -187,14 +220,21 @@ export default function ProjectsPage() {
               </BrutalTableCell>
             </BrutalTableRow>
           ))
+        ) : isError ? (
+          <BrutalTableRow>
+            <BrutalTableCell colSpan={activePortfolio ? 4 : 5}>
+              <QueryErrorState />
+            </BrutalTableCell>
+          </BrutalTableRow>
         ) : items.length === 0 ? (
           <BrutalTableRow>
-            <BrutalTableCell colSpan={4} className="p-20 text-center">
+            <BrutalTableCell
+              colSpan={activePortfolio ? 4 : 5}
+              className="p-20 text-center"
+            >
               <div className="flex flex-col items-center gap-4 opacity-40">
                 <Code className="h-12 w-12" />
-                <p className="text-[10px] font-bold uppercase tracking-ultrawide">
-                  No projects found
-                </p>
+                <p className="text-xs font-medium">No projects found</p>
               </div>
             </BrutalTableCell>
           </BrutalTableRow>
@@ -212,6 +252,13 @@ export default function ProjectsPage() {
                   /{item.slug}
                 </div>
               </BrutalTableCell>
+              {!activePortfolio && (
+                <BrutalTableCell>
+                  <div className="text-xs font-medium">
+                    {item.portfolio?.name}
+                  </div>
+                </BrutalTableCell>
+              )}
               <BrutalTableCell>
                 <div className="flex flex-wrap gap-1">
                   {item.techStack?.map((tech) => (
@@ -230,29 +277,19 @@ export default function ProjectsPage() {
                 </div>
               </BrutalTableCell>
               <BrutalTableCell>
-                <Badge
-                  variant={
-                    item.status === 'published'
-                      ? 'default'
-                      : item.status === 'draft'
-                        ? 'secondary'
-                        : 'outline'
-                  }
-                >
-                  {item.status || 'draft'}
-                </Badge>
+                <StatusBadge status={item.status || 'draft'} />
               </BrutalTableCell>
               <BrutalTableCell className="text-right">
                 <div className="flex justify-end gap-2 opacity-40 transition-opacity group-hover:opacity-100">
                   <Link
                     href={`/projects/${item._id}`}
-                    className="border border-transparent p-2 transition-colors hover:border-border hover:bg-secondary"
+                    className="rounded-lg border border-transparent p-2 transition-colors hover:border-border hover:bg-secondary"
                   >
                     <Edit className="h-4 w-4 text-muted-foreground" />
                   </Link>
                   <button
                     onClick={() => handleDeleteTrigger(item._id!, item.title)}
-                    className="group/del border border-transparent p-2 transition-colors hover:border-destructive/20 hover:bg-destructive/10"
+                    className="group/del rounded-lg border border-transparent p-2 transition-colors hover:border-destructive/20 hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4 text-muted-foreground group-hover/del:text-destructive" />
                   </button>
@@ -282,8 +319,10 @@ export default function ProjectsPage() {
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         isLoading={deleteMutation.isPending}
-        title="DELETE PROJECT?"
-        message={`Are you sure you want to delete "${targetProject?.title.toUpperCase()}"? This action cannot be undone.`}
+        title="Delete project?"
+        message={`Are you sure you want to delete "${targetProject?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        isDestructive={true}
       />
     </div>
   );

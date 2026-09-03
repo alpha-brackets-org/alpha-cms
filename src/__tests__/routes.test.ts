@@ -409,32 +409,34 @@ describe('CMS Endpoint Integration Tests', () => {
       const techCatIdStr = categoryResult.insertedId.toString();
 
       // 2. Seed 3 blogs with different data
-      await getDb().collection(CollectionName.BLOGS).insertMany([
-        {
-          title: 'First Blog Post',
-          slug: 'first-blog-post',
-          portfolio: new mongoose.Types.ObjectId(testPortfolioIdStr),
-          status: 'draft',
-          category: new mongoose.Types.ObjectId(techCatIdStr),
-          createdAt: new Date(Date.now() - 10000),
-        },
-        {
-          title: 'Second Article',
-          slug: 'second-article',
-          portfolio: new mongoose.Types.ObjectId(testPortfolioIdStr),
-          status: 'published',
-          category: null,
-          createdAt: new Date(Date.now() - 5000),
-        },
-        {
-          title: 'Third Blog Entry',
-          slug: 'third-blog-entry',
-          portfolio: new mongoose.Types.ObjectId(testPortfolioIdStr),
-          status: 'published',
-          category: new mongoose.Types.ObjectId(techCatIdStr),
-          createdAt: new Date(),
-        },
-      ]);
+      await getDb()
+        .collection(CollectionName.BLOGS)
+        .insertMany([
+          {
+            title: 'First Blog Post',
+            slug: 'first-blog-post',
+            portfolio: new mongoose.Types.ObjectId(testPortfolioIdStr),
+            status: 'draft',
+            category: new mongoose.Types.ObjectId(techCatIdStr),
+            createdAt: new Date(Date.now() - 10000),
+          },
+          {
+            title: 'Second Article',
+            slug: 'second-article',
+            portfolio: new mongoose.Types.ObjectId(testPortfolioIdStr),
+            status: 'published',
+            category: null,
+            createdAt: new Date(Date.now() - 5000),
+          },
+          {
+            title: 'Third Blog Entry',
+            slug: 'third-blog-entry',
+            portfolio: new mongoose.Types.ObjectId(testPortfolioIdStr),
+            status: 'published',
+            category: new mongoose.Types.ObjectId(techCatIdStr),
+            createdAt: new Date(),
+          },
+        ]);
 
       // Test Limit & Page Pagination
       const page1Res = await getBlogs(

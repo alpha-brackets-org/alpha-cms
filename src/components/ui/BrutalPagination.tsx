@@ -25,38 +25,38 @@ export function BrutalPagination({
 }: BrutalPaginationProps) {
   return (
     <div className="flex flex-col items-center justify-between gap-4 py-4 md:flex-row">
-      <div className="text-[10px] font-black uppercase tracking-ultrawide text-muted-foreground">
+      <div className="text-xs font-medium text-muted-foreground">
         {itemsCount !== undefined && totalItems !== undefined ? (
           <>
-            SHOWING {itemsCount} OF {totalItems} {label}
+            Showing {itemsCount} of {totalItems} {label.toLowerCase()}
           </>
         ) : (
           <>
-            PAGE {currentPage} OF {totalPages}
+            Page {currentPage} of {totalPages}
           </>
         )}
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex gap-3">
         <Button
           variant="outline"
           size="sm"
-          className="h-9 w-24 gap-1 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none disabled:opacity-30"
+          className="w-24 gap-1 disabled:opacity-30"
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={!hasPrevPage}
         >
           <ChevronLeft className="h-4 w-4" />
-          PREV
+          Prev
         </Button>
 
         <Button
           variant="outline"
           size="sm"
-          className="h-9 w-24 gap-1 border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none disabled:opacity-30"
+          className="w-24 gap-1 disabled:opacity-30"
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={!hasNextPage}
         >
-          NEXT
+          Next
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>

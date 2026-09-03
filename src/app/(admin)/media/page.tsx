@@ -9,11 +9,11 @@ export default function MediaPage() {
       {/* Page Header */}
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="mb-2 text-3xl font-bold uppercase tracking-tight">
-            Central Assets
+          <h2 className="mb-2 text-3xl font-semibold tracking-tight">
+            Media Library
           </h2>
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-            Standardized Infrastructure for Portfolio Media
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            Manage shared assets across portfolios
           </p>
         </div>
       </div>

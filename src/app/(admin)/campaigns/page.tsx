@@ -9,7 +9,6 @@ import {
   Users,
   CheckCircle2,
   Loader2,
-  X,
   Eye,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -24,7 +23,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { BrutalConfirm } from '@/components/ui/BrutalConfirm';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  BrutalTable,
+  BrutalTableRow,
+  BrutalTableCell,
+} from '@/components/ui/BrutalTable';
+import { BrutalPagination } from '@/components/ui/BrutalPagination';
 import { useToast } from '@/hooks/use-toast';
+import { QueryErrorState } from '@/components/ui/QueryErrorState';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 
@@ -43,18 +57,30 @@ export default function CampaignsPage() {
   const [subject, setSubject] = useState('');
   const [content, setContent] = useState('');
 
-  const { data: response, isLoading } = useCampaigns({
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+
+  const {
+    data: response,
+    isLoading,
+    isError,
+  } = useCampaigns({
     portfolio: activePortfolio || undefined,
+    page,
+    limit,
   });
 
   const createMutation = useCreateCampaign();
   const sendMutation = useSendCampaign();
 
   const campaigns = response?.data || [];
+  const total = response?.pagination.total || 0;
+  const hasNextPage = response?.pagination.hasNextPage || false;
+  const hasPrevPage = response?.pagination.hasPrevPage || false;
 
   const handleCreate = () => {
     if (!activePortfolio) {
-      error('ERROR', 'Please select a portfolio first');
+      error('Error', 'Please select a portfolio first');
       return;
     }
 
@@ -69,17 +95,27 @@ export default function CampaignsPage() {
           setIsModalOpen(false);
           setSubject('');
           setContent('');
-          success('CAMPAIGN CREATED', 'Broadcast is ready to send.');
+          success('Campaign Created', 'Broadcast is ready to send.');
         },
       }
     );
   };
 
-  const handleSend = (id: string) => {
-    sendMutation.mutate(id, {
+  const [sendConfirmOpen, setSendConfirmOpen] = useState(false);
+  const [targetSendId, setTargetSendId] = useState<string | null>(null);
+
+  const handleSendTrigger = (id: string) => {
+    setTargetSendId(id);
+    setSendConfirmOpen(true);
+  };
+
+  const handleConfirmSend = () => {
+    if (!targetSendId) return;
+    sendMutation.mutate(targetSendId, {
       onSuccess: (res) => {
+        setSendConfirmOpen(false);
         success(
-          'CAMPAIGN SENT',
+          'Campaign Sent',
           `Successfully sent to ${res.data.sent} subscribers.`
         );
       },
@@ -91,117 +127,143 @@ export default function CampaignsPage() {
       {/* Header */}
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="mb-2 text-3xl font-bold uppercase tracking-tight">
+          <h2 className="mb-2 text-3xl font-semibold tracking-tight">
             Newsletter Campaigns
           </h2>
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
             Manual broadcasts and email marketing history
           </p>
         </div>
         <Button onClick={() => setIsModalOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" />
-          CREATE BROADCAST
+          Create Broadcast
         </Button>
       </div>
 
-      {/* Campaigns Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {/* Campaigns Table */}
+      <BrutalTable
+        headers={['Campaign', 'Recipients', 'Performance', 'Sent', 'Actions']}
+      >
         {isLoading ? (
           [...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-48 w-full border-2 border-border" />
+            <BrutalTableRow key={i}>
+              <BrutalTableCell>
+                <Skeleton className="mb-2 h-4 w-48" />
+                <Skeleton className="h-3 w-24" />
+              </BrutalTableCell>
+              <BrutalTableCell>
+                <Skeleton className="h-4 w-16" />
+              </BrutalTableCell>
+              <BrutalTableCell>
+                <Skeleton className="h-4 w-24" />
+              </BrutalTableCell>
+              <BrutalTableCell>
+                <Skeleton className="h-4 w-20" />
+              </BrutalTableCell>
+              <BrutalTableCell className="text-right">
+                <Skeleton className="ml-auto h-8 w-8" />
+              </BrutalTableCell>
+            </BrutalTableRow>
           ))
+        ) : isError ? (
+          <BrutalTableRow>
+            <BrutalTableCell colSpan={5}>
+              <QueryErrorState />
+            </BrutalTableCell>
+          </BrutalTableRow>
         ) : campaigns.length === 0 ? (
-          <div className="col-span-full border-2 border-dashed border-border py-20 text-center">
-            <Mail className="mx-auto mb-4 h-12 w-12 text-muted-foreground opacity-20" />
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              No campaigns found
-            </p>
-          </div>
+          <BrutalTableRow>
+            <BrutalTableCell colSpan={5} className="p-20 text-center">
+              <div className="flex flex-col items-center gap-4 opacity-40">
+                <Mail className="h-12 w-12" />
+                <p className="text-xs uppercase tracking-wide">
+                  No campaigns found
+                </p>
+              </div>
+            </BrutalTableCell>
+          </BrutalTableRow>
         ) : (
           campaigns.map((campaign) => (
-            <div
-              key={campaign._id}
-              className="group border-2 border-border bg-card p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:border-primary"
-            >
-              <div className="mb-4 flex items-start justify-between">
+            <BrutalTableRow key={campaign._id} className="group">
+              <BrutalTableCell>
                 <div className="flex items-center gap-3">
                   <div
                     className={cn(
-                      'border-2 border-border p-2',
+                      'rounded-full border border-border p-2',
                       campaign.status === 'sent'
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-secondary'
                     )}
                   >
-                    <Send className="h-5 w-5" />
+                    <Send className="h-4 w-4" />
                   </div>
                   <div>
-                    <h3 className="line-clamp-1 font-bold uppercase tracking-tight">
+                    <div className="line-clamp-1 text-sm font-semibold tracking-tight">
                       {campaign.subject}
-                    </h3>
-                    <p className="font-mono text-[9px] text-muted-foreground">
-                      ID: {campaign._id}
-                    </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={
+                          campaign.status === 'sent' ? 'default' : 'secondary'
+                        }
+                        className="text-[10px] uppercase tracking-wide"
+                      >
+                        {campaign.status}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
-                <Badge
-                  variant={campaign.status === 'sent' ? 'default' : 'secondary'}
-                  className="uppercase tracking-widest"
-                >
-                  {campaign.status}
-                </Badge>
-              </div>
-
-              <div className="my-4 grid grid-cols-2 gap-4 border-y-2 border-border/50 py-4">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <div className="text-[10px] font-bold uppercase">
-                    <span className="text-primary">
-                      {campaign.recipientCount}
-                    </span>{' '}
-                    Recipients
+              </BrutalTableCell>
+              <BrutalTableCell>
+                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
+                  <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-primary">
+                    {campaign.recipientCount}
+                  </span>
+                </div>
+              </BrutalTableCell>
+              <BrutalTableCell>
+                {campaign.stats ? (
+                  <div className="flex gap-3 text-[10px] font-medium uppercase tracking-wide">
+                    <span>
+                      Opens:{' '}
+                      <span className="text-primary">
+                        {campaign.stats.opens}
+                      </span>
+                    </span>
+                    <span>
+                      Clicks:{' '}
+                      <span className="text-primary">
+                        {campaign.stats.clicks}
+                      </span>
+                    </span>
                   </div>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground opacity-50">
+                    —
+                  </span>
+                )}
+              </BrutalTableCell>
+              <BrutalTableCell>
+                <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+                  <Calendar className="h-3.5 w-3.5" />
+                  {campaign.sentAt
+                    ? new Date(campaign.sentAt).toLocaleDateString()
+                    : 'Scheduled'}
                 </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <div className="text-[10px] font-bold uppercase">
-                    {campaign.sentAt
-                      ? new Date(campaign.sentAt).toLocaleDateString()
-                      : 'Scheduled'}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex gap-4">
-                  {campaign.stats && (
-                    <>
-                      <div className="text-[9px] font-black uppercase">
-                        Opens:{' '}
-                        <span className="text-primary">
-                          {campaign.stats.opens}
-                        </span>
-                      </div>
-                      <div className="text-[9px] font-black uppercase">
-                        Clicks:{' '}
-                        <span className="text-primary">
-                          {campaign.stats.clicks}
-                        </span>
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div className="flex gap-2">
+              </BrutalTableCell>
+              <BrutalTableCell className="text-right">
+                <div className="flex justify-end gap-2 opacity-40 transition-opacity group-hover:opacity-100">
                   <Link
                     href={`/campaigns/${campaign._id}`}
-                    className="flex h-8 w-8 items-center justify-center border-2 border-border bg-secondary/50 transition-all hover:border-primary hover:bg-secondary"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-secondary/50 transition-colors hover:border-border hover:bg-secondary"
                   >
                     <Eye className="h-4 w-4 text-muted-foreground" />
                   </Link>
                   {campaign.status === 'draft' && (
                     <Button
                       size="sm"
-                      onClick={() => handleSend(campaign._id!)}
+                      onClick={() => handleSendTrigger(campaign._id!)}
                       disabled={sendMutation.isPending}
                       className="h-8 gap-2 bg-amber-500 text-amber-950 hover:bg-amber-600"
                     >
@@ -210,7 +272,7 @@ export default function CampaignsPage() {
                       ) : (
                         <Send className="h-3 w-3" />
                       )}
-                      SEND NOW
+                      Send
                     </Button>
                   )}
                   {campaign.status === 'sent' && (
@@ -218,74 +280,85 @@ export default function CampaignsPage() {
                       variant="outline"
                       className="h-8 gap-1 border-primary text-primary"
                     >
-                      <CheckCircle2 className="h-3 w-3" /> COMPLETED
+                      <CheckCircle2 className="h-3 w-3" /> Done
                     </Badge>
                   )}
                 </div>
-              </div>
-            </div>
+              </BrutalTableCell>
+            </BrutalTableRow>
           ))
         )}
-      </div>
+      </BrutalTable>
+
+      {/* Pagination */}
+      {response && response.pagination.totalPages > 1 && (
+        <BrutalPagination
+          currentPage={page}
+          totalPages={response.pagination.totalPages}
+          hasPrevPage={hasPrevPage}
+          hasNextPage={hasNextPage}
+          onPageChange={setPage}
+          totalItems={total}
+          itemsCount={campaigns.length}
+          label="CAMPAIGNS"
+        />
+      )}
 
       {/* Create Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
-          <div className="relative flex max-h-[95vh] w-full max-w-4xl flex-col border-4 border-foreground bg-card shadow-[16px_16px_0px_0px_rgba(0,0,0,1)]">
-            <div className="flex items-center justify-between border-b-4 border-foreground bg-secondary/20 p-6">
-              <h3 className="text-xl font-bold uppercase tracking-tight">
-                Create New Broadcast
-              </h3>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-2 hover:bg-secondary"
-              >
-                <X className="h-5 w-5" />
-              </button>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="flex max-h-[95vh] max-w-4xl flex-col">
+          <DialogHeader>
+            <DialogTitle>Create New Broadcast</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 space-y-6 overflow-y-auto p-6">
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                Email Subject Line
+              </Label>
+              <Input
+                placeholder="e.g. Exciting updates from our studio!"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className="h-12 text-lg font-semibold"
+              />
             </div>
 
-            <div className="flex-1 space-y-6 overflow-y-auto p-8">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest">
-                  Email Subject Line
-                </Label>
-                <Input
-                  placeholder="e.g. Exciting updates from our studio!"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  className="h-12 text-lg font-bold"
-                />
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                Campaign Content
+              </Label>
+              <div className="min-h-[400px]">
+                <RichTextEditor content={content} onChange={setContent} />
               </div>
-
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest">
-                  Campaign Content
-                </Label>
-                <div className="min-h-[400px]">
-                  <RichTextEditor content={content} onChange={setContent} />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-4 border-t-4 border-foreground bg-secondary/10 p-6">
-              <Button
-                variant="outline"
-                onClick={() => setIsModalOpen(false)}
-                className="border-2 border-foreground"
-              >
-                DISCARD
-              </Button>
-              <Button
-                onClick={handleCreate}
-                disabled={!subject || !content || createMutation.isPending}
-                className="border-2 border-foreground px-8"
-              >
-                {createMutation.isPending ? 'CREATING...' : 'SAVE AS DRAFT'}
-              </Button>
             </div>
           </div>
-        </div>
-      )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+              Discard
+            </Button>
+            <Button
+              onClick={handleCreate}
+              disabled={!subject || !content || createMutation.isPending}
+              className="px-8"
+            >
+              {createMutation.isPending ? 'Creating...' : 'Save as Draft'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <BrutalConfirm
+        isOpen={sendConfirmOpen}
+        onClose={() => setSendConfirmOpen(false)}
+        onConfirm={handleConfirmSend}
+        isLoading={sendMutation.isPending}
+        title="Send this campaign?"
+        message="This will immediately email every active subscriber for this portfolio. This action cannot be undone."
+        confirmText="Send Now"
+        isDestructive={false}
+      />
     </div>
   );
 }

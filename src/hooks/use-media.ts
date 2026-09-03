@@ -37,12 +37,9 @@ export function useBatchDeleteMedia() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (ids: string[]) =>
-      api.delete<{ data: { ids: string[]; deletedCount: number } }>(
-        '/media',
-        {
-          ids,
-        }
-      ),
+      api.delete<{ data: { ids: string[]; deletedCount: number } }>('/media', {
+        ids,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['media'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });

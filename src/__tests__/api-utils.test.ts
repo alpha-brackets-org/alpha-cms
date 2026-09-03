@@ -83,18 +83,16 @@ describe('apiHandler Wrapper', () => {
   beforeAll(async () => {
     await dbConnect();
     // Spy on user findOne in tests
-    vi.spyOn(getDb(), 'collection').mockImplementation(
-      (name: string) => {
-        if (name === 'users') {
-          return {
-            findOne: async () => mockUserRecord,
-          } as unknown as ReturnType<ReturnType<typeof getDb>['collection']>;
-        }
+    vi.spyOn(getDb(), 'collection').mockImplementation((name: string) => {
+      if (name === 'users') {
         return {
-          countDocuments: async () => 0,
+          findOne: async () => mockUserRecord,
         } as unknown as ReturnType<ReturnType<typeof getDb>['collection']>;
       }
-    );
+      return {
+        countDocuments: async () => 0,
+      } as unknown as ReturnType<ReturnType<typeof getDb>['collection']>;
+    });
   });
 
   afterAll(() => {

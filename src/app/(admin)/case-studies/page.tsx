@@ -10,9 +10,16 @@ import { usePortfolio } from '@/providers/PortfolioProvider';
 import { BrutalConfirm } from '@/components/ui/BrutalConfirm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { PublishStatus } from '@/types/cms';
 import { useDebounce } from '@/hooks/use-debounce';
 import {
@@ -21,6 +28,7 @@ import {
   BrutalTableCell,
 } from '@/components/ui/BrutalTable';
 import { BrutalPagination } from '@/components/ui/BrutalPagination';
+import { QueryErrorState } from '@/components/ui/QueryErrorState';
 
 export default function CaseStudiesPage() {
   const { activePortfolio } = usePortfolio();
@@ -40,7 +48,11 @@ export default function CaseStudiesPage() {
     title: string;
   } | null>(null);
 
-  const { data: response, isLoading } = useCaseStudies({
+  const {
+    data: response,
+    isLoading,
+    isError,
+  } = useCaseStudies({
     search: debouncedSearch,
     status,
     category,
@@ -80,17 +92,17 @@ export default function CaseStudiesPage() {
       {/* Header */}
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="mb-2 text-3xl font-bold uppercase tracking-tight">
+          <h2 className="mb-2 text-3xl font-semibold tracking-tight">
             Case Studies
           </h2>
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Showcase your agency&apos;s finest work
           </p>
         </div>
         <Button asChild>
           <Link href="/case-studies/create" className="gap-2">
             <Plus className="h-4 w-4" />
-            NEW PROJECT
+            New Project
           </Link>
         </Button>
       </div>
@@ -116,19 +128,22 @@ export default function CaseStudiesPage() {
             <Label className="mb-1 block opacity-60">Category</Label>
             <Select
               value={category}
-              onChange={(e) => {
-                setCategory(e.target.value);
+              onValueChange={(val) => {
+                setCategory(val);
                 setPage(1);
               }}
-              wrapperClassName="w-full md:w-40 shrink-0"
-              className="h-10 text-xs font-bold uppercase tracking-wide"
             >
-              <option value="all">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat._id} value={cat._id}>
-                  {cat.name}
-                </option>
-              ))}
+              <SelectTrigger className="h-10 w-full shrink-0 text-xs font-medium md:w-40">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat._id} value={cat._id!}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
@@ -136,19 +151,22 @@ export default function CaseStudiesPage() {
             <Label className="mb-1 block opacity-60">Status</Label>
             <Select
               value={status}
-              onChange={(e) => {
-                setStatus(e.target.value);
+              onValueChange={(val) => {
+                setStatus(val);
                 setPage(1);
               }}
-              wrapperClassName="w-full md:w-40 shrink-0"
-              className="h-10 text-xs font-bold uppercase tracking-wide"
             >
-              <option value="all">All Status</option>
-              {Object.values(PublishStatus).map((stat) => (
-                <option key={stat} value={stat}>
-                  {stat.toUpperCase()}
-                </option>
-              ))}
+              <SelectTrigger className="h-10 w-full shrink-0 text-xs font-medium md:w-40">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                {Object.values(PublishStatus).map((stat) => (
+                  <SelectItem key={stat} value={stat}>
+                    {stat.charAt(0).toUpperCase() + stat.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
@@ -157,7 +175,7 @@ export default function CaseStudiesPage() {
               variant="outline"
               onClick={handleClearFilters}
               disabled={!searchTerm && status === 'all' && category === 'all'}
-              className="h-10 px-6 text-xs font-bold uppercase tracking-wide"
+              className="h-10 px-6 text-xs font-medium"
             >
               Clear
             </Button>
@@ -207,12 +225,18 @@ export default function CaseStudiesPage() {
               </BrutalTableCell>
             </BrutalTableRow>
           ))
+        ) : isError ? (
+          <BrutalTableRow>
+            <BrutalTableCell colSpan={6}>
+              <QueryErrorState />
+            </BrutalTableCell>
+          </BrutalTableRow>
         ) : items.length === 0 ? (
           <BrutalTableRow>
             <BrutalTableCell colSpan={6} className="p-20 text-center">
               <div className="flex flex-col items-center gap-4 opacity-40">
                 <Search className="h-12 w-12" />
-                <p className="text-[10px] font-bold uppercase tracking-ultrawide">
+                <p className="text-xs font-medium">
                   No case studies matched your filters
                 </p>
               </div>
@@ -236,43 +260,33 @@ export default function CaseStudiesPage() {
               </BrutalTableCell>
               {!activePortfolio && (
                 <BrutalTableCell>
-                  <div className="text-[10px] font-bold uppercase tracking-tight">
+                  <div className="text-xs font-medium">
                     {item.portfolio?.name || 'Global'}
                   </div>
                 </BrutalTableCell>
               )}
               <BrutalTableCell>
-                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase">
+                <div className="flex items-center gap-1.5 text-xs font-medium">
                   <Building2 className="h-3 w-3 text-primary" />
                   {item.client || 'Confidential'}
                 </div>
-                <div className="mt-0.5 text-[9px] uppercase tracking-widest text-muted-foreground">
+                <div className="mt-0.5 text-xs text-muted-foreground">
                   {item.industry || 'General'}
                 </div>
               </BrutalTableCell>
               <BrutalTableCell>
-                <div className="text-[10px] font-medium uppercase opacity-80">
+                <div className="text-xs font-medium opacity-80">
                   {item.category?.name}
                 </div>
               </BrutalTableCell>
               <BrutalTableCell>
-                <Badge
-                  variant={
-                    item.status === 'published'
-                      ? 'default'
-                      : item.status === 'draft'
-                        ? 'secondary'
-                        : 'outline'
-                  }
-                >
-                  {item.status || 'draft'}
-                </Badge>
+                <StatusBadge status={item.status || 'draft'} />
               </BrutalTableCell>
               <BrutalTableCell className="text-right">
                 <div className="flex justify-end gap-2 opacity-40 transition-opacity group-hover:opacity-100">
                   <Link
                     href={`/case-studies/${item._id}`}
-                    className="border border-transparent p-2 transition-colors hover:border-border hover:bg-secondary"
+                    className="rounded-lg border border-transparent p-2 transition-colors hover:border-border hover:bg-secondary"
                   >
                     <Edit className="h-4 w-4 text-muted-foreground" />
                   </Link>
@@ -280,7 +294,7 @@ export default function CaseStudiesPage() {
                     onClick={() =>
                       handleDeleteTrigger(item._id!, item.projectTitle)
                     }
-                    className="group/del border border-transparent p-2 transition-colors hover:border-destructive/20 hover:bg-destructive/10"
+                    className="group/del rounded-lg border border-transparent p-2 transition-colors hover:border-destructive/20 hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4 text-muted-foreground group-hover/del:text-destructive" />
                   </button>
@@ -310,8 +324,10 @@ export default function CaseStudiesPage() {
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         isLoading={deleteMutation.isPending}
-        title="DELETE PROJECT?"
-        message={`Are you sure you want to delete "${targetProject?.title.toUpperCase()}"? This project will be removed from all agency portfolios.`}
+        title="Delete project?"
+        message={`Are you sure you want to delete "${targetProject?.title}"? This project will be removed from all agency portfolios.`}
+        confirmText="Delete"
+        isDestructive={true}
       />
     </div>
   );

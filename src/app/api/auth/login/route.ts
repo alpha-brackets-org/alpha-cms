@@ -1,5 +1,6 @@
 import { apiHandler, sendError, sendData } from '@/lib/api-utils';
-import { comparePassword, signToken } from '@/lib/auth-utils';
+import { comparePassword } from '@/lib/password-utils';
+import { signToken } from '@/lib/auth-utils';
 import { getDb } from '@/lib/db/dbConnect';
 
 export const POST = apiHandler(
@@ -11,9 +12,11 @@ export const POST = apiHandler(
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const user = await getDb().collection('users').findOne({
-      $expr: { $eq: [{ $toLower: '$email' }, normalizedEmail] },
-    });
+    const user = await getDb()
+      .collection('users')
+      .findOne({
+        $expr: { $eq: [{ $toLower: '$email' }, normalizedEmail] },
+      });
 
     if (!user || !user.password) {
       return sendError('IDENTITY NOT FOUND', 401);

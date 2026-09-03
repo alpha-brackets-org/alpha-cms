@@ -5,6 +5,7 @@ import {
   sendError,
   corsOptions,
   sendCorsResponse,
+  verifyPortfolioApiKey,
 } from '@/lib/api-utils';
 import { CollectionName } from '@/schemas/cms';
 import { MongoQuery } from '@/types/cms';
@@ -24,14 +25,20 @@ export const GET = apiHandler(
     const id = searchParams.get('id');
     const domain = searchParams.get('domain');
 
-    if (!id && !domain) {
-      return sendError('Portfolio ID or Domain is required', 400);
-    }
-
     const db = getDb();
     const query: MongoQuery = {};
 
-    if (id) {
+    // Preferred path: server-to-server API key auth — works identically in
+    // any environment (including localhost) since it's not domain-dependent.
+    const apiKeyAuth = await verifyPortfolioApiKey(request);
+    if (apiKeyAuth) {
+      query._id = new mongoose.Types.ObjectId(apiKeyAuth.portfolioId);
+    } else if (!id && !domain) {
+      return sendError(
+        'Authorization header, Portfolio ID, or Domain is required',
+        400
+      );
+    } else if (id) {
       try {
         query._id = new mongoose.Types.ObjectId(id);
       } catch {

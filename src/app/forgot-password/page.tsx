@@ -49,10 +49,7 @@ export default function ForgotPasswordPage() {
               </p>
             </div>
             <Link href="/login" className="block w-full">
-              <Button
-                variant="brutal"
-                className="w-full uppercase tracking-widest"
-              >
+              <Button className="w-full uppercase tracking-widest">
                 Return to Base
               </Button>
             </Link>
@@ -84,7 +81,6 @@ export default function ForgotPasswordPage() {
             <Button
               type="submit"
               disabled={forgotMutation.isPending}
-              variant="brutal"
               className="w-full py-8 text-xs"
             >
               {forgotMutation.isPending

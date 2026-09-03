@@ -31,6 +31,7 @@ export function useCreateTestimonial() {
       api.post<{ data: Testimonial }>('/testimonials', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['testimonials'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
     meta: { successMessage: 'Testimonial created successfully!' },
   });
@@ -44,6 +45,7 @@ export function useUpdateTestimonial(id: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['testimonials'] });
       queryClient.invalidateQueries({ queryKey: ['testimonial', id] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
     meta: { successMessage: 'Testimonial updated successfully!' },
   });

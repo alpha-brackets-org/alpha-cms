@@ -76,10 +76,8 @@ export default function EditFaqPage() {
             </Link>
           </Button>
           <div>
-            <h2 className="text-2xl font-bold uppercase tracking-tight">
-              Edit FAQ
-            </h2>
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            <h2 className="text-2xl font-semibold tracking-tight">Edit FAQ</h2>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
               Update FAQ details
             </p>
           </div>
@@ -93,7 +91,7 @@ export default function EditFaqPage() {
             disabled={deleteMutation.isPending}
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            DELETE
+            Delete
           </Button>
         </div>
       </div>
@@ -102,7 +100,7 @@ export default function EditFaqPage() {
         initialData={initialData}
         onSubmit={handleSubmit}
         isLoading={updateMutation.isPending}
-        submitText="SAVE CHANGES"
+        submitText="Save Changes"
       />
 
       <BrutalConfirm
@@ -110,9 +108,9 @@ export default function EditFaqPage() {
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleDelete}
         isLoading={deleteMutation.isPending}
-        title="DELETE FAQ?"
+        title="Delete FAQ?"
         message="Are you sure you want to delete this FAQ? This action is irreversible."
-        confirmText="DELETE NOW"
+        confirmText="Delete Now"
         isDestructive={true}
       />
     </div>

@@ -9,7 +9,13 @@ import { usePortfolio } from '@/providers/PortfolioProvider';
 import { BrutalConfirm } from '@/components/ui/BrutalConfirm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { PublishStatus } from '@/types/cms';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -19,7 +25,8 @@ import {
   BrutalTableCell,
 } from '@/components/ui/BrutalTable';
 import { BrutalPagination } from '@/components/ui/BrutalPagination';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { QueryErrorState } from '@/components/ui/QueryErrorState';
 
 export default function FaqsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -37,7 +44,11 @@ export default function FaqsPage() {
     question: string;
   } | null>(null);
 
-  const { data: response, isLoading } = useFaqs({
+  const {
+    data: response,
+    isLoading,
+    isError,
+  } = useFaqs({
     search: debouncedSearch,
     status,
     page,
@@ -73,17 +84,15 @@ export default function FaqsPage() {
       {/* Page Header */}
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="mb-2 text-3xl font-bold uppercase tracking-tight">
-            FAQs
-          </h2>
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          <h2 className="mb-2 text-3xl font-semibold tracking-tight">FAQs</h2>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
             Manage frequently asked questions
           </p>
         </div>
         <Button asChild>
           <Link href="/faqs/create" className="gap-2">
             <Plus className="h-4 w-4" />
-            NEW FAQ
+            New FAQ
           </Link>
         </Button>
       </div>
@@ -109,19 +118,22 @@ export default function FaqsPage() {
             <Label className="mb-1 block opacity-60">Status</Label>
             <Select
               value={status}
-              onChange={(e) => {
-                setStatus(e.target.value);
+              onValueChange={(val) => {
+                setStatus(val);
                 setPage(1);
               }}
-              wrapperClassName="min-w-[140px] shrink-0"
-              className="h-10 text-xs font-bold uppercase tracking-wide"
             >
-              <option value="all">All Status</option>
-              {Object.values(PublishStatus).map((stat) => (
-                <option key={stat} value={stat}>
-                  {stat.toUpperCase()}
-                </option>
-              ))}
+              <SelectTrigger className="h-10 min-w-[140px] shrink-0 text-xs font-medium">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                {Object.values(PublishStatus).map((stat) => (
+                  <SelectItem key={stat} value={stat}>
+                    {stat.toUpperCase()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
@@ -130,7 +142,7 @@ export default function FaqsPage() {
               variant="outline"
               onClick={handleClearFilters}
               disabled={!searchTerm && status === 'all'}
-              className="h-10 px-6 text-xs font-bold uppercase tracking-wide"
+              className="h-10 px-6 text-xs font-medium"
             >
               Clear
             </Button>
@@ -175,12 +187,18 @@ export default function FaqsPage() {
               </BrutalTableCell>
             </BrutalTableRow>
           ))
+        ) : isError ? (
+          <BrutalTableRow>
+            <BrutalTableCell colSpan={6}>
+              <QueryErrorState />
+            </BrutalTableCell>
+          </BrutalTableRow>
         ) : faqs.length === 0 ? (
           <BrutalTableRow>
             <BrutalTableCell colSpan={6} className="p-20 text-center">
               <div className="flex flex-col items-center gap-4 opacity-40">
                 <Search className="h-12 w-12" />
-                <p className="text-[10px] font-bold uppercase tracking-ultrawide">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   No FAQs matched your filters
                 </p>
               </div>
@@ -197,29 +215,19 @@ export default function FaqsPage() {
                 </div>
               </BrutalTableCell>
               <BrutalTableCell>
-                <div className="text-[10px] font-bold uppercase tracking-tight opacity-70">
+                <div className="text-xs font-medium uppercase tracking-wide opacity-70">
                   {faq.group || '-'}
                 </div>
               </BrutalTableCell>
               {!activePortfolio && (
                 <BrutalTableCell>
-                  <div className="text-[10px] font-bold uppercase tracking-tight">
+                  <div className="text-xs font-medium uppercase tracking-wide">
                     {faq.portfolio?.name}
                   </div>
                 </BrutalTableCell>
               )}
               <BrutalTableCell>
-                <Badge
-                  variant={
-                    faq.status === 'published'
-                      ? 'default'
-                      : faq.status === 'draft'
-                        ? 'secondary'
-                        : 'outline'
-                  }
-                >
-                  {faq.status}
-                </Badge>
+                <StatusBadge status={faq.status} />
               </BrutalTableCell>
               <BrutalTableCell>
                 <div className="font-mono text-sm">{faq.order}</div>
@@ -228,14 +236,14 @@ export default function FaqsPage() {
                 <div className="flex justify-end gap-2 opacity-40 transition-opacity group-hover:opacity-100">
                   <Link
                     href={`/faqs/${faq._id}`}
-                    className="border border-transparent p-2 transition-colors hover:border-border hover:bg-secondary"
+                    className="rounded-full p-2 transition-colors hover:bg-secondary"
                   >
                     <Edit className="h-4 w-4 text-muted-foreground" />
                   </Link>
                   <button
                     onClick={() => handleDeleteTrigger(faq._id!, faq.question)}
                     disabled={deleteMutation.isPending}
-                    className="group/del border border-transparent p-2 transition-colors hover:border-destructive/20 hover:bg-destructive/10 disabled:opacity-30"
+                    className="group/del rounded-full p-2 transition-colors hover:bg-destructive/10 disabled:opacity-30"
                   >
                     <Trash2 className="h-4 w-4 text-muted-foreground group-hover/del:text-destructive" />
                   </button>
@@ -265,9 +273,9 @@ export default function FaqsPage() {
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         isLoading={deleteMutation.isPending}
-        title="DELETE FAQ?"
+        title="Delete FAQ?"
         message={`Are you sure you want to delete this FAQ? This action is irreversible.`}
-        confirmText="DELETE NOW"
+        confirmText="Delete Now"
         isDestructive={true}
       />
     </div>

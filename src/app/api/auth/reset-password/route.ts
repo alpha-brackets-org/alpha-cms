@@ -1,5 +1,5 @@
 import { apiHandler, sendError, sendData } from '@/lib/api-utils';
-import { hashPassword } from '@/lib/auth-utils';
+import { hashPassword } from '@/lib/password-utils';
 import { getDb } from '@/lib/db/dbConnect';
 
 export const POST = apiHandler(
@@ -10,10 +10,12 @@ export const POST = apiHandler(
       return sendError('TOKEN AND PASSWORD REQUIRED', 400);
     }
 
-    const user = await getDb().collection('users').findOne({
-      resetToken: token,
-      resetTokenExpiry: { $gt: new Date() },
-    });
+    const user = await getDb()
+      .collection('users')
+      .findOne({
+        resetToken: token,
+        resetTokenExpiry: { $gt: new Date() },
+      });
 
     if (!user) {
       return sendError('INVALID OR EXPIRED TOKEN', 400);
@@ -21,19 +23,21 @@ export const POST = apiHandler(
 
     const hashedPassword = await hashPassword(password);
 
-    await getDb().collection('users').updateOne(
-      { _id: user._id },
-      {
-        $set: {
-          password: hashedPassword,
-          updatedAt: new Date(),
-        },
-        $unset: {
-          resetToken: '',
-          resetTokenExpiry: '',
-        },
-      }
-    );
+    await getDb()
+      .collection('users')
+      .updateOne(
+        { _id: user._id },
+        {
+          $set: {
+            password: hashedPassword,
+            updatedAt: new Date(),
+          },
+          $unset: {
+            resetToken: '',
+            resetTokenExpiry: '',
+          },
+        }
+      );
 
     return sendData({ message: 'PASSWORD RESTORED' });
   },

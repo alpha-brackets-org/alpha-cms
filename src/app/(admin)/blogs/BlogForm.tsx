@@ -20,7 +20,14 @@ import {
 import Link from 'next/link';
 import Cookies from 'js-cookie';
 import { useToast } from '@/hooks/use-toast';
-import { RichTextEditor } from '@/components/cms/RichTextEditor';
+import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning';
+import dynamic from 'next/dynamic';
+
+const RichTextEditor = dynamic(
+  () =>
+    import('@/components/cms/RichTextEditor').then((mod) => mod.RichTextEditor),
+  { ssr: false }
+);
 import { MediaPicker } from '@/components/cms/MediaPicker';
 import { useCategories } from '@/hooks/use-categories';
 import { usePortfolios } from '@/hooks/use-portfolios';
@@ -28,7 +35,13 @@ import { SeoAnalyzer } from '@/components/cms/SeoAnalyzer';
 import { CharCount } from '@/components/cms/CharCount';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -90,6 +103,8 @@ export function BlogForm({
       },
     },
   });
+
+  useUnsavedChangesWarning(isDirty);
 
   const watchedValues = watch();
 
@@ -176,12 +191,12 @@ export function BlogForm({
         <div className="flex items-center gap-4">
           <Link
             href="/blogs"
-            className="border-2 border-transparent p-2 transition-all hover:border-border hover:bg-background"
+            className="rounded-full p-2 transition-colors hover:bg-secondary"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-widest">
+            <h2 className="text-sm font-semibold">
               {isNew ? 'Creating New Article' : 'Editing Article'}
             </h2>
             <p className="font-mono text-[9px] lowercase text-primary">
@@ -202,7 +217,7 @@ export function BlogForm({
             size="sm"
             className="gap-2"
           >
-            <Eye className="h-4 w-4" /> PREVIEW
+            <Eye className="h-4 w-4" /> Preview
           </Button>
           <Button
             type="submit"
@@ -215,7 +230,7 @@ export function BlogForm({
             ) : (
               <Save className="h-4 w-4" />
             )}
-            {isLoading ? 'SAVING...' : submitText}
+            {isLoading ? 'Saving...' : submitText}
           </Button>
         </div>
       </div>
@@ -225,8 +240,8 @@ export function BlogForm({
         {Object.keys(errors).length > 0 && (
           <div className="absolute left-4 right-4 top-20 z-40 flex items-center gap-3 rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-destructive">
             <AlertCircle className="h-4 w-4 shrink-0" />
-            <span className="text-xs font-bold uppercase tracking-widest">
-              Validation Alert: Missing Required Protocol
+            <span className="text-xs font-semibold">
+              Please fill in all required fields
             </span>
           </div>
         )}
@@ -240,7 +255,7 @@ export function BlogForm({
                 <input
                   {...register('title')}
                   placeholder="Article Title"
-                  className={`w-full border-b-2 bg-transparent text-3xl font-bold transition-colors placeholder:text-muted-foreground/30 focus:outline-none md:text-4xl ${
+                  className={`w-full border-b bg-transparent text-3xl font-bold transition-colors placeholder:text-muted-foreground/30 focus:outline-none md:text-4xl ${
                     errors.title
                       ? 'border-destructive'
                       : 'border-transparent focus:border-border/50'
@@ -276,9 +291,7 @@ export function BlogForm({
             <div className="space-y-6 rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl">
               <div className="flex items-center gap-3 border-b border-white/10 pb-4">
                 <Search className="h-5 w-5 text-primary" />
-                <h3 className="text-sm font-bold uppercase tracking-widest">
-                  SEO Infrastructure
-                </h3>
+                <h3 className="text-sm font-semibold">SEO Settings</h3>
               </div>
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                 <div className="space-y-6">
@@ -324,7 +337,9 @@ export function BlogForm({
             <SeoAnalyzer
               title={watchedValues.seo?.metaTitle || watchedValues.title || ''}
               description={
-                watchedValues.seo?.metaDescription || watchedValues.excerpt || ''
+                watchedValues.seo?.metaDescription ||
+                watchedValues.excerpt ||
+                ''
               }
               content={watchedValues.content ?? ''}
               keywords={watchedValues.seo?.keywords ?? ''}
@@ -332,60 +347,81 @@ export function BlogForm({
             />
 
             <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
-              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-widest">
-                <Settings className="h-4 w-4 text-primary" /> Parameters
+              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-semibold">
+                <Settings className="h-4 w-4 text-primary" /> Settings
               </h3>
 
               <div className="space-y-2">
                 <Label>Status</Label>
-                <Select {...register('status')}>
-                  {Object.values(PublishStatus).map((status) => (
-                    <option
-                      key={status}
-                      value={status}
-                      className="bg-black text-white"
-                    >
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </option>
-                  ))}
-                </Select>
+                <Controller
+                  name="status"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.values(PublishStatus).map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
 
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select {...register('category')}>
-                  <option value="" className="bg-black text-white">
-                    Select a category
-                  </option>
-                  {categoriesResponse?.data.map((cat) => (
-                    <option
-                      key={cat._id}
-                      value={cat._id}
-                      className="bg-black text-white"
+                <Controller
+                  name="category"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value ?? undefined}
+                      onValueChange={field.onChange}
                     >
-                      {cat.name}
-                    </option>
-                  ))}
-                </Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categoriesResponse?.data.map((cat) => (
+                          <SelectItem key={cat._id} value={cat._id!}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
 
               {isMounted && !Cookies.get('alpha_active_portfolio') && isNew && (
                 <div className="space-y-2">
                   <Label>Assign to Portfolio</Label>
-                  <Select {...register('portfolio')}>
-                    <option value="" disabled className="bg-black text-white">
-                      Select a portfolio
-                    </option>
-                    {portfolios?.map((p) => (
-                      <option
-                        key={p._id}
-                        value={p._id}
-                        className="bg-black text-white"
+                  <Controller
+                    name="portfolio"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
                       >
-                        {p.name}
-                      </option>
-                    ))}
-                  </Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a portfolio" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {portfolios?.map((p) => (
+                            <SelectItem key={p._id} value={p._id!}>
+                              {p.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                   {errors.portfolio && (
                     <p className="text-[9px] font-bold uppercase text-destructive">
                       {errors.portfolio.message}
@@ -440,7 +476,7 @@ export function BlogForm({
             </div>
 
             <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
-              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-widest">
+              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-semibold">
                 <ImageIcon className="h-4 w-4 text-primary" /> Social Media
               </h3>
               <Controller
@@ -457,8 +493,8 @@ export function BlogForm({
             </div>
 
             <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
-              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-widest">
-                <TagIcon className="h-4 w-4 text-primary" /> Taxonomies
+              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-semibold">
+                <TagIcon className="h-4 w-4 text-primary" /> Tags
               </h3>
 
               <div className="space-y-3">

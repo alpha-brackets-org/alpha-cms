@@ -10,14 +10,15 @@ import { buildQueryString } from '@/lib/utils';
 import { useCmsQuery } from './use-cms-query';
 
 export function useProjects(filters: ProjectFilters = {}) {
-  return useCmsQuery<PaginatedResponse<Project>>(['projects', filters], () =>
-    api.get(`/projects${buildQueryString(filters)}`)
+  return useCmsQuery<PaginatedResponse<PopulatedProject>>(
+    ['projects', filters],
+    () => api.get(`/projects${buildQueryString(filters)}`)
   );
 }
 
 export function useProject(id: string) {
   return useCmsQuery<{ data: PopulatedProject }>(
-    ['projects', id],
+    ['project', id],
     () => api.get(`/projects/${id}`),
     {
       enabled: id !== 'new' && !!id,

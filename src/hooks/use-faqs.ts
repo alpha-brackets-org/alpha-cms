@@ -11,13 +11,9 @@ export function useFaqs(filters: BaseFilters = {}) {
 }
 
 export function useFaq(id: string) {
-  return useCmsQuery<{ data: Faq }>(
-    ['faq', id],
-    () => api.get(`/faqs/${id}`),
-    {
-      enabled: id !== 'new' && !!id,
-    }
-  );
+  return useCmsQuery<{ data: Faq }>(['faq', id], () => api.get(`/faqs/${id}`), {
+    enabled: id !== 'new' && !!id,
+  });
 }
 
 export function useCreateFaq() {

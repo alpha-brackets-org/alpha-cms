@@ -5,7 +5,10 @@ import {
   sendData,
   sendBadRequest,
   sendNotFound,
+  sendError,
+  verifyPortfolioApiKey,
 } from '@/lib/api-utils';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import {
   CollectionName,
   SubscriberStatus,
@@ -31,6 +34,23 @@ const CaseStudyLeadSchema = LeadCaptureSchema.omit({ portfolio: true });
 export const POST = apiHandler(
   async (request, { params }) => {
     const { id: portfolioId } = await params;
+
+    // If an Authorization header is present, it must match this portfolio —
+    // mirrors the same optional API-key check in /api/leads/capture.
+    const authHeader = request.headers.get('authorization');
+    if (authHeader) {
+      const apiKeyAuth = await verifyPortfolioApiKey(request);
+      if (!apiKeyAuth || apiKeyAuth.portfolioId !== portfolioId) {
+        return sendError('Invalid API key for this portfolio', 401);
+      }
+    }
+
+    const ip = getClientIp(request);
+    const { allowed } = await checkRateLimit('portfolio-leads', ip, 20, 60);
+    if (!allowed) {
+      return sendError('Too many requests. Please try again later.', 429);
+    }
+
     const body = await request.json();
     const { source, caseStudyId } = body;
 
@@ -93,41 +113,31 @@ export const POST = apiHandler(
       .findOne({ _id: contentObjId })) as unknown as CaseStudy;
     if (!caseStudy) return sendNotFound('Case Study');
 
-    // 2. Find or Create Subscriber
-    const existing = await db.collection(CollectionName.SUBSCRIBERS).findOne({
-      email: email.toLowerCase(),
-      portfolio: portfolioObjId,
-    });
+    // 2. Find or Create Subscriber — a single atomic upsert closes the race
+    // window where two concurrent requests could both pass a findOne check
+    // and collide on the unique { email, portfolio } index.
+    const existingSubscriber = await db
+      .collection(CollectionName.SUBSCRIBERS)
+      .findOne({ email: email.toLowerCase(), portfolio: portfolioObjId });
 
-    if (existing) {
-      // Update existing subscriber
-      await db.collection(CollectionName.SUBSCRIBERS).updateOne(
-        { _id: existing._id },
-        {
-          $addToSet: { downloadHistory: caseStudyId },
-          $set: {
-            status: SubscriberStatus.ACTIVE,
-            intent: intent || existing.intent,
-            metadata: { ...existing.metadata, ...metadata },
-            lastLeadAt: new Date(),
-            updatedAt: new Date(),
-          },
-        }
-      );
-    } else {
-      // Create new Subscriber
-      await DbUtils.createDoc(CollectionName.SUBSCRIBERS, {
-        email: email.toLowerCase(),
-        portfolio: portfolioObjId,
-        status: SubscriberStatus.ACTIVE,
-        source: SubscriberSource.CASE_STUDY_DOWNLOAD,
-        downloadHistory: [caseStudyId],
-        intent: intent || '',
-        metadata: metadata || {},
-        lastLeadAt: new Date(),
-        subscribedAt: new Date(),
-      });
-    }
+    await db.collection(CollectionName.SUBSCRIBERS).updateOne(
+      { email: email.toLowerCase(), portfolio: portfolioObjId },
+      {
+        $addToSet: { downloadHistory: caseStudyId },
+        $set: {
+          status: SubscriberStatus.ACTIVE,
+          intent: intent || existingSubscriber?.intent || '',
+          metadata: { ...existingSubscriber?.metadata, ...metadata },
+          lastLeadAt: new Date(),
+          updatedAt: new Date(),
+        },
+        $setOnInsert: {
+          source: SubscriberSource.CASE_STUDY_DOWNLOAD,
+          subscribedAt: new Date(),
+        },
+      },
+      { upsert: true }
+    );
 
     // 3. Trigger Immediate Email (Transactional)
     try {

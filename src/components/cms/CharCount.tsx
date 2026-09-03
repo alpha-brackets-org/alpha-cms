@@ -16,7 +16,7 @@ export const CharCount = ({ current, max, min, className }: CharCountProps) => {
   return (
     <div
       className={cn(
-        'mt-1.5 flex justify-end font-mono text-[9px] font-bold uppercase tracking-widest',
+        'mt-1.5 flex justify-end font-mono text-xs uppercase tracking-wide',
         isError
           ? 'text-destructive'
           : isWarning
@@ -25,7 +25,7 @@ export const CharCount = ({ current, max, min, className }: CharCountProps) => {
         className
       )}
     >
-      <span className="mr-1">LENGTH:</span>
+      <span className="mr-1">Length:</span>
       <span>{current}</span>
       {max && (
         <>

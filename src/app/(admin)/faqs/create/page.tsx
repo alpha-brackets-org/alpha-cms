@@ -32,10 +32,8 @@ export default function CreateFaqPage() {
             </Link>
           </Button>
           <div>
-            <h2 className="text-2xl font-bold uppercase tracking-tight">
-              New FAQ
-            </h2>
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            <h2 className="text-2xl font-semibold tracking-tight">New FAQ</h2>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
               Create a new frequently asked question
             </p>
           </div>
@@ -45,7 +43,7 @@ export default function CreateFaqPage() {
       <FaqForm
         onSubmit={handleSubmit}
         isLoading={createMutation.isPending}
-        submitText="CREATE FAQ"
+        submitText="Create FAQ"
       />
     </div>
   );

@@ -17,14 +17,22 @@ import {
 import Link from 'next/link';
 import Cookies from 'js-cookie';
 import { useToast } from '@/hooks/use-toast';
+import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning';
 import { useCategories } from '@/hooks/use-categories';
 import { usePortfolios } from '@/hooks/use-portfolios';
+import { useStringArrayField } from '@/hooks/use-string-array-field';
 import { MediaPicker } from '@/components/cms/MediaPicker';
 import { SeoAnalyzer } from '@/components/cms/SeoAnalyzer';
 import { CharCount } from '@/components/cms/CharCount';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -55,7 +63,6 @@ export function ProjectForm({
   submitText,
   isNew = false,
 }: ProjectFormProps) {
-  const [techInput, setTechInput] = useState('');
   const [isMounted, setIsMounted] = useState(false);
   const { error, warning } = useToast();
 
@@ -101,6 +108,8 @@ export function ProjectForm({
     },
   });
 
+  useUnsavedChangesWarning(isDirty);
+
   const watchedValues = watch();
 
   useEffect(() => {
@@ -143,27 +152,13 @@ export function ProjectForm({
     window.open(`${baseUrl}/projects/${values.slug}`, '_blank');
   };
 
-  const handleAddTech = (e: React.KeyboardEvent) => {
-    if ((e.key === 'Enter' || e.key === ',') && techInput.trim()) {
-      e.preventDefault();
-      const currentTech = getValues('techStack') || [];
-      if (!currentTech.includes(techInput.trim())) {
-        reset({
-          ...getValues(),
-          techStack: [...currentTech, techInput.trim()],
-        });
-      }
-      setTechInput('');
-    }
-  };
-
-  const handleRemoveTech = (techToRemove: string) => {
-    const currentTech = getValues('techStack') || [];
-    reset({
-      ...getValues(),
-      techStack: currentTech.filter((s) => s !== techToRemove),
-    });
-  };
+  const {
+    input: techInput,
+    setInput: setTechInput,
+    items: techStack,
+    handleKeyDown: handleAddTech,
+    removeItem: handleRemoveTech,
+  } = useStringArrayField<Project>('techStack', getValues, reset);
 
   const onFormSubmit = (data: Project) => {
     onSubmit(data);
@@ -184,7 +179,7 @@ export function ProjectForm({
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-widest">
+            <h2 className="text-sm font-semibold">
               {isNew ? 'New Project' : 'Editing Project'}
             </h2>
             <p className="font-mono text-[9px] lowercase text-primary">
@@ -207,7 +202,7 @@ export function ProjectForm({
               onClick={handlePreview}
               className="gap-2"
             >
-              <Eye className="h-4 w-4" /> PREVIEW
+              <Eye className="h-4 w-4" /> Preview
             </Button>
           )}
           <Button
@@ -221,7 +216,7 @@ export function ProjectForm({
             ) : (
               <Save className="h-4 w-4" />
             )}
-            {isLoading ? 'SAVING...' : submitText}
+            {isLoading ? 'Saving...' : submitText}
           </Button>
         </div>
       </div>
@@ -244,9 +239,7 @@ export function ProjectForm({
               />
               <div className="flex flex-wrap items-center gap-4 rounded-xl border border-white/10 bg-secondary/20 p-3 font-mono text-[10px] text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold uppercase text-primary">
-                    Slug:
-                  </span>
+                  <span className="font-semibold text-primary">Slug:</span>
                   <input
                     {...register('slug')}
                     placeholder="project-slug"
@@ -258,7 +251,7 @@ export function ProjectForm({
 
             {/* Rich Text Editor */}
             <div className="space-y-3">
-              <Label className="text-sm font-bold tracking-widest text-primary">
+              <Label className="text-sm font-semibold text-primary">
                 Project Description
               </Label>
               <Controller
@@ -276,7 +269,7 @@ export function ProjectForm({
             {/* Links */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary">
+                <Label className="flex items-center gap-2 text-xs font-semibold text-primary">
                   <LinkIcon className="h-4 w-4" /> Live URL
                 </Label>
                 <Input
@@ -286,7 +279,7 @@ export function ProjectForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary">
+                <Label className="flex items-center gap-2 text-xs font-semibold text-primary">
                   <GithubIcon className="h-4 w-4" /> Repository URL
                 </Label>
                 <Input
@@ -301,9 +294,7 @@ export function ProjectForm({
             <div className="space-y-6 rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl">
               <div className="flex items-center gap-3 border-b border-white/10 pb-4">
                 <Search className="h-5 w-5 text-primary" />
-                <h3 className="text-sm font-bold uppercase tracking-widest">
-                  SEO Infrastructure
-                </h3>
+                <h3 className="text-sm font-semibold">SEO Infrastructure</h3>
               </div>
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                 <div className="space-y-6">
@@ -365,7 +356,9 @@ export function ProjectForm({
             <SeoAnalyzer
               title={watchedValues.seo?.metaTitle || watchedValues.title}
               description={
-                watchedValues.seo?.metaDescription || watchedValues.excerpt || ''
+                watchedValues.seo?.metaDescription ||
+                watchedValues.excerpt ||
+                ''
               }
               content={watchedValues.description ?? ''}
               keywords={watchedValues.seo?.keywords ?? ''}
@@ -374,61 +367,82 @@ export function ProjectForm({
 
             {/* Settings */}
             <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
-              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-widest">
+              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-semibold">
                 <Settings className="h-4 w-4 text-primary" /> Settings
               </h3>
 
               <div className="space-y-2">
                 <Label>Status</Label>
-                <Select {...register('status')}>
-                  {Object.values(PublishStatus).map((status) => (
-                    <option
-                      key={status}
-                      value={status}
-                      className="bg-black text-white"
-                    >
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </option>
-                  ))}
-                </Select>
+                <Controller
+                  control={control}
+                  name="status"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.values(PublishStatus).map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
 
               {isMounted && !Cookies.get('alpha_active_portfolio') && isNew && (
                 <div className="space-y-2">
                   <Label>Assign to Portfolio</Label>
-                  <Select {...register('portfolio')}>
-                    <option value="" disabled className="bg-black text-white">
-                      Select a portfolio
-                    </option>
-                    {portfolios?.map((p) => (
-                      <option
-                        key={p._id}
-                        value={p._id}
-                        className="bg-black text-white"
+                  <Controller
+                    control={control}
+                    name="portfolio"
+                    render={({ field }) => (
+                      <Select
+                        value={field.value ?? undefined}
+                        onValueChange={field.onChange}
                       >
-                        {p.name}
-                      </option>
-                    ))}
-                  </Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a portfolio" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {portfolios?.map((p) => (
+                            <SelectItem key={p._id} value={p._id!}>
+                              {p.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
               )}
 
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select {...register('category')}>
-                  <option value="" className="bg-black text-white">
-                    Select a category
-                  </option>
-                  {categories.map((cat) => (
-                    <option
-                      key={cat._id}
-                      value={cat._id}
-                      className="bg-black text-white"
+                <Controller
+                  control={control}
+                  name="category"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value ?? undefined}
+                      onValueChange={field.onChange}
                     >
-                      {cat.name}
-                    </option>
-                  ))}
-                </Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat._id} value={cat._id!}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
 
               <div className="space-y-2">
@@ -464,7 +478,7 @@ export function ProjectForm({
 
             {/* Tech Stack */}
             <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
-              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-widest">
+              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-semibold">
                 <Code className="h-4 w-4 text-primary" /> Tech Stack
               </h3>
               <div className="space-y-3">
@@ -476,7 +490,7 @@ export function ProjectForm({
                   className="h-10 text-[10px]"
                 />
                 <div className="flex flex-wrap gap-2">
-                  {(getValues('techStack') || []).map((tech, index) => (
+                  {techStack.map((tech, index) => (
                     <Badge
                       key={index}
                       variant="secondary"
@@ -498,7 +512,7 @@ export function ProjectForm({
 
             {/* Thumbnail */}
             <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
-              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-widest">
+              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-semibold">
                 <ImageIcon className="h-4 w-4 text-primary" /> Visuals
               </h3>
               <Controller

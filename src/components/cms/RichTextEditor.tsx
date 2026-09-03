@@ -63,7 +63,7 @@ export const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
       CodeBlock.configure({
         HTMLAttributes: {
           class:
-            'bg-secondary/50 rounded-md p-4 font-mono text-sm border-2 border-border my-4 block',
+            'bg-secondary/50 rounded-md p-4 font-mono text-sm border border-border my-4 block',
         },
       }),
       Typography,
@@ -74,7 +74,7 @@ export const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
       Image.configure({
         HTMLAttributes: {
           class:
-            'border-4 border-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] my-8 max-w-full h-auto',
+            'rounded-lg border border-border shadow-md my-8 max-w-full h-auto',
         },
       }),
     ],
@@ -126,7 +126,7 @@ export const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
       type="button"
       onClick={onClick}
       title={title}
-      className={`border-r border-border/50 p-2 transition-all hover:bg-primary/10 ${
+      className={`border-r border-border/50 p-2 transition-colors hover:bg-primary/10 ${
         isActive
           ? 'bg-primary/5 text-primary'
           : 'text-muted-foreground hover:text-primary'
@@ -137,8 +137,8 @@ export const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
   );
 
   return (
-    <div className="brutal-border w-full overflow-hidden border-2 border-border bg-card transition-colors focus-within:border-primary">
-      <div className="sticky top-0 z-10 flex flex-wrap items-center border-b-2 border-border bg-secondary/30 p-1">
+    <div className="w-full overflow-hidden rounded-xl border border-border bg-card transition-colors focus-within:border-primary">
+      <div className="sticky top-0 z-10 flex flex-wrap items-center border-b border-border bg-secondary/30 p-1">
         <div className="mr-2 flex items-center border-r border-border pr-2">
           <MenuButton
             onClick={() => editor.chain().focus().undo().run()}
@@ -288,14 +288,14 @@ export const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
       </div>
 
       {/* Editor Footer Info */}
-      <div className="flex items-center justify-between border-t-2 border-border bg-secondary/10 px-4 py-2 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+      <div className="flex items-center justify-between border-t border-border bg-secondary/10 px-4 py-2 text-xs uppercase tracking-wide text-muted-foreground">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
-            <span className="text-primary">CHARACTERS:</span>
+            <span className="text-primary">Characters:</span>
             <span>{editor.getText().length}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-primary">WORDS:</span>
+            <span className="text-primary">Words:</span>
             <span>
               {
                 editor
@@ -307,8 +307,8 @@ export const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-primary">AUTO-SYNC:</span>
-          <span>ACTIVE</span>
+          <span className="text-primary">Auto-sync:</span>
+          <span>Active</span>
         </div>
       </div>
 

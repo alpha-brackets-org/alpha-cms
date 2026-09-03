@@ -15,11 +15,11 @@ import {
 import { useLeads, useUpdateLead } from '@/hooks/use-leads';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Select } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { LeadStatus } from '@/schemas/cms';
+import { LeadStatusSelect } from '@/components/leads/LeadStatusSelect';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -59,7 +59,7 @@ export default function LeadDetailPage() {
         onSuccess: () => {
           setNewNote('');
           toast({
-            title: 'NOTE ADDED',
+            title: 'Note Added',
             description: 'Engagement history updated.',
           });
         },
@@ -74,8 +74,8 @@ export default function LeadDetailPage() {
       {
         onSuccess: () => {
           toast({
-            title: 'STATUS UPDATED',
-            description: `Lead moved to ${newStatus.toUpperCase()}`,
+            title: 'Status Updated',
+            description: `Lead moved to ${newStatus}`,
           });
         },
       }
@@ -101,16 +101,16 @@ export default function LeadDetailPage() {
 
   return (
     <div className="flex min-h-full flex-col">
-      <div className="sticky top-0 z-50 flex items-center justify-between border-b-2 border-border bg-secondary/80 p-4 backdrop-blur-xl md:px-8">
+      <div className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-secondary/80 p-4 backdrop-blur-xl md:px-8">
         <div className="flex items-center gap-4">
           <Link
             href="/leads"
-            className="border-2 border-transparent p-2 transition-all hover:border-border hover:bg-background"
+            className="rounded-full border border-transparent p-2 transition-colors hover:bg-background"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-widest">
+            <h2 className="text-sm font-semibold tracking-tight">
               Lead Profile
             </h2>
             <p className="font-mono text-[9px] lowercase text-primary">
@@ -120,8 +120,11 @@ export default function LeadDetailPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="font-mono text-[10px]">
-            AUTO-SAVE ACTIVE
+          <Badge
+            variant="outline"
+            className="font-mono text-xs uppercase tracking-wide"
+          >
+            Auto-save active
           </Badge>
         </div>
       </div>
@@ -130,10 +133,10 @@ export default function LeadDetailPage() {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Main Info Card */}
           <div className="space-y-8 lg:col-span-2">
-            <div className="border-2 border-border bg-card p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-              <div className="flex items-start justify-between border-b-2 border-border pb-6">
+            <div className="rounded-2xl border border-border bg-card p-8 shadow-md">
+              <div className="flex items-start justify-between border-b border-border pb-6">
                 <div>
-                  <h1 className="text-4xl font-bold uppercase tracking-tight text-primary">
+                  <h1 className="text-4xl font-semibold tracking-tight text-primary">
                     {lead.firstName} {lead.lastName}
                   </h1>
                   <div className="mt-2 flex items-center gap-4 font-mono text-xs text-muted-foreground">
@@ -151,26 +154,26 @@ export default function LeadDetailPage() {
                   variant={
                     status === LeadStatus.QUALIFIED ? 'default' : 'secondary'
                   }
-                  className="px-4 py-1 text-sm"
+                  className="px-4 py-1 text-xs uppercase tracking-wide"
                 >
-                  {status.toUpperCase()}
+                  {status}
                 </Badge>
               </div>
 
               <div className="grid grid-cols-2 gap-8 pt-6">
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  <Label className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
                     <Building2 className="h-3 w-3" /> Company
                   </Label>
-                  <p className="text-lg font-bold">
+                  <p className="text-lg font-semibold">
                     {lead.company || 'Not Provided'}
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  <Label className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
                     <User className="h-3 w-3" /> Job Title
                   </Label>
-                  <p className="text-lg font-bold">
+                  <p className="text-lg font-semibold">
                     {lead.jobTitle || 'Not Provided'}
                   </p>
                 </div>
@@ -178,8 +181,8 @@ export default function LeadDetailPage() {
             </div>
 
             {/* Notes Section */}
-            <div className="border-2 border-border bg-card p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <Label className="mb-4 flex items-center gap-2 border-b-2 border-border pb-3 text-xs font-bold uppercase tracking-ultrawide">
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <Label className="mb-4 flex items-center gap-2 border-b border-border pb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 <FileText className="h-4 w-4 text-primary" /> Engagement History
                 & Notes
               </Label>
@@ -195,9 +198,9 @@ export default function LeadDetailPage() {
                 <Button
                   onClick={handleAddNote}
                   disabled={!newNote.trim() || updateMutation.isPending}
-                  className="self-end px-6 text-[10px] font-bold"
+                  className="self-end px-6 text-xs font-medium"
                 >
-                  ADD NOTE TO TIMELINE
+                  Add Note to Timeline
                 </Button>
               </div>
 
@@ -211,9 +214,9 @@ export default function LeadDetailPage() {
                         key={i}
                         className="relative border-l-2 border-primary/20 pb-4 pl-4 last:pb-0"
                       >
-                        <div className="absolute -left-[9px] top-0 h-4 w-4 border-2 border-primary bg-background" />
+                        <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full border border-primary bg-background" />
                         <div className="flex items-center justify-between">
-                          <span className="text-[9px] font-black uppercase text-primary">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-primary">
                             {note.adminName || 'Admin'}
                           </span>
                           <span className="font-mono text-[9px] text-muted-foreground">
@@ -238,36 +241,28 @@ export default function LeadDetailPage() {
 
           {/* Sidebar */}
           <div className="space-y-8">
-            <div className="border-2 border-border bg-secondary/30 p-6">
-              <Label className="mb-4 flex items-center gap-2 border-b-2 border-border/50 pb-3 text-xs font-bold uppercase tracking-ultrawide">
+            <div className="rounded-2xl border border-border bg-secondary/30 p-6">
+              <Label className="mb-4 flex items-center gap-2 border-b border-border/50 pb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 <Target className="h-4 w-4 text-primary" /> Qualification
               </Label>
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label>Current Status</Label>
-                  <Select
+                  <LeadStatusSelect
                     value={status}
-                    onChange={(e) =>
-                      handleStatusChange(e.target.value as LeadStatus)
-                    }
-                  >
-                    {Object.values(LeadStatus).map((s) => (
-                      <option key={s} value={s}>
-                        {s.toUpperCase()}
-                      </option>
-                    ))}
-                  </Select>
+                    onValueChange={handleStatusChange}
+                  />
                 </div>
               </div>
             </div>
 
-            <div className="border-2 border-border bg-card p-6">
-              <Label className="mb-4 flex items-center gap-2 border-b-2 border-border pb-3 text-xs font-bold uppercase tracking-ultrawide">
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <Label className="mb-4 flex items-center gap-2 border-b border-border pb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 <Calendar className="h-4 w-4 text-primary" /> Acquisition Data
               </Label>
               <div className="space-y-4">
                 <div>
-                  <p className="text-[10px] font-bold uppercase text-muted-foreground">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
                     Source
                   </p>
                   <Badge variant="outline" className="mt-1">
@@ -277,7 +272,7 @@ export default function LeadDetailPage() {
                   </Badge>
                 </div>
                 <div>
-                  <p className="mb-2 text-[10px] font-bold uppercase text-muted-foreground">
+                  <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
                     Downloaded Content
                   </p>
                   {lead.downloadedItems && lead.downloadedItems.length > 0 ? (
@@ -298,7 +293,7 @@ export default function LeadDetailPage() {
                   )}
                 </div>
                 <div className="border-t border-border pt-4">
-                  <p className="text-[10px] font-bold uppercase text-muted-foreground">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
                     Captured At
                   </p>
                   <p className="mt-1 font-mono text-xs">

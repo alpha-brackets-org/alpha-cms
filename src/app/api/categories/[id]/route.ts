@@ -80,7 +80,16 @@ export const DELETE = apiHandler(async (_request, { params }) => {
         { session }
       );
 
-    // 3. Delete Category
+    // 3. Unlink Projects
+    await getDb()
+      .collection(CollectionName.PROJECTS)
+      .updateMany(
+        { $or: [{ category: categoryId }, { category: categoryIdStr }] },
+        { $set: { category: null } },
+        { session }
+      );
+
+    // 4. Delete Category
     return getDb()
       .collection(CollectionName.CATEGORIES)
       .deleteOne(query, { session });

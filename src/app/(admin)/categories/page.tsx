@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Search, Edit, Trash2, Tag, Loader2 } from 'lucide-react';
 import {
@@ -26,7 +26,13 @@ import { BrutalPagination } from '@/components/ui/BrutalPagination';
 import { useState } from 'react';
 import { usePortfolio } from '@/providers/PortfolioProvider';
 import { usePortfolios } from '@/hooks/use-portfolios';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -36,6 +42,7 @@ import {
 } from '@/components/ui/dialog';
 import { useAuth } from '@/providers/AuthProvider';
 import { hasPermission, CmsPermission } from '@/lib/auth';
+import { QueryErrorState } from '@/components/ui/QueryErrorState';
 
 export default function CategoriesPage() {
   const { user: currentUser } = useAuth();
@@ -52,7 +59,11 @@ export default function CategoriesPage() {
     name: string;
   } | null>(null);
 
-  const { data: categoriesResponse, isLoading } = useCategories({
+  const {
+    data: categoriesResponse,
+    isLoading,
+    isError,
+  } = useCategories({
     search: debouncedSearch,
     page,
     limit: 10,
@@ -71,6 +82,7 @@ export default function CategoriesPage() {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<Category>({
     resolver: zodResolver(CategorySchema),
@@ -121,17 +133,15 @@ export default function CategoriesPage() {
       {/* Page Header */}
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="mb-2 text-3xl font-bold uppercase tracking-tight">
-            Categories
-          </h2>
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          <h2 className="mb-2 text-3xl font-bold tracking-tight">Categories</h2>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
             Organize your content taxonomies
           </p>
         </div>
         {hasPermission(currentUser, CmsPermission.CAN_EDIT_CONTENT) && (
           <Button onClick={() => openModal()} className="gap-2">
             <Plus className="h-4 w-4" />
-            NEW CATEGORY
+            New Category
           </Button>
         )}
       </div>
@@ -186,6 +196,12 @@ export default function CategoriesPage() {
               </BrutalTableCell>
             </BrutalTableRow>
           ))
+        ) : isError ? (
+          <BrutalTableRow>
+            <BrutalTableCell colSpan={activePortfolio ? 3 : 4}>
+              <QueryErrorState />
+            </BrutalTableCell>
+          </BrutalTableRow>
         ) : categories.length === 0 ? (
           <BrutalTableRow>
             <BrutalTableCell
@@ -194,9 +210,7 @@ export default function CategoriesPage() {
             >
               <div className="flex flex-col items-center gap-4 opacity-40">
                 <Tag className="h-12 w-12" />
-                <p className="text-[10px] font-bold uppercase tracking-ultrawide">
-                  No categories found
-                </p>
+                <p className="text-xs font-medium">No categories found</p>
               </div>
             </BrutalTableCell>
           </BrutalTableRow>
@@ -208,19 +222,19 @@ export default function CategoriesPage() {
                   <div className="text-sm font-bold transition-colors group-hover:text-primary">
                     {cat.name}
                   </div>
-                  {cat.isDefault && <Badge variant="system">SYSTEM</Badge>}
+                  {cat.isDefault && <Badge variant="system">System</Badge>}
                 </div>
               </BrutalTableCell>
               {!activePortfolio && (
                 <BrutalTableCell>
                   {cat.isDefault ? (
-                    <span className="text-[10px] uppercase tracking-widest opacity-30">
+                    <span className="text-xs uppercase tracking-wide opacity-30">
                       Global
                     </span>
                   ) : (
                     <Badge
                       variant="outline"
-                      className="text-[9px] font-bold uppercase leading-none opacity-80"
+                      className="text-xs font-medium leading-none opacity-80"
                     >
                       {cat.portfolio?.name}
                     </Badge>
@@ -296,7 +310,7 @@ export default function CategoriesPage() {
               <Label>Name</Label>
               <Input {...register('name')} placeholder="e.g. Development" />
               {errors.name && (
-                <p className="text-[9px] font-bold uppercase text-destructive">
+                <p className="text-xs font-medium text-destructive">
                   {errors.name.message}
                 </p>
               )}
@@ -306,7 +320,7 @@ export default function CategoriesPage() {
               <Label>Slug</Label>
               <Input {...register('slug')} placeholder="development" />
               {errors.slug && (
-                <p className="text-[9px] font-bold uppercase text-destructive">
+                <p className="text-xs font-medium text-destructive">
                   {errors.slug.message}
                 </p>
               )}
@@ -316,23 +330,32 @@ export default function CategoriesPage() {
               !editingCategory && (
                 <div className="space-y-2">
                   <Label>Assign to Portfolio</Label>
-                  <Select
-                    {...register('portfolio')}
+                  <Controller
+                    control={control}
+                    name="portfolio"
                     defaultValue={
                       activePortfolio === 'all' ? '' : activePortfolio || ''
                     }
-                  >
-                    <option value="" disabled>
-                      Select a portfolio
-                    </option>
-                    {portfolios.map((p) => (
-                      <option key={p._id} value={p._id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </Select>
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a portfolio" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {portfolios.map((p) => (
+                            <SelectItem key={p._id} value={p._id || ''}>
+                              {p.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                   {errors.portfolio && (
-                    <p className="text-[9px] font-bold uppercase text-destructive">
+                    <p className="text-xs font-medium text-destructive">
                       {errors.portfolio.message}
                     </p>
                   )}
@@ -342,14 +365,14 @@ export default function CategoriesPage() {
             <Button
               type="submit"
               disabled={createMutation.isPending || updateMutation.isPending}
-              className="w-full py-8"
+              className="w-full py-6"
             >
               {createMutation.isPending || updateMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Tag className="h-4 w-4" />
               )}
-              {editingCategory ? 'CONFIRM UPDATE' : 'CREATE CATEGORY'}
+              {editingCategory ? 'Confirm Update' : 'Create Category'}
             </Button>
           </form>
         </DialogContent>
@@ -360,7 +383,7 @@ export default function CategoriesPage() {
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         isLoading={deleteMutation.isPending}
-        title="Delete Category"
+        title="Delete Category?"
         message={`Are you sure you want to delete "${targetCategory?.name}"? This action cannot be undone.`}
       />
     </div>

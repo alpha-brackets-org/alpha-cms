@@ -1,4 +1,4 @@
-import {
+﻿import {
   OpenApiGeneratorV3,
   OpenAPIRegistry,
 } from '@asteasolutions/zod-to-openapi';
@@ -104,6 +104,13 @@ registry.registerComponent('securitySchemes', 'AuthCookie', {
   description: 'Secure session token for administrative access',
 });
 
+registry.registerComponent('securitySchemes', 'ApiKeyAuth', {
+  type: 'http',
+  scheme: 'bearer',
+  description:
+    'Portfolio-scoped API key, sent server-to-server by an external client website (never from browser JS). Generated via POST /portfolios/{id}/api-key/regenerate — works identically on localhost and production since it does not depend on domain matching.',
+});
+
 /**
  * --- SHARED PARAMETERS ---
  */
@@ -163,7 +170,7 @@ const CategoryQueryParam = {
 registry.registerPath({
   method: 'get',
   path: '/stats',
-  tags: ['System & Management'],
+  tags: ['Stats'],
   description: 'Global system overview and asset counts across all portfolios',
   summary: 'System Health Overview',
   responses: {
@@ -178,7 +185,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/portfolios',
-  tags: ['System & Management'],
+  tags: ['Portfolios'],
   description: 'List all active portfolios and their configurations',
   summary: 'List Portfolios',
   responses: {
@@ -195,7 +202,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'post',
   path: '/portfolios',
-  tags: ['System & Management'],
+  tags: ['Portfolios'],
   summary: 'Create Portfolio',
   request: {
     body: { content: { 'application/json': { schema: PortfolioSchema } } },
@@ -213,7 +220,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'patch',
   path: '/portfolios/{id}',
-  tags: ['System & Management'],
+  tags: ['Portfolios'],
   summary: 'Update Portfolio',
   request: {
     params: z.object({ id: z.string() }),
@@ -234,14 +241,15 @@ registry.registerPath({
 registry.registerPath({
   method: 'delete',
   path: '/portfolios/{id}',
-  tags: ['System & Management'],
+  tags: ['Portfolios'],
   summary: 'Delete Portfolio',
   request: {
     params: z.object({ id: z.string() }),
   },
   responses: {
     200: {
-      description: 'Deleted (cascades across every portfolio-scoped collection)',
+      description:
+        'Deleted (cascades across every portfolio-scoped collection)',
       content: {
         'application/json': {
           schema: dataResponse(z.object({ id: z.string() })),
@@ -254,10 +262,11 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/portfolios/config',
-  tags: ['Public Endpoints'],
+  tags: ['Portfolios'],
   description:
-    'Public endpoint to fetch portfolio configuration for external sites',
+    'Public endpoint to fetch portfolio configuration for external sites. Preferred auth is an API key Bearer token (works identically on localhost and production); the `id`/`domain` query params remain as a fallback for callers not yet migrated.',
   summary: 'Get Public Portfolio Config',
+  security: [{ ApiKeyAuth: [] }, {}],
   request: {
     query: z.object({
       id: z.string().optional(),
@@ -271,6 +280,36 @@ registry.registerPath({
         'application/json': { schema: dataResponse(PortfolioConfigSchema) },
       },
     },
+    400: {
+      description: 'None of Authorization header, id, or domain were provided',
+    },
+    404: { description: 'No portfolio matched' },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/portfolios/{id}/api-key/regenerate',
+  tags: ['Portfolios'],
+  description:
+    'Generates a new API key for the portfolio and invalidates the previous one. The plaintext key is returned exactly once — only its hash is persisted, so it cannot be retrieved again.',
+  summary: 'Regenerate Portfolio API Key',
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: {
+    200: {
+      description: 'New API key generated (shown once)',
+      content: {
+        'application/json': {
+          schema: dataResponse(z.object({ apiKey: z.string() })).openapi(
+            'RegenerateApiKeyResponse'
+          ),
+        },
+      },
+    },
+    403: { description: 'Only system administrators can manage API keys' },
+    404: { description: 'Portfolio not found' },
   },
 });
 
@@ -278,7 +317,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/users',
-  tags: ['System & Management'],
+  tags: ['Users'],
   description: 'List authorized personnel with administrative access',
   summary: 'List Users',
   responses: {
@@ -295,7 +334,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'post',
   path: '/users',
-  tags: ['System & Management'],
+  tags: ['Users'],
   summary: 'Authorize New User',
   request: {
     body: { content: { 'application/json': { schema: UserSchema } } },
@@ -312,7 +351,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'patch',
   path: '/users/{id}',
-  tags: ['System & Management'],
+  tags: ['Users'],
   summary: 'Update User Credentials',
   request: {
     params: z.object({ id: z.string() }),
@@ -330,7 +369,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'delete',
   path: '/users/{id}',
-  tags: ['System & Management'],
+  tags: ['Users'],
   summary: 'Delete User',
   request: {
     params: z.object({ id: z.string() }),
@@ -548,7 +587,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'post',
   path: '/portfolios/{id}/leads',
-  tags: ['Leads & Newsletter'],
+  tags: ['Leads'],
   description:
     'Submit either a general contact-form lead, or a case-study lead-magnet request (branches on `source`/`caseStudyId`). Triggers automated delivery for the lead-magnet case.',
   summary: 'Portfolio Lead / Contact Form',
@@ -576,15 +615,10 @@ registry.registerPath({
           schema: dataResponse(
             z.object({
               message: z.string(),
-              downloadUrl: z
-                .string()
-                .optional()
-                .openapi({
-                  description:
-                    'Only present for case-study lead-magnet requests',
-                  example:
-                    'https://saadqadir.com/case-study/healthline-platform',
-                }),
+              downloadUrl: z.string().optional().openapi({
+                description: 'Only present for case-study lead-magnet requests',
+                example: 'https://saadqadir.com/case-study/healthline-platform',
+              }),
             })
           ).openapi('SubmitLeadResponse'),
         },
@@ -595,8 +629,40 @@ registry.registerPath({
 
 registry.registerPath({
   method: 'post',
+  path: '/leads/capture',
+  tags: ['Leads'],
+  description:
+    'Captures a case-study lead-magnet request and triggers automated email delivery. If an Authorization Bearer key is sent, it must match the `portfolio` field in the body.',
+  summary: 'Capture Case-Study Lead',
+  security: [{ ApiKeyAuth: [] }, {}],
+  request: {
+    body: {
+      content: {
+        'application/json': { schema: LeadCaptureSchema },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: 'Lead captured and lead-magnet email sent',
+      content: {
+        'application/json': {
+          schema: dataResponse(z.object({ message: z.string() })).openapi(
+            'LeadCaptureResponse'
+          ),
+        },
+      },
+    },
+    401: { description: 'Provided API key does not match the portfolio' },
+    404: { description: 'Portfolio or case study not found' },
+    429: { description: 'Rate limited — too many submissions from this email' },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
   path: '/portfolios/{id}/subscribe',
-  tags: ['Leads & Newsletter'],
+  tags: ['Subscribers'],
   description: 'Subscribe to a specific portfolio newsletter',
   summary: 'Newsletter Opt-in',
   request: {
@@ -639,7 +705,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'post',
   path: '/subscribers/unsubscribe',
-  tags: ['Public Endpoints'],
+  tags: ['Subscribers'],
   description: 'Public endpoint to unsubscribe from a portfolio newsletter',
   summary: 'Newsletter Unsubscribe',
   request: {
@@ -674,7 +740,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'post',
   path: '/analytics/collect',
-  tags: ['Public Endpoints'],
+  tags: ['Analytics'],
   description: 'Submit an analytics event from a portfolio site',
   summary: 'Collect Analytics Event',
   request: {
@@ -703,7 +769,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/subscribers',
-  tags: ['Leads & Newsletter'],
+  tags: ['Subscribers'],
   description: 'Retrieve paginated list of subscribers across portfolios',
   summary: 'Subscriber Directory',
   request: {
@@ -732,7 +798,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'patch',
   path: '/subscribers/{id}',
-  tags: ['Leads & Newsletter'],
+  tags: ['Subscribers'],
   summary: 'Update Subscriber',
   request: {
     params: z.object({ id: z.string() }),
@@ -753,7 +819,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'delete',
   path: '/subscribers/{id}',
-  tags: ['Leads & Newsletter'],
+  tags: ['Subscribers'],
   summary: 'Delete Subscriber',
   request: {
     params: z.object({ id: z.string() }),
@@ -773,7 +839,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/leads',
-  tags: ['Leads & Newsletter'],
+  tags: ['Leads'],
   description: 'Retrieve paginated list of B2B Leads',
   summary: 'Leads Directory',
   request: {
@@ -794,7 +860,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/leads/export',
-  tags: ['Leads & Newsletter'],
+  tags: ['Leads'],
   description: 'Export leads as CSV file',
   summary: 'Export Leads',
   request: {
@@ -819,7 +885,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/leads/{id}',
-  tags: ['Leads & Newsletter'],
+  tags: ['Leads'],
   summary: 'Get Single Lead',
   request: {
     params: z.object({ id: z.string() }),
@@ -835,7 +901,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'patch',
   path: '/leads/{id}',
-  tags: ['Leads & Newsletter'],
+  tags: ['Leads'],
   summary: 'Update Lead Status/Notes',
   request: {
     params: z.object({ id: z.string() }),
@@ -852,7 +918,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'delete',
   path: '/leads/{id}',
-  tags: ['Leads & Newsletter'],
+  tags: ['Leads'],
   summary: 'Delete Lead',
   request: {
     params: z.object({ id: z.string() }),
@@ -872,7 +938,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/campaigns',
-  tags: ['Leads & Newsletter'],
+  tags: ['Campaigns'],
   summary: 'List Campaigns',
   request: {
     query: z.object({
@@ -893,7 +959,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'post',
   path: '/campaigns',
-  tags: ['Leads & Newsletter'],
+  tags: ['Campaigns'],
   summary: 'Create Campaign',
   request: {
     body: { content: { 'application/json': { schema: CampaignSchema } } },
@@ -911,7 +977,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/campaigns/{id}',
-  tags: ['Leads & Newsletter'],
+  tags: ['Campaigns'],
   summary: 'Get Single Campaign',
   request: {
     params: z.object({ id: z.string() }),
@@ -930,8 +996,9 @@ registry.registerPath({
 registry.registerPath({
   method: 'post',
   path: '/campaigns/{id}/send',
-  tags: ['Leads & Newsletter'],
-  description: 'Send a draft campaign to every active subscriber of its portfolio',
+  tags: ['Campaigns'],
+  description:
+    'Send a draft campaign to every active subscriber of its portfolio',
   summary: 'Send Campaign',
   request: {
     params: z.object({ id: z.string() }),
@@ -959,7 +1026,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'delete',
   path: '/campaigns/{id}',
-  tags: ['Leads & Newsletter'],
+  tags: ['Campaigns'],
   summary: 'Delete Campaign',
   request: {
     params: z.object({ id: z.string() }),
@@ -985,7 +1052,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/blogs',
-  tags: ['Core Content'],
+  tags: ['Blogs'],
   description: 'Retrieve blog posts with multi-portfolio filtering',
   summary: 'List Blogs',
   request: {
@@ -1012,7 +1079,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'post',
   path: '/blogs',
-  tags: ['Core Content'],
+  tags: ['Blogs'],
   summary: 'Create Blog Post',
   request: {
     body: { content: { 'application/json': { schema: BlogSchema } } },
@@ -1030,7 +1097,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'patch',
   path: '/blogs/{id}',
-  tags: ['Core Content'],
+  tags: ['Blogs'],
   summary: 'Update Blog Post',
   request: {
     params: z.object({ id: z.string() }),
@@ -1049,7 +1116,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/blogs/{id}',
-  tags: ['Core Content'],
+  tags: ['Blogs'],
   summary: 'Get Single Blog Post',
   request: {
     params: z.object({ id: z.string() }),
@@ -1067,7 +1134,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'delete',
   path: '/blogs/{id}',
-  tags: ['Core Content'],
+  tags: ['Blogs'],
   summary: 'Delete Blog Post',
   request: {
     params: z.object({ id: z.string() }),
@@ -1088,7 +1155,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/case-studies',
-  tags: ['Core Content'],
+  tags: ['Case Studies'],
   description: 'Retrieve project case studies filtered by portfolio',
   summary: 'List Case Studies',
   request: {
@@ -1115,7 +1182,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'post',
   path: '/case-studies',
-  tags: ['Core Content'],
+  tags: ['Case Studies'],
   summary: 'Create Case Study',
   request: {
     body: { content: { 'application/json': { schema: CaseStudySchema } } },
@@ -1133,7 +1200,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'patch',
   path: '/case-studies/{id}',
-  tags: ['Core Content'],
+  tags: ['Case Studies'],
   summary: 'Update Case Study',
   request: {
     params: z.object({ id: z.string() }),
@@ -1152,7 +1219,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/case-studies/{id}',
-  tags: ['Core Content'],
+  tags: ['Case Studies'],
   summary: 'Get Single Case Study',
   request: {
     params: z.object({ id: z.string() }),
@@ -1170,7 +1237,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'delete',
   path: '/case-studies/{id}',
-  tags: ['Core Content'],
+  tags: ['Case Studies'],
   summary: 'Delete Case Study',
   request: {
     params: z.object({ id: z.string() }),
@@ -1191,7 +1258,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/projects',
-  tags: ['Core Content'],
+  tags: ['Projects'],
   description: 'Retrieve technical projects filtered by portfolio',
   summary: 'List Projects',
   request: {
@@ -1217,7 +1284,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'post',
   path: '/projects',
-  tags: ['Core Content'],
+  tags: ['Projects'],
   summary: 'Create Project',
   request: {
     body: { content: { 'application/json': { schema: ProjectSchema } } },
@@ -1235,7 +1302,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'patch',
   path: '/projects/{id}',
-  tags: ['Core Content'],
+  tags: ['Projects'],
   summary: 'Update Project',
   request: {
     params: z.object({ id: z.string() }),
@@ -1254,7 +1321,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/projects/{id}',
-  tags: ['Core Content'],
+  tags: ['Projects'],
   summary: 'Get Single Project',
   request: {
     params: z.object({ id: z.string() }),
@@ -1272,7 +1339,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'delete',
   path: '/projects/{id}',
-  tags: ['Core Content'],
+  tags: ['Projects'],
   summary: 'Delete Project',
   request: {
     params: z.object({ id: z.string() }),
@@ -1293,7 +1360,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/faqs',
-  tags: ['Core Content'],
+  tags: ['FAQs'],
   description: 'Retrieve FAQs with multi-portfolio filtering',
   summary: 'List FAQs',
   request: {
@@ -1317,7 +1384,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'post',
   path: '/faqs',
-  tags: ['Core Content'],
+  tags: ['FAQs'],
   summary: 'Create FAQ',
   request: {
     body: { content: { 'application/json': { schema: FaqSchema } } },
@@ -1333,7 +1400,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/faqs/{id}',
-  tags: ['Core Content'],
+  tags: ['FAQs'],
   summary: 'Get Single FAQ',
   request: {
     params: z.object({ id: z.string() }),
@@ -1350,7 +1417,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'patch',
   path: '/faqs/{id}',
-  tags: ['Core Content'],
+  tags: ['FAQs'],
   summary: 'Update FAQ',
   request: {
     params: z.object({ id: z.string() }),
@@ -1367,7 +1434,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'delete',
   path: '/faqs/{id}',
-  tags: ['Core Content'],
+  tags: ['FAQs'],
   summary: 'Delete FAQ',
   request: {
     params: z.object({ id: z.string() }),
@@ -1388,7 +1455,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/testimonials',
-  tags: ['Core Content'],
+  tags: ['Testimonials'],
   description: 'Retrieve testimonials with multi-portfolio filtering',
   summary: 'List Testimonials',
   request: {
@@ -1416,7 +1483,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'post',
   path: '/testimonials',
-  tags: ['Core Content'],
+  tags: ['Testimonials'],
   summary: 'Create Testimonial',
   request: {
     body: {
@@ -1442,7 +1509,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/testimonials/{id}',
-  tags: ['Core Content'],
+  tags: ['Testimonials'],
   summary: 'Get Single Testimonial',
   request: {
     params: z.object({ id: z.string() }),
@@ -1465,7 +1532,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'patch',
   path: '/testimonials/{id}',
-  tags: ['Core Content'],
+  tags: ['Testimonials'],
   summary: 'Update Testimonial',
   request: {
     params: z.object({ id: z.string() }),
@@ -1495,7 +1562,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'delete',
   path: '/testimonials/{id}',
-  tags: ['Core Content'],
+  tags: ['Testimonials'],
   summary: 'Delete Testimonial',
   request: {
     params: z.object({ id: z.string() }),
@@ -1518,7 +1585,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/media/auth',
-  tags: ['Media & Assets'],
+  tags: ['Media'],
   description:
     'Generate authentication parameters for client-side ImageKit uploads',
   summary: 'ImageKit Auth Params',
@@ -1543,7 +1610,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'post',
   path: '/media/upload',
-  tags: ['Media & Assets'],
+  tags: ['Media'],
   summary: 'Upload & Register Media',
   description:
     'Industrial proxy for ImageKit uploads with automatic DB registration',
@@ -1576,7 +1643,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'patch',
   path: '/media/{id}',
-  tags: ['Media & Assets'],
+  tags: ['Media'],
   summary: 'Update Media Metadata',
   request: {
     params: z.object({ id: z.string() }),
@@ -1595,7 +1662,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'delete',
   path: '/media/{id}',
-  tags: ['Media & Assets'],
+  tags: ['Media'],
   summary: 'Delete Media Asset',
   request: {
     params: z.object({ id: z.string() }),
@@ -1615,7 +1682,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'delete',
   path: '/media',
-  tags: ['Media & Assets'],
+  tags: ['Media'],
   summary: 'Bulk Delete Media Assets',
   description:
     'Deletes multiple media assets by ID, cleaning up ImageKit files first',
@@ -1652,7 +1719,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/categories',
-  tags: ['Taxonomy & Tags'],
+  tags: ['Categories'],
   description: 'Manage categories and tagging structures',
   summary: 'List Categories',
   request: {
@@ -1672,7 +1739,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'post',
   path: '/categories',
-  tags: ['Taxonomy & Tags'],
+  tags: ['Categories'],
   summary: 'Create Category',
   request: {
     body: { content: { 'application/json': { schema: CategorySchema } } },
@@ -1690,7 +1757,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'patch',
   path: '/categories/{id}',
-  tags: ['Taxonomy & Tags'],
+  tags: ['Categories'],
   summary: 'Update Category',
   request: {
     params: z.object({ id: z.string() }),
@@ -1709,7 +1776,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'delete',
   path: '/categories/{id}',
-  tags: ['Taxonomy & Tags'],
+  tags: ['Categories'],
   summary: 'Delete Category',
   request: {
     params: z.object({ id: z.string() }),
@@ -1729,7 +1796,7 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/media',
-  tags: ['Media & Assets'],
+  tags: ['Media'],
   description: 'Retrieve and filter centralized media assets',
   summary: 'List Media Library',
   request: {

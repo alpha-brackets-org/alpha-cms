@@ -268,8 +268,8 @@ export const PortfolioSchema = z
     newsletterConfig: z
       .object({
         senderName: z.string().nullish(),
-        senderEmail: z.string().nullish(),
-        replyTo: z.string().nullish(),
+        senderEmail: z.email().nullish().or(z.literal('')),
+        replyTo: z.email().nullish().or(z.literal('')),
         accentColor: z.string().nullish(),
         logoUrl: z.string().nullish(),
         footerText: z.string().nullish(),
@@ -280,7 +280,7 @@ export const PortfolioSchema = z
         host: z.string().nullish(),
         port: z.preprocess(
           (val) => (val === '' || isNaN(Number(val)) ? undefined : Number(val)),
-          z.number().nullish()
+          z.number().int().min(1).max(65535).nullish()
         ),
         user: z.string().nullish(),
         pass: z.string().nullish(),
@@ -297,6 +297,7 @@ export const PortfolioSchema = z
       .array(z.object({ platform: z.string(), url: z.string() }))
       .default([]),
     maintenanceMode: z.boolean().default(false),
+    apiKeyHash: z.string().nullish(),
   })
   .extend(BaseSchema.shape)
   .openapi('Portfolio');
@@ -399,6 +400,13 @@ export const ContactFormLeadSchema = z
     message: z.string().nullish(),
   })
   .openapi('ContactFormLead');
+
+export const ChangePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1),
+    newPassword: z.string().min(8),
+  })
+  .openapi('ChangePassword');
 
 export const SubscriberSchema = z
   .object({

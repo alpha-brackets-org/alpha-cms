@@ -19,18 +19,25 @@ import { usePortfolio } from '@/providers/PortfolioProvider';
 import { BrutalConfirm } from '@/components/ui/BrutalConfirm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { LeadSource, LeadStatus } from '@/schemas/cms';
+import { LeadStatusSelect } from '@/components/leads/LeadStatusSelect';
 import {
   BrutalTable,
   BrutalTableRow,
   BrutalTableCell,
 } from '@/components/ui/BrutalTable';
 import { BrutalPagination } from '@/components/ui/BrutalPagination';
-import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
+import { QueryErrorState } from '@/components/ui/QueryErrorState';
 
 export default function LeadsPage() {
   const { activePortfolio } = usePortfolio();
@@ -50,7 +57,11 @@ export default function LeadsPage() {
     name: string;
   } | null>(null);
 
-  const { data: response, isLoading } = useLeads({
+  const {
+    data: response,
+    isLoading,
+    isError,
+  } = useLeads({
     search: debouncedSearch,
     status: status === 'all' ? undefined : status,
     page,
@@ -94,16 +105,16 @@ export default function LeadsPage() {
       {/* Header */}
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="mb-2 text-3xl font-bold uppercase tracking-tight">
+          <h2 className="mb-2 text-3xl font-semibold tracking-tight">
             Leads (CRM)
           </h2>
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
             Manage your B2B contacts and gated-content downloads
           </p>
         </div>
         <Button
           variant="outline"
-          className="gap-2 border-2 border-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+          className="gap-2 transition-colors hover:bg-secondary"
           onClick={() => {
             const url = activePortfolio
               ? `/api/leads/export?portfolio=${activePortfolio}`
@@ -112,7 +123,7 @@ export default function LeadsPage() {
           }}
         >
           <Download className="h-4 w-4" />
-          EXPORT LEADS (CSV)
+          Export Leads (CSV)
         </Button>
       </div>
 
@@ -137,19 +148,22 @@ export default function LeadsPage() {
             <Label className="mb-1 block opacity-60">Lead Status</Label>
             <Select
               value={status}
-              onChange={(e) => {
-                setStatus(e.target.value);
+              onValueChange={(val) => {
+                setStatus(val);
                 setPage(1);
               }}
-              wrapperClassName="w-full md:w-40 shrink-0"
-              className="h-10 text-xs font-bold uppercase tracking-wide"
             >
-              <option value="all">All Status</option>
-              {Object.values(LeadStatus).map((stat) => (
-                <option key={stat} value={stat}>
-                  {stat.toUpperCase()}
-                </option>
-              ))}
+              <SelectTrigger className="h-10 w-full text-xs font-medium md:w-40">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                {Object.values(LeadStatus).map((stat) => (
+                  <SelectItem key={stat} value={stat}>
+                    {stat.toUpperCase()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
@@ -158,7 +172,7 @@ export default function LeadsPage() {
               variant="outline"
               onClick={handleClearFilters}
               disabled={!searchTerm && status === 'all'}
-              className="h-10 px-6 text-xs font-bold uppercase tracking-wide"
+              className="h-10 px-6 text-xs font-medium"
             >
               Clear
             </Button>
@@ -191,12 +205,18 @@ export default function LeadsPage() {
               </BrutalTableCell>
             </BrutalTableRow>
           ))
+        ) : isError ? (
+          <BrutalTableRow>
+            <BrutalTableCell colSpan={5}>
+              <QueryErrorState />
+            </BrutalTableCell>
+          </BrutalTableRow>
         ) : items.length === 0 ? (
           <BrutalTableRow>
             <BrutalTableCell colSpan={5} className="p-20 text-center">
               <div className="flex flex-col items-center gap-4 opacity-40">
                 <Target className="h-12 w-12" />
-                <p className="text-[10px] font-bold uppercase tracking-ultrawide">
+                <p className="text-xs uppercase tracking-wide">
                   No leads found
                 </p>
               </div>
@@ -229,11 +249,11 @@ export default function LeadsPage() {
                 </div>
               </BrutalTableCell>
               <BrutalTableCell>
-                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase">
+                <div className="flex items-center gap-1.5 text-xs font-medium">
                   <Building2 className="h-3 w-3 text-primary" />
                   {item.company || 'Not Provided'}
                 </div>
-                <div className="mt-0.5 flex items-center gap-1 text-[9px] uppercase tracking-widest text-muted-foreground">
+                <div className="mt-0.5 flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
                   <User className="h-3 w-3" /> {item.jobTitle}
                 </div>
               </BrutalTableCell>
@@ -251,38 +271,17 @@ export default function LeadsPage() {
                 )}
               </BrutalTableCell>
               <BrutalTableCell>
-                <Select
-                  value={item.status}
-                  onChange={(e) =>
-                    handleStatusChange(item._id!, e.target.value as LeadStatus)
-                  }
-                  wrapperClassName="w-32"
-                  className={cn(
-                    'h-8 border-2 text-[10px] font-black uppercase tracking-tighter',
-                    {
-                      [LeadStatus.NEW]:
-                        'border-blue-500 bg-blue-50 text-blue-700',
-                      [LeadStatus.CONTACTED]:
-                        'border-yellow-500 bg-yellow-50 text-yellow-700',
-                      [LeadStatus.QUALIFIED]:
-                        'border-green-500 bg-green-50 text-green-700',
-                      [LeadStatus.DISQUALIFIED]:
-                        'border-red-500 bg-red-50 text-red-700',
-                    }[item.status]
-                  )}
-                >
-                  {Object.values(LeadStatus).map((status) => (
-                    <option key={status} value={status}>
-                      {status.toUpperCase()}
-                    </option>
-                  ))}
-                </Select>
+                <LeadStatusSelect
+                  value={item.status as LeadStatus}
+                  onValueChange={(val) => handleStatusChange(item._id!, val)}
+                  className="h-8 w-32"
+                />
               </BrutalTableCell>
               <BrutalTableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Link
                     href={`/leads/${item._id}`}
-                    className="group/view border border-transparent p-2 transition-all hover:border-primary/20 hover:bg-primary/10"
+                    className="group/view rounded-full border border-transparent p-2 transition-colors hover:bg-primary/10"
                   >
                     <Eye className="h-4 w-4 text-muted-foreground group-hover/view:text-primary" />
                   </Link>
@@ -293,7 +292,7 @@ export default function LeadsPage() {
                         `${item.firstName} ${item.lastName}`
                       )
                     }
-                    className="group/del border border-transparent p-2 transition-all hover:border-destructive/20 hover:bg-destructive/10"
+                    className="group/del rounded-full border border-transparent p-2 transition-colors hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4 text-muted-foreground group-hover/del:text-destructive" />
                   </button>
@@ -321,8 +320,8 @@ export default function LeadsPage() {
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         isLoading={deleteMutation.isPending}
-        title="DELETE LEAD?"
-        message={`Are you sure you want to delete "${targetLead?.name.toUpperCase()}"? This action cannot be undone.`}
+        title="Delete Lead?"
+        message={`Are you sure you want to delete "${targetLead?.name}"? This action cannot be undone.`}
       />
     </div>
   );

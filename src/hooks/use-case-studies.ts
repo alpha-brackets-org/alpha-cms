@@ -47,8 +47,9 @@ export function useUpdateCaseStudy(id: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['case-studies'] });
       queryClient.invalidateQueries({ queryKey: ['case-study', id] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
-    meta: { successMessage: 'Changes saved successfully!' },
+    meta: { successMessage: 'Case study updated successfully!' },
   });
 }
 

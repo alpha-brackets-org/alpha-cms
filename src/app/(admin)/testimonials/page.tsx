@@ -19,7 +19,13 @@ import { usePortfolio } from '@/providers/PortfolioProvider';
 import { BrutalConfirm } from '@/components/ui/BrutalConfirm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useDebounce } from '@/hooks/use-debounce';
 import {
@@ -31,6 +37,7 @@ import { BrutalPagination } from '@/components/ui/BrutalPagination';
 import { StarRating } from '@/components/ui/StarRating';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { TestimonialStatus } from '@/types/cms';
+import { QueryErrorState } from '@/components/ui/QueryErrorState';
 
 export default function TestimonialsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,7 +52,11 @@ export default function TestimonialsPage() {
     null
   );
 
-  const { data: response, isLoading } = useTestimonials({
+  const {
+    data: response,
+    isLoading,
+    isError,
+  } = useTestimonials({
     search: debouncedSearch,
     status,
     page,
@@ -81,18 +92,16 @@ export default function TestimonialsPage() {
         <div>
           <div className="mb-1 flex items-center gap-3">
             <MessageSquareQuote className="h-6 w-6 text-primary" />
-            <h2 className="text-3xl font-bold uppercase tracking-tight">
-              Testimonials
-            </h2>
+            <h2 className="text-3xl font-bold tracking-tight">Testimonials</h2>
           </div>
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
             {total} testimonial{total !== 1 ? 's' : ''} · manage social proof
           </p>
         </div>
         <Button asChild className="gap-2">
           <Link href="/testimonials/create">
             <Plus className="h-4 w-4" />
-            NEW TESTIMONIAL
+            New Testimonial
           </Link>
         </Button>
       </div>
@@ -118,21 +127,23 @@ export default function TestimonialsPage() {
           <div className="flex-1 md:flex-none">
             <Label className="mb-1 block opacity-60">Status</Label>
             <Select
-              id="testimonials-status"
               value={status}
-              onChange={(e) => {
-                setStatus(e.target.value);
+              onValueChange={(val) => {
+                setStatus(val);
                 setPage(1);
               }}
-              wrapperClassName="min-w-[140px] shrink-0"
-              className="h-10 text-xs font-bold uppercase tracking-wide"
             >
-              <option value="all">All Status</option>
-              {Object.values(TestimonialStatus).map((s) => (
-                <option key={s} value={s}>
-                  {s.toUpperCase()}
-                </option>
-              ))}
+              <SelectTrigger className="h-10 min-w-[140px] shrink-0 text-xs font-medium">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                {Object.values(TestimonialStatus).map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
@@ -141,7 +152,7 @@ export default function TestimonialsPage() {
               variant="outline"
               onClick={handleClearFilters}
               disabled={!searchTerm && status === 'all'}
-              className="h-10 px-6 text-xs font-bold uppercase tracking-wide"
+              className="h-10 px-6 text-xs font-medium"
             >
               Clear
             </Button>
@@ -191,12 +202,18 @@ export default function TestimonialsPage() {
               </BrutalTableCell>
             </BrutalTableRow>
           ))
+        ) : isError ? (
+          <BrutalTableRow>
+            <BrutalTableCell colSpan={6}>
+              <QueryErrorState />
+            </BrutalTableCell>
+          </BrutalTableRow>
         ) : testimonials.length === 0 ? (
           <BrutalTableRow>
             <BrutalTableCell colSpan={6} className="p-20 text-center">
               <div className="flex flex-col items-center gap-4 opacity-40">
                 <MessageSquareQuote className="h-12 w-12" />
-                <p className="text-[10px] font-bold uppercase tracking-widest">
+                <p className="text-xs font-medium">
                   No testimonials matched your filters
                 </p>
               </div>
@@ -216,7 +233,7 @@ export default function TestimonialsPage() {
                   </div>
                 )}
                 {t.platform && (
-                  <div className="mt-1 text-[9px] font-bold uppercase tracking-widest text-primary/70">
+                  <div className="mt-1 text-xs font-medium text-primary/70">
                     {t.platform}
                   </div>
                 )}
@@ -237,7 +254,7 @@ export default function TestimonialsPage() {
               {/* Portfolio */}
               {!activePortfolio && (
                 <BrutalTableCell>
-                  <div className="text-[10px] font-bold uppercase tracking-tight">
+                  <div className="text-xs font-medium">
                     {t.portfolio?.name || '—'}
                   </div>
                 </BrutalTableCell>
@@ -247,7 +264,7 @@ export default function TestimonialsPage() {
               <BrutalTableCell>
                 <StatusBadge status={t.status} />
                 {t.featured && (
-                  <div className="mt-1 flex items-center gap-1 text-[9px] font-bold uppercase text-amber-400">
+                  <div className="mt-1 flex items-center gap-1 text-xs font-medium text-amber-400">
                     <Star className="h-2.5 w-2.5 fill-amber-400" /> Featured
                   </div>
                 )}
@@ -295,9 +312,9 @@ export default function TestimonialsPage() {
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         isLoading={deleteMutation.isPending}
-        title="DELETE TESTIMONIAL?"
+        title="Delete Testimonial?"
         message={`Delete "${target?.name}"? This action cannot be undone.`}
-        confirmText="DELETE NOW"
+        confirmText="Delete Now"
         isDestructive={true}
       />
     </div>

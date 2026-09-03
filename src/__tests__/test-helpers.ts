@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { hashPassword } from '@/lib/auth-utils';
+import { hashPassword } from '@/lib/password-utils';
 import { mockPortfolioData } from './test-data';
 
 export function makeReq(

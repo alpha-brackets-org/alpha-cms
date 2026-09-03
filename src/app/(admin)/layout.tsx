@@ -44,9 +44,7 @@ export default function AdminLayout({
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <h1 className="ml-4 text-sm font-bold uppercase tracking-widest text-primary">
-            ALPHA CMS
-          </h1>
+          <h1 className="ml-4 text-sm font-semibold text-primary">Alpha CMS</h1>
         </header>
 
         <main className="grain relative flex min-h-0 flex-1 flex-col overflow-hidden">

@@ -153,14 +153,12 @@ export const SeoAnalyzer = ({
       <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-4">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-4 w-4 text-primary" />
-          <h3 className="text-[10px] font-bold uppercase tracking-widest">
-            SEO Live Audit
-          </h3>
+          <h3 className="text-sm font-semibold">SEO Live Audit</h3>
         </div>
         <div className="flex flex-col items-end">
           <span
             className={cn(
-              'text-xl font-black tabular-nums',
+              'text-xl font-semibold tabular-nums',
               audit.score > 80
                 ? 'text-primary'
                 : audit.score > 50
@@ -170,7 +168,7 @@ export const SeoAnalyzer = ({
           >
             {audit.score}%
           </span>
-          <span className="text-[8px] font-bold uppercase tracking-widest text-muted-foreground">
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">
             Trust Score
           </span>
         </div>
@@ -199,9 +197,7 @@ export const SeoAnalyzer = ({
             className="rounded-xl border border-white/5 bg-secondary/20 p-3 transition-all hover:border-white/15 hover:bg-secondary/30"
           >
             <div className="mb-1 flex items-center justify-between">
-              <span className="text-[9px] font-bold uppercase tracking-widest">
-                {factor.label}
-              </span>
+              <span className="text-xs font-medium">{factor.label}</span>
               {getStatusIcon(factor.status)}
             </div>
             <p className="text-[10px] leading-relaxed text-muted-foreground">

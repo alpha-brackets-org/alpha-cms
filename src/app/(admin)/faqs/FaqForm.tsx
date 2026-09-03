@@ -3,7 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { PublishStatus } from '@/types/cms';
@@ -85,7 +91,7 @@ export function FaqForm({
     >
       {/* Main Content */}
       <div className="space-y-6 lg:col-span-2">
-        <div className="border-2 border-border bg-card p-6">
+        <div className="rounded-2xl border border-border bg-card p-6">
           <div className="space-y-4">
             <div>
               <Label htmlFor="question">Question</Label>
@@ -117,43 +123,52 @@ export function FaqForm({
 
       {/* Sidebar Settings */}
       <div className="space-y-6">
-        <div className="border-2 border-border bg-card p-6">
-          <h3 className="mb-4 text-sm font-bold uppercase tracking-wider">
-            Settings
-          </h3>
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <h3 className="mb-4 text-sm font-semibold">Settings</h3>
           <div className="space-y-4">
             <div>
               <Label htmlFor="portfolio">Portfolio</Label>
               <Select
-                id="portfolio"
-                name="portfolio"
                 value={formData.portfolio}
-                onChange={handleChange}
-                required
+                onValueChange={(val) =>
+                  handleChange({
+                    target: { name: 'portfolio', value: val },
+                  } as React.ChangeEvent<HTMLSelectElement>)
+                }
               >
-                <option value="">Select Portfolio</option>
-                {portfolios.map((p) => (
-                  <option key={p._id} value={p._id}>
-                    {p.name}
-                  </option>
-                ))}
+                <SelectTrigger id="portfolio">
+                  <SelectValue placeholder="Select Portfolio" />
+                </SelectTrigger>
+                <SelectContent>
+                  {portfolios.map((p) => (
+                    <SelectItem key={p._id} value={p._id!}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
 
             <div>
               <Label htmlFor="status">Status</Label>
               <Select
-                id="status"
-                name="status"
                 value={formData.status}
-                onChange={handleChange}
-                required
+                onValueChange={(val) =>
+                  handleChange({
+                    target: { name: 'status', value: val },
+                  } as React.ChangeEvent<HTMLSelectElement>)
+                }
               >
-                {Object.values(PublishStatus).map((stat) => (
-                  <option key={stat} value={stat}>
-                    {stat.toUpperCase()}
-                  </option>
-                ))}
+                <SelectTrigger id="status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(PublishStatus).map((stat) => (
+                    <SelectItem key={stat} value={stat}>
+                      {stat.toUpperCase()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
 

@@ -24,7 +24,7 @@ export default function LoginPage() {
       { email, password },
       {
         onSuccess: () => {
-          router.push('/dashboard');
+          router.push('/');
         },
       }
     );

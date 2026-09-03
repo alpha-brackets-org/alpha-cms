@@ -21,14 +21,22 @@ import {
 import Link from 'next/link';
 import Cookies from 'js-cookie';
 import { useToast } from '@/hooks/use-toast';
+import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning';
 import { useCategories } from '@/hooks/use-categories';
 import { usePortfolios } from '@/hooks/use-portfolios';
+import { useStringArrayField } from '@/hooks/use-string-array-field';
 import { MediaPicker } from '@/components/cms/MediaPicker';
 import { SeoAnalyzer } from '@/components/cms/SeoAnalyzer';
 import { CharCount } from '@/components/cms/CharCount';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -59,7 +67,6 @@ export function CaseStudyForm({
   isNew = false,
 }: CaseStudyFormProps) {
   const [tagInput, setTagInput] = useState('');
-  const [serviceInput, setServiceInput] = useState('');
   const [isMounted, setIsMounted] = useState(false);
   const { error, warning } = useToast();
 
@@ -107,12 +114,22 @@ export function CaseStudyForm({
     },
   });
 
+  useUnsavedChangesWarning(isDirty);
+
   const watchedValues = watch();
 
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'tags',
   });
+
+  const {
+    input: serviceInput,
+    setInput: setServiceInput,
+    items: services,
+    handleKeyDown: handleAddService,
+    removeItem: handleRemoveService,
+  } = useStringArrayField<CaseStudy>('services', getValues, reset);
 
   useEffect(() => {
     if (initialData) {
@@ -173,28 +190,6 @@ export function CaseStudyForm({
     }
   };
 
-  const handleAddService = (e: React.KeyboardEvent) => {
-    if ((e.key === 'Enter' || e.key === ',') && serviceInput.trim()) {
-      e.preventDefault();
-      const currentServices = getValues('services') || [];
-      if (!currentServices.includes(serviceInput.trim())) {
-        reset({
-          ...getValues(),
-          services: [...currentServices, serviceInput.trim()],
-        });
-      }
-      setServiceInput('');
-    }
-  };
-
-  const handleRemoveService = (serviceToRemove: string) => {
-    const currentServices = getValues('services') || [];
-    reset({
-      ...getValues(),
-      services: currentServices.filter((s) => s !== serviceToRemove),
-    });
-  };
-
   const onFormSubmit = (data: CaseStudy) => {
     onSubmit(data);
   };
@@ -214,7 +209,7 @@ export function CaseStudyForm({
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-widest">
+            <h2 className="text-sm font-semibold">
               {isNew ? 'New Case Study' : 'Editing Project'}
             </h2>
             <p className="font-mono text-[9px] lowercase text-primary">
@@ -237,7 +232,7 @@ export function CaseStudyForm({
               onClick={handlePreview}
               className="gap-2"
             >
-              <Eye className="h-4 w-4" /> PREVIEW
+              <Eye className="h-4 w-4" /> Preview
             </Button>
           )}
           <Button
@@ -251,7 +246,7 @@ export function CaseStudyForm({
             ) : (
               <Save className="h-4 w-4" />
             )}
-            {isLoading ? 'SAVING...' : submitText}
+            {isLoading ? 'Saving...' : submitText}
           </Button>
         </div>
       </div>
@@ -274,9 +269,7 @@ export function CaseStudyForm({
               />
               <div className="flex flex-wrap items-center gap-4 rounded-xl border border-white/10 bg-secondary/20 p-3 font-mono text-[10px] text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold uppercase text-primary">
-                    Slug:
-                  </span>
+                  <span className="font-semibold text-primary">Slug:</span>
                   <input
                     {...register('slug')}
                     placeholder="project-slug"
@@ -288,7 +281,7 @@ export function CaseStudyForm({
 
             {/* Rich Text Editor */}
             <div className="space-y-3">
-              <Label className="text-sm font-bold tracking-widest text-primary">
+              <Label className="text-sm font-semibold text-primary">
                 Overview (Minimalistic Teaser)
               </Label>
               <Controller
@@ -307,9 +300,7 @@ export function CaseStudyForm({
             <div className="space-y-6 rounded-2xl border border-white/10 bg-card/50 p-6 shadow-sm backdrop-blur-xl">
               <div className="flex items-center gap-3 border-b border-white/10 pb-4">
                 <Search className="h-5 w-5 text-primary" />
-                <h3 className="text-sm font-bold uppercase tracking-widest">
-                  SEO Infrastructure
-                </h3>
+                <h3 className="text-sm font-semibold">SEO Infrastructure</h3>
               </div>
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                 <div className="space-y-6">
@@ -371,7 +362,9 @@ export function CaseStudyForm({
             <SeoAnalyzer
               title={watchedValues.seo?.metaTitle || watchedValues.projectTitle}
               description={
-                watchedValues.seo?.metaDescription || watchedValues.excerpt || ''
+                watchedValues.seo?.metaDescription ||
+                watchedValues.excerpt ||
+                ''
               }
               content={watchedValues.content}
               keywords={watchedValues.seo?.keywords ?? ''}
@@ -380,44 +373,58 @@ export function CaseStudyForm({
 
             {/* Case Study Details */}
             <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
-              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-widest">
+              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-semibold">
                 <Settings className="h-4 w-4 text-primary" /> Case Study Details
               </h3>
 
               <div className="space-y-2">
                 <Label>Status</Label>
-                <Select {...register('status')}>
-                  {Object.values(PublishStatus).map((status) => (
-                    <option
-                      key={status}
-                      value={status}
-                      className="bg-black text-white"
-                    >
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </option>
-                  ))}
-                </Select>
+                <Controller
+                  control={control}
+                  name="status"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.values(PublishStatus).map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
 
               {isMounted && !Cookies.get('alpha_active_portfolio') && isNew && (
                 <div className="space-y-2">
                   <Label>Assign to Portfolio</Label>
-                  <Select {...register('portfolio')}>
-                    <option value="" disabled className="bg-black text-white">
-                      Select a portfolio
-                    </option>
-                    {portfolios?.map((p) => (
-                      <option
-                        key={p._id}
-                        value={p._id}
-                        className="bg-black text-white"
+                  <Controller
+                    control={control}
+                    name="portfolio"
+                    render={({ field }) => (
+                      <Select
+                        value={field.value ?? undefined}
+                        onValueChange={field.onChange}
                       >
-                        {p.name}
-                      </option>
-                    ))}
-                  </Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a portfolio" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {portfolios?.map((p) => (
+                            <SelectItem key={p._id} value={p._id!}>
+                              {p.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                   {errors.portfolio && (
-                    <p className="text-[9px] font-bold uppercase text-destructive">
+                    <p className="text-xs font-medium text-destructive">
                       {errors.portfolio?.message as string}
                     </p>
                   )}
@@ -426,20 +433,27 @@ export function CaseStudyForm({
 
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select {...register('category')}>
-                  <option value="" className="bg-black text-white">
-                    Select a category
-                  </option>
-                  {categories.map((cat) => (
-                    <option
-                      key={cat._id}
-                      value={cat._id}
-                      className="bg-black text-white"
+                <Controller
+                  control={control}
+                  name="category"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value ?? undefined}
+                      onValueChange={field.onChange}
                     >
-                      {cat.name}
-                    </option>
-                  ))}
-                </Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat._id} value={cat._id!}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
 
               <div className="space-y-4 pt-2">
@@ -509,7 +523,7 @@ export function CaseStudyForm({
 
             {/* Taxonomies */}
             <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
-              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-widest">
+              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-semibold">
                 <TagIcon className="h-4 w-4 text-primary" /> Taxonomies
               </h3>
 
@@ -523,7 +537,7 @@ export function CaseStudyForm({
                   className="h-10 text-[10px]"
                 />
                 <div className="flex flex-wrap gap-2">
-                  {(getValues('services') || []).map((service, index) => (
+                  {services.map((service, index) => (
                     <Badge
                       key={index}
                       variant="default"
@@ -574,7 +588,7 @@ export function CaseStudyForm({
 
             {/* Media & PDF */}
             <div className="space-y-4 rounded-2xl border border-white/10 bg-card/50 p-4 shadow-sm backdrop-blur-xl">
-              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-widest">
+              <h3 className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-semibold">
                 <ImageIcon className="h-4 w-4 text-primary" /> Media & Content
               </h3>
 

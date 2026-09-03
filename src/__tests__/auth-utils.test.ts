@@ -1,11 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import {
-  hashPassword,
-  comparePassword,
-  signToken,
-  verifyToken,
-  generateRandomPassword,
-} from '@/lib/auth-utils';
+import { hashPassword, comparePassword, generateRandomPassword } from '@/lib/password-utils';
+import { signToken, verifyToken } from '@/lib/auth-utils';
 
 describe('hashPassword / comparePassword', () => {
   it('hashes a password and verifies it correctly', async () => {

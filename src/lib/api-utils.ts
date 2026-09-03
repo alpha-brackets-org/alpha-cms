@@ -7,6 +7,8 @@ import { verifyToken } from './auth-utils';
 import { z } from 'zod';
 import { User, UserRole } from '@/schemas/cms';
 import { CmsPermission, hasPermission } from '@/lib/auth';
+import { hashApiKey } from '@/lib/encryption';
+import { CollectionName } from '@/schemas/cms';
 
 /**
  * Type for Next.js Route Handler Context. Every route should destructure
@@ -138,6 +140,28 @@ export function apiHandler<T extends z.ZodSchema = z.ZodSchema>(
 }
 
 /**
+ * Verifies an `Authorization: Bearer <apiKey>` header against a portfolio's
+ * stored apiKeyHash. Used by public routes that external client websites call
+ * server-to-server (config fetch, lead capture) instead of domain matching.
+ */
+export async function verifyPortfolioApiKey(
+  req: Request
+): Promise<{ portfolioId: string } | null> {
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) return null;
+
+  const key = authHeader.slice('Bearer '.length).trim();
+  if (!key) return null;
+
+  const portfolio = await getDb()
+    .collection(CollectionName.PORTFOLIOS)
+    .findOne({ apiKeyHash: hashApiKey(key) });
+
+  if (!portfolio) return null;
+  return { portfolioId: portfolio._id.toString() };
+}
+
+/**
  * Standard envelope for a single resource (GET one, POST create, PATCH update, DELETE).
  */
 export function sendData(data: unknown, status: number = 200) {
@@ -223,7 +247,7 @@ export function parseSearchParams(request: Request) {
   const rawPage = parseInt(searchParams.get('page') ?? '');
   const rawLimit = parseInt(searchParams.get('limit') ?? '');
   const page = Math.max(1, isNaN(rawPage) ? 1 : rawPage);
-  const limit = Math.max(1, isNaN(rawLimit) ? 10 : rawLimit);
+  const limit = Math.min(100, Math.max(1, isNaN(rawLimit) ? 10 : rawLimit));
   const skip = (page - 1) * limit;
 
   return {
@@ -290,11 +314,13 @@ export function corsOptions() {
  */
 export const DbUtils = {
   async createDoc(collection: string, data: Record<string, unknown>) {
-    return await getDb().collection(collection).insertOne({
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    return await getDb()
+      .collection(collection)
+      .insertOne({
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
   },
 
   async findDoc(
